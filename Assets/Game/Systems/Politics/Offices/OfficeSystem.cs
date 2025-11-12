@@ -210,10 +210,7 @@ namespace Game.Systems.Politics.Offices
             eventBus.Publish(new OfficeAssignedEvent(currentYear, currentMonth, currentDay,
                 officeId, definition.Name, characterId, seat.SeatIndex, seat.StartYear, seat.EndYear, name));
 
-            if (DebugMode)
-            {
-                LogInfo($"Activated {name}#{characterId} as {definition.Name} seat {seat.SeatIndex} ({seat.StartYear}-{seat.EndYear}).");
-            }
+            LogInfo($"{name} assumes {definition.Name} seat {seat.SeatIndex} ({FormatTermRange(seat.StartYear, seat.EndYear)}).");
         }
 
         private void CancelPendingAssignment(string officeId, OfficeSeat seat)
@@ -268,10 +265,8 @@ namespace Game.Systems.Politics.Offices
             int startYear = seat.StartYear;
             string name = ResolveCharacterName(holderId);
 
-            if (DebugMode)
-            {
-                LogInfo($"Vacating {officeId} seat {seat.SeatIndex} held by {name}#{holderId} (term {startYear}-{endYear}).");
-            }
+            string officeName = ResolveOfficeName(officeId);
+            LogInfo($"{name} leaves {officeName} seat {seat.SeatIndex} ({FormatTermRange(startYear, endYear)}).");
 
             seat.HolderId = null;
             seat.StartYear = 0;
@@ -642,10 +637,7 @@ namespace Game.Systems.Politics.Offices
                 eventBus.Publish(new OfficeAssignedEvent(year, currentMonth, currentDay,
                     officeId, def.Name, characterId, seat.SeatIndex, seat.StartYear, seat.EndYear, name));
 
-                if (DebugMode)
-                {
-                    LogInfo($"Assigned {name}#{characterId} to {def.Name} seat {seat.SeatIndex} ({seat.StartYear}-{seat.EndYear}).");
-                }
+                LogInfo($"{name} assumes {def.Name} seat {seat.SeatIndex} ({FormatTermRange(seat.StartYear, seat.EndYear)}).");
 
                 return new OfficeSeatDescriptor
                 {
@@ -664,6 +656,23 @@ namespace Game.Systems.Politics.Offices
         {
             var character = characterSystem.Get(characterId);
             return character?.FullName ?? $"Character {characterId}";
+        }
+
+        private string ResolveOfficeName(string officeId)
+        {
+            var def = GetDefinition(officeId);
+            return def?.Name ?? officeId;
+        }
+
+        private static string FormatTermRange(int startYear, int endYear)
+        {
+            if (startYear <= 0 && endYear <= 0)
+                return "unspecified term";
+            if (startYear <= 0)
+                return $"term ending {endYear}";
+            if (endYear <= 0)
+                return $"term starting {startYear}";
+            return startYear == endYear ? $"term {startYear}" : $"term {startYear}-{endYear}";
         }
 
         public IReadOnlyList<OfficeCareerRecord> GetCareerHistory(int characterId)

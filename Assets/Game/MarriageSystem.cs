@@ -93,8 +93,6 @@ namespace Game.Systems.MarriageSystem
                 attempts++;
             }
 
-            if (marriagesToday > 0)
-                LogInfo($"{marriagesToday} new marriages formed on {e.Day}/{e.Month}/{e.Year}.");
         }
 
         private int WeightedPickFemale(List<Character> females, SocialClass maleClass)

@@ -223,11 +223,12 @@ namespace Game.Systems.Politics.Elections
 
         private void ConductElections()
         {
+            LogInfo($"Election day has arrived: conducting elections for {currentYear}.");
+
             var infos = officeSystem.GetElectionInfos(currentYear);
             if (infos.Count == 0)
             {
-                if (DebugMode)
-                    LogInfo($"No offices queued for election on July 1, {currentYear}.");
+                LogInfo($"Election day: no offices scheduled for election in {currentYear}.");
                 return;
             }
 
@@ -268,10 +269,14 @@ namespace Game.Systems.Politics.Elections
 
                 if (candidates.Count == 0)
                 {
-                    if (DebugMode)
-                        LogWarn($"No candidates stood for {info.Definition.Name} in {currentYear}.");
+                    LogWarn($"{info.Definition.Name}: election skipped, no eligible candidates in {currentYear}.");
                     continue;
                 }
+
+                var candidateSummary = string.Join(", ", candidates
+                    .OrderByDescending(c => c.FinalScore)
+                    .Select(c => $"{c.Character.FullName} ({c.FinalScore:F1})"));
+                LogInfo($"{info.Definition.Name}: candidates -> {candidateSummary}");
 
                 float totalScore = candidates.Sum(c => Mathf.Max(0.1f, c.FinalScore));
                 var winners = SelectWinners(candidates, info.SeatsAvailable);
@@ -291,6 +296,8 @@ namespace Game.Systems.Politics.Elections
                     Candidates = candidates,
                     Winners = new List<ElectionWinnerSummary>()
                 };
+
+                var winnerEntries = new List<string>();
 
                 foreach (var winner in winners)
                 {
@@ -317,15 +324,20 @@ namespace Game.Systems.Politics.Elections
                     summary.Winners.Add(winnerSummary);
                     record.Winners.Add(winnerSummary);
 
+                    winnerEntries.Add($"{winner.Character.FullName} (seat {seat.SeatIndex}, term {seat.StartYear}-{seat.EndYear})");
+
                     if (DebugMode)
                     {
                         string detail = string.Join(", ", winner.VoteBreakdown
                             .OrderByDescending(kv => kv.Value)
                             .Take(4)
                             .Select(kv => $"{kv.Key}:{kv.Value:F1}"));
-                        LogInfo($"{winner.Character.FullName} wins {info.Definition.Name} seat {seat.SeatIndex} with score {winner.FinalScore:F1} [{detail}] (term begins {seat.StartYear})");
+                        LogInfo($"{winner.Character.FullName} detailed breakdown -> {detail}");
                     }
                 }
+
+                var winnerSummaryLine = string.Join("; ", winnerEntries);
+                LogInfo($"{info.Definition.Name}: winners -> {winnerSummaryLine}");
 
                 summaries.Add(summary);
                 resultsByYear[currentYear].Add(record);

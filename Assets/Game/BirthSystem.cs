@@ -107,14 +107,12 @@ namespace Game.Systems.BirthSystem
                 var child = CharacterFactory.CreateChild(father, mother, year, month, day);
                 characterSystem.AddCharacter(child);
                 bus.Publish(new OnCharacterBorn(year, month, day, child.ID, father?.ID, mother.ID));
-                LogInfo($"Birth: {child.FullName} born to {mother.FullName}");
 
                 if (rng.NextDouble() < config.MultipleBirthChance)
                 {
                     var twin = CharacterFactory.CreateChild(father, mother, year, month, day);
                     characterSystem.AddCharacter(twin);
                     bus.Publish(new OnCharacterBorn(year, month, day, twin.ID, father?.ID, mother.ID));
-                    LogInfo($"Twin birth: {twin.FullName}");
                 }
             }
 

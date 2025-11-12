@@ -109,7 +109,6 @@ namespace Game.Data.Characters
                 Influence = 0
             };
 
-            Debug.Log($"[CharacterFactory] New child born: {romanName.GetFullName()} ({gender})");
             return child;
         }
 

@@ -34,7 +34,6 @@ namespace Game.Systems.EventBus
                 throw new ArgumentNullException(nameof(e));
 
             nextQueue.Enqueue(e);
-            Log($"Queued event: {e.Name} ({e.Day}/{e.Month}/{e.Year})");
         }
 
         public void Subscribe<T>(Action<T> handler) where T : GameEvent
