@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Game.Core;
+using Game.Systems.Politics.Elections;
 
 namespace Game.Systems.EventBus
 {
@@ -16,6 +17,14 @@ namespace Game.Systems.EventBus
         private readonly Dictionary<Type, List<Action<GameEvent>>> subscribers = new();
         private readonly List<GameEvent> history = new();
         private readonly HashSet<Type> unhandledTypesLogged = new();
+        private static readonly HashSet<Type> optionalEventTypes = new()
+        {
+            typeof(OnCharacterMarried),
+            typeof(OnPopulationTick),
+            typeof(OnNewMonthEvent),
+            typeof(ElectionSeasonOpenedEvent),
+            typeof(ElectionSeasonCompletedEvent)
+        };
 
         public override void Initialize(GameState state)
         {
@@ -79,7 +88,10 @@ namespace Game.Systems.EventBus
                 }
                 else if (unhandledTypesLogged.Add(eventType))
                 {
-                    LogWarn($"No subscribers for {e.Name}");
+                    if (optionalEventTypes.Contains(eventType))
+                        LogInfo($"No subscribers for {e.Name} (optional event)");
+                    else
+                        LogWarn($"No subscribers for {e.Name}");
                 }
             }
         }
