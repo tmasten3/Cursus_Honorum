@@ -35,6 +35,8 @@ namespace Game.Systems.Politics.Offices
         private int currentMonth;
         private int currentDay;
 
+        private bool initialHoldersSeeded;
+
         public bool DebugMode { get; set; }
 
         public OfficeSystem(EventBus.EventBus eventBus, Game.Systems.CharacterSystem.CharacterSystem characterSystem,
@@ -54,6 +56,8 @@ namespace Game.Systems.Politics.Offices
 
             eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
             eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
+
+            SeedInitialOfficeHolders();
         }
 
         public override void Update(GameState state) { }
@@ -104,6 +108,141 @@ namespace Game.Systems.Politics.Offices
             {
                 LogError($"Failed to load office definitions: {ex.Message}");
             }
+        }
+
+        private void SeedInitialOfficeHolders()
+        {
+            if (initialHoldersSeeded)
+                return;
+
+            bool anySeatsFilled = seatsByOffice.Any(kvp => kvp.Value.Any(seat => seat.HolderId.HasValue));
+            if (anySeatsFilled)
+            {
+                initialHoldersSeeded = true;
+                return;
+            }
+
+            int initialYear = EstimateInitialYear();
+            currentYear = initialYear;
+            currentMonth = 1;
+            currentDay = 1;
+
+            var assignments = new Dictionary<string, int[]>
+            {
+                ["consul"] = new[] { 283, 269 },
+                ["censor"] = new[] { 273, 261 },
+                ["praetor"] = new[] { 255, 279 },
+                ["aedile"] = new[] { 25, 31 },
+                ["plebeian_aedile"] = new[] { 37, 43 },
+                ["tribune"] = new[] { 97, 103, 253, 259, 271 },
+                ["quaestor"] = new[] { 1, 7, 13, 19, 49, 55, 79, 121 }
+            };
+
+            foreach (var kvp in assignments)
+            {
+                string officeId = kvp.Key;
+                if (!seatsByOffice.TryGetValue(officeId, out var seats) || seats.Count == 0)
+                    continue;
+
+                var def = GetDefinition(officeId);
+                if (def == null)
+                    continue;
+
+                var holderIds = kvp.Value;
+                int seatCount = Math.Min(holderIds.Length, seats.Count);
+                for (int i = 0; i < seatCount; i++)
+                {
+                    int characterId = holderIds[i];
+                    var character = characterSystem.Get(characterId);
+                    if (character == null || !character.IsAlive)
+                    {
+                        LogWarn($"Unable to seed {officeId} seat {seats[i].SeatIndex}: character {characterId} missing or deceased.");
+                        continue;
+                    }
+
+                    var seat = seats[i];
+                    int termStart = initialYear - Math.Max(0, def.TermLengthYears - 1);
+                    int termEnd = initialYear;
+
+                    seat.HolderId = characterId;
+                    seat.StartYear = termStart;
+                    seat.EndYear = termEnd;
+                    seat.PendingHolderId = null;
+                    seat.PendingStartYear = 0;
+
+                    if (!activeByCharacter.TryGetValue(characterId, out var activeList))
+                    {
+                        activeList = new List<ActiveOfficeRecord>();
+                        activeByCharacter[characterId] = activeList;
+                    }
+
+                    activeList.RemoveAll(a => a.OfficeId == officeId && a.SeatIndex == seat.SeatIndex);
+                    activeList.Add(new ActiveOfficeRecord
+                    {
+                        OfficeId = officeId,
+                        SeatIndex = seat.SeatIndex,
+                        EndYear = termEnd
+                    });
+
+                    if (DebugMode)
+                    {
+                        string name = ResolveCharacterName(characterId);
+                        LogInfo($"Seeded {name}#{characterId} to {def.Name} seat {seat.SeatIndex} ({FormatTermRange(termStart, termEnd)}).");
+                    }
+                }
+            }
+
+            var historySeeds = new (int characterId, string officeId, int seatIndex, int startYear, int endYear)[]
+            {
+                (283, "praetor", 0, initialYear - 2, initialYear - 1),
+                (269, "praetor", 1, initialYear - 2, initialYear - 1),
+                (273, "consul", 0, initialYear - 3, initialYear - 3),
+                (261, "consul", 1, initialYear - 3, initialYear - 3),
+                (25, "quaestor", 0, initialYear - 3, initialYear - 2),
+                (31, "quaestor", 1, initialYear - 3, initialYear - 2),
+                (255, "quaestor", 2, initialYear - 4, initialYear - 3),
+                (279, "quaestor", 3, initialYear - 4, initialYear - 3)
+            };
+
+            foreach (var record in historySeeds)
+            {
+                if (!historyByCharacter.TryGetValue(record.characterId, out var list))
+                {
+                    list = new List<OfficeCareerRecord>();
+                    historyByCharacter[record.characterId] = list;
+                }
+
+                bool exists = list.Any(r => r.OfficeId == record.officeId && r.StartYear == record.startYear && r.EndYear == record.endYear);
+                if (!exists)
+                {
+                    list.Add(new OfficeCareerRecord
+                    {
+                        OfficeId = record.officeId,
+                        SeatIndex = record.seatIndex,
+                        HolderId = record.characterId,
+                        StartYear = record.startYear,
+                        EndYear = record.endYear
+                    });
+                }
+
+                lastHeldYear[(record.characterId, record.officeId)] = record.endYear;
+            }
+
+            initialHoldersSeeded = true;
+        }
+
+        private int EstimateInitialYear()
+        {
+            var living = characterSystem.GetAllLiving();
+            var reference = living?.FirstOrDefault(c => c != null);
+            if (reference != null)
+            {
+                int inferredYear = reference.BirthYear + reference.Age;
+                if (inferredYear != 0)
+                    return inferredYear;
+            }
+
+            return -248;
         }
 
         private void OnNewDay(OnNewDayEvent e)
@@ -388,7 +527,7 @@ namespace Game.Systems.Politics.Offices
                     if (string.IsNullOrWhiteSpace(prereq))
                         continue;
 
-                    if (!HasCompletedOffice(character.ID, prereq))
+                    if (!HasQualifiedForOffice(character.ID, prereq, year))
                     {
                         reason = $"Requires prior service as {prereq}";
                         return false;
@@ -398,7 +537,7 @@ namespace Game.Systems.Politics.Offices
 
             if (definition.PrerequisitesAny != null && definition.PrerequisitesAny.Count > 0)
             {
-                bool satisfied = definition.PrerequisitesAny.Any(p => HasCompletedOffice(character.ID, p));
+                bool satisfied = definition.PrerequisitesAny.Any(p => HasQualifiedForOffice(character.ID, p, year));
                 if (!satisfied)
                 {
                     reason = "Prerequisite offices not held";
@@ -464,6 +603,27 @@ namespace Game.Systems.Politics.Offices
             if (historyByCharacter.TryGetValue(characterId, out var records))
             {
                 return records.Any(r => r.OfficeId == officeId);
+            }
+
+            return false;
+        }
+
+        private bool HasQualifiedForOffice(int characterId, string officeId, int electionYear)
+        {
+            officeId = officeId?.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(officeId))
+                return false;
+
+            if (HasCompletedOffice(characterId, officeId))
+                return true;
+
+            if (activeByCharacter.TryGetValue(characterId, out var activeList))
+            {
+                foreach (var active in activeList)
+                {
+                    if (active.OfficeId == officeId && active.EndYear <= electionYear)
+                        return true;
+                }
             }
 
             return false;

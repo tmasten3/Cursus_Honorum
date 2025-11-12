@@ -127,7 +127,8 @@ namespace Game.Systems.Politics.Elections
                 if (options.Count == 0)
                     continue;
 
-                var choice = WeightedPick(options);
+                var prioritized = PrioritizeOfficeChoices(options);
+                var choice = WeightedPick(prioritized);
                 if (choice.def == null)
                     continue;
 
@@ -167,6 +168,25 @@ namespace Game.Systems.Politics.Elections
                     return option;
             }
             return options.Last();
+        }
+
+        private List<(OfficeDefinition def, float score, Dictionary<string, float> breakdown)> PrioritizeOfficeChoices(
+            List<(OfficeDefinition def, float score, Dictionary<string, float> breakdown)> options)
+        {
+            if (options == null || options.Count == 0)
+                return options;
+
+            float maxScore = options.Max(o => o.score);
+            float threshold = Mathf.Clamp(maxScore * 0.65f, 0f, maxScore);
+
+            var viable = options.Where(o => o.score >= threshold).ToList();
+            if (viable.Count == 0)
+                viable = options;
+
+            int highestRank = viable.Max(o => o.def?.Rank ?? int.MinValue);
+            var prioritized = viable.Where(o => o.def != null && o.def.Rank == highestRank).ToList();
+
+            return prioritized.Count > 0 ? prioritized : viable;
         }
 
         private (float score, Dictionary<string, float> breakdown) EvaluateAmbition(Character character, OfficeDefinition office, int seats)
