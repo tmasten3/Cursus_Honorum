@@ -15,6 +15,24 @@ namespace UnityEngine
     {
         public static float Max(float a, float b) => MathF.Max(a, b);
         public static int Max(int a, int b) => Math.Max(a, b);
+        public static float Clamp(float value, float min, float max)
+        {
+            if (min > max)
+                return min;
+            if (value < min)
+                return min;
+            if (value > max)
+                return max;
+            return value;
+        }
+
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
+
+        public static float Pow(float f, float p) => MathF.Pow(f, p);
+
+        public static float Sqrt(float f) => MathF.Sqrt(f);
+
+        public static float Log10(float f) => MathF.Log10(f);
     }
 
     public static class Time
