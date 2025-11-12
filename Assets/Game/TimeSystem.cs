@@ -11,7 +11,7 @@ namespace Game.Systems.TimeSystem
         public override string Name => "Time System";
         public override IEnumerable<Type> Dependencies => new[] { typeof(EventBus.EventBus) };
 
-        private readonly EventBus.EventBus eventBus;
+        private readonly EventBus eventBus;
 
         private int day;
         private int month;

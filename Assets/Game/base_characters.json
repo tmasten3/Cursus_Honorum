@@ -1,0 +1,6639 @@
+{
+  "Characters": [
+    {
+      "ID": 1,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Cornelius",
+        "Cognomen": "Scipio Asina",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -285,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 37,
+      "IsAlive": true,
+      "SpouseID": 2,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Naval",
+        "Ambitious"
+      ],
+      "Wealth": 5600,
+      "Influence": 8
+    },
+    {
+      "ID": 2,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Asina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -292,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 44,
+      "IsAlive": true,
+      "SpouseID": 1,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Pious",
+        "Steadfast"
+      ],
+      "Wealth": 5400,
+      "Influence": 6
+    },
+    {
+      "ID": 3,
+      "RomanName": {
+        "Praenomen": "Gnaeus",
+        "Nomen": "Cornelius",
+        "Cognomen": "Scipio",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 1,
+      "MotherID": 2,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Disciplined"
+      ],
+      "Wealth": 900,
+      "Influence": 3
+    },
+    {
+      "ID": 4,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Cornelius",
+        "Cognomen": "Scipio",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 1,
+      "MotherID": 2,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Studious"
+      ],
+      "Wealth": 860,
+      "Influence": 3
+    },
+    {
+      "ID": 5,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Scipio",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -264,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 1,
+      "MotherID": 2,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Graceful"
+      ],
+      "Wealth": 820,
+      "Influence": 2
+    },
+    {
+      "ID": 6,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Scipio",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 1,
+      "MotherID": 2,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 790,
+      "Influence": 2
+    },
+    {
+      "ID": 7,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Aemilius",
+        "Cognomen": "Paullus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 8,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Diplomatic",
+        "Prudent"
+      ],
+      "Wealth": 5200,
+      "Influence": 7
+    },
+    {
+      "ID": 8,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Aemilia",
+        "Cognomen": "Paulla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 7,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Cultured",
+        "Pious"
+      ],
+      "Wealth": 5000,
+      "Influence": 6
+    },
+    {
+      "ID": 9,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Aemilius",
+        "Cognomen": "Paullus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -270,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 22,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 7,
+      "MotherID": 8,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Analytical"
+      ],
+      "Wealth": 830,
+      "Influence": 3
+    },
+    {
+      "ID": 10,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Aemilius",
+        "Cognomen": "Paullus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 7,
+      "MotherID": 8,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Bold"
+      ],
+      "Wealth": 810,
+      "Influence": 3
+    },
+    {
+      "ID": 11,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Aemilia",
+        "Cognomen": "Paulla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -265,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 7,
+      "MotherID": 8,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Loyal"
+      ],
+      "Wealth": 790,
+      "Influence": 2
+    },
+    {
+      "ID": 12,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Aemilia",
+        "Cognomen": "Paulla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 7,
+      "MotherID": 8,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Studious"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 13,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Fabius",
+        "Cognomen": "Maximus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -289,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 41,
+      "IsAlive": true,
+      "SpouseID": 14,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Fabius",
+      "Class": 0,
+      "Traits": [
+        "Strategic",
+        "Patient"
+      ],
+      "Wealth": 5500,
+      "Influence": 8
+    },
+    {
+      "ID": 14,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fabia",
+        "Cognomen": "Maxima",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -293,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 45,
+      "IsAlive": true,
+      "SpouseID": 13,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Fabius",
+      "Class": 0,
+      "Traits": [
+        "Resolute"
+      ],
+      "Wealth": 5300,
+      "Influence": 6
+    },
+    {
+      "ID": 15,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Fabius",
+        "Cognomen": "Maximus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -271,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 23,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 13,
+      "MotherID": 14,
+      "SiblingID": null,
+      "Family": "Fabius",
+      "Class": 0,
+      "Traits": [
+        "Observant"
+      ],
+      "Wealth": 880,
+      "Influence": 3
+    },
+    {
+      "ID": 16,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Fabius",
+        "Cognomen": "Maximus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 13,
+      "MotherID": 14,
+      "SiblingID": null,
+      "Family": "Fabius",
+      "Class": 0,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 860,
+      "Influence": 3
+    },
+    {
+      "ID": 17,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fabia",
+        "Cognomen": "Maxima",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -266,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 13,
+      "MotherID": 14,
+      "SiblingID": null,
+      "Family": "Fabius",
+      "Class": 0,
+      "Traits": [
+        "Dutiful"
+      ],
+      "Wealth": 820,
+      "Influence": 2
+    },
+    {
+      "ID": 18,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fabia",
+        "Cognomen": "Maxima",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 13,
+      "MotherID": 14,
+      "SiblingID": null,
+      "Family": "Fabius",
+      "Class": 0,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 19,
+      "RomanName": {
+        "Praenomen": "Appius",
+        "Nomen": "Claudius",
+        "Cognomen": "Pulcher",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -287,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 20,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Claudius",
+      "Class": 0,
+      "Traits": [
+        "Proud",
+        "Charismatic"
+      ],
+      "Wealth": 5450,
+      "Influence": 8
+    },
+    {
+      "ID": 20,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Claudia",
+        "Cognomen": "Pulchra",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -291,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 43,
+      "IsAlive": true,
+      "SpouseID": 19,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Claudius",
+      "Class": 0,
+      "Traits": [
+        "Elegant",
+        "Shrewd"
+      ],
+      "Wealth": 5200,
+      "Influence": 6
+    },
+    {
+      "ID": 21,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Claudius",
+        "Cognomen": "Pulcher",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 19,
+      "MotherID": 20,
+      "SiblingID": null,
+      "Family": "Claudius",
+      "Class": 0,
+      "Traits": [
+        "Bold"
+      ],
+      "Wealth": 850,
+      "Influence": 3
+    },
+    {
+      "ID": 22,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Claudius",
+        "Cognomen": "Pulcher",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 19,
+      "MotherID": 20,
+      "SiblingID": null,
+      "Family": "Claudius",
+      "Class": 0,
+      "Traits": [
+        "Eloquent"
+      ],
+      "Wealth": 830,
+      "Influence": 3
+    },
+    {
+      "ID": 23,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Claudia",
+        "Cognomen": "Pulchra",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -264,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 19,
+      "MotherID": 20,
+      "SiblingID": null,
+      "Family": "Claudius",
+      "Class": 0,
+      "Traits": [
+        "Perceptive"
+      ],
+      "Wealth": 800,
+      "Influence": 2
+    },
+    {
+      "ID": 24,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Claudia",
+        "Cognomen": "Pulchra",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 19,
+      "MotherID": 20,
+      "SiblingID": null,
+      "Family": "Claudius",
+      "Class": 0,
+      "Traits": [
+        "Graceful"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 25,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Valerius",
+        "Cognomen": "Laevinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -288,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 26,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Valerius",
+      "Class": 0,
+      "Traits": [
+        "Naval",
+        "Astute"
+      ],
+      "Wealth": 5300,
+      "Influence": 7
+    },
+    {
+      "ID": 26,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Valeria",
+        "Cognomen": "Laevina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -294,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 46,
+      "IsAlive": true,
+      "SpouseID": 25,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Valerius",
+      "Class": 0,
+      "Traits": [
+        "Pragmatic",
+        "Virtuous"
+      ],
+      "Wealth": 5100,
+      "Influence": 5
+    },
+    {
+      "ID": 27,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Valerius",
+        "Cognomen": "Laevinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -270,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 22,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 25,
+      "MotherID": 26,
+      "SiblingID": null,
+      "Family": "Valerius",
+      "Class": 0,
+      "Traits": [
+        "Adventurous"
+      ],
+      "Wealth": 820,
+      "Influence": 3
+    },
+    {
+      "ID": 28,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Valerius",
+        "Cognomen": "Laevinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 25,
+      "MotherID": 26,
+      "SiblingID": null,
+      "Family": "Valerius",
+      "Class": 0,
+      "Traits": [
+        "Diligent"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 29,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Valeria",
+        "Cognomen": "Laevina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -265,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 25,
+      "MotherID": 26,
+      "SiblingID": null,
+      "Family": "Valerius",
+      "Class": 0,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 30,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Valeria",
+        "Cognomen": "Laevina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 25,
+      "MotherID": 26,
+      "SiblingID": null,
+      "Family": "Valerius",
+      "Class": 0,
+      "Traits": [
+        "Attentive"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 31,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Julius",
+        "Cognomen": "Iulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -286,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 32,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Julius",
+      "Class": 0,
+      "Traits": [
+        "Charismatic",
+        "Eloquent"
+      ],
+      "Wealth": 5400,
+      "Influence": 7
+    },
+    {
+      "ID": 32,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Julia",
+        "Cognomen": "Iula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -290,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 42,
+      "IsAlive": true,
+      "SpouseID": 31,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Julius",
+      "Class": 0,
+      "Traits": [
+        "Hospitable",
+        "Graceful"
+      ],
+      "Wealth": 5200,
+      "Influence": 6
+    },
+    {
+      "ID": 33,
+      "RomanName": {
+        "Praenomen": "Sextus",
+        "Nomen": "Julius",
+        "Cognomen": "Iulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 31,
+      "MotherID": 32,
+      "SiblingID": null,
+      "Family": "Julius",
+      "Class": 0,
+      "Traits": [
+        "Charming"
+      ],
+      "Wealth": 840,
+      "Influence": 3
+    },
+    {
+      "ID": 34,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Julius",
+        "Cognomen": "Iulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 31,
+      "MotherID": 32,
+      "SiblingID": null,
+      "Family": "Julius",
+      "Class": 0,
+      "Traits": [
+        "Thoughtful"
+      ],
+      "Wealth": 820,
+      "Influence": 3
+    },
+    {
+      "ID": 35,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Julia",
+        "Cognomen": "Iula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -264,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 31,
+      "MotherID": 32,
+      "SiblingID": null,
+      "Family": "Julius",
+      "Class": 0,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 790,
+      "Influence": 2
+    },
+    {
+      "ID": 36,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Julia",
+        "Cognomen": "Iula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 31,
+      "MotherID": 32,
+      "SiblingID": null,
+      "Family": "Julius",
+      "Class": 0,
+      "Traits": [
+        "Devout"
+      ],
+      "Wealth": 770,
+      "Influence": 2
+    },
+    {
+      "ID": 37,
+      "RomanName": {
+        "Praenomen": "Tiberius",
+        "Nomen": "Sempronius",
+        "Cognomen": "Blesus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -283,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 35,
+      "IsAlive": true,
+      "SpouseID": 38,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sempronius",
+      "Class": 1,
+      "Traits": [
+        "Organized",
+        "Patient"
+      ],
+      "Wealth": 4200,
+      "Influence": 6
+    },
+    {
+      "ID": 38,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sempronia",
+        "Cognomen": "Blesa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -287,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 37,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sempronius",
+      "Class": 1,
+      "Traits": [
+        "Clever",
+        "Supportive"
+      ],
+      "Wealth": 4000,
+      "Influence": 4
+    },
+    {
+      "ID": 39,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Sempronius",
+        "Cognomen": "Blesus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 37,
+      "MotherID": 38,
+      "SiblingID": null,
+      "Family": "Sempronius",
+      "Class": 1,
+      "Traits": [
+        "Prudent"
+      ],
+      "Wealth": 700,
+      "Influence": 3
+    },
+    {
+      "ID": 40,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Sempronius",
+        "Cognomen": "Blesus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 37,
+      "MotherID": 38,
+      "SiblingID": null,
+      "Family": "Sempronius",
+      "Class": 1,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 690,
+      "Influence": 3
+    },
+    {
+      "ID": 41,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sempronia",
+        "Cognomen": "Blesa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 37,
+      "MotherID": 38,
+      "SiblingID": null,
+      "Family": "Sempronius",
+      "Class": 1,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 660,
+      "Influence": 2
+    },
+    {
+      "ID": 42,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sempronia",
+        "Cognomen": "Blesa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 37,
+      "MotherID": 38,
+      "SiblingID": null,
+      "Family": "Sempronius",
+      "Class": 1,
+      "Traits": [
+        "Observant"
+      ],
+      "Wealth": 640,
+      "Influence": 2
+    },
+    {
+      "ID": 43,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Fulvius",
+        "Cognomen": "Flaccus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 44,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Fulvius",
+      "Class": 1,
+      "Traits": [
+        "Energetic",
+        "Diplomatic"
+      ],
+      "Wealth": 4300,
+      "Influence": 6
+    },
+    {
+      "ID": 44,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fulvia",
+        "Cognomen": "Flacca",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -289,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 41,
+      "IsAlive": true,
+      "SpouseID": 43,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Fulvius",
+      "Class": 1,
+      "Traits": [
+        "Resourceful",
+        "Pious"
+      ],
+      "Wealth": 4100,
+      "Influence": 4
+    },
+    {
+      "ID": 45,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Fulvius",
+        "Cognomen": "Flaccus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 43,
+      "MotherID": 44,
+      "SiblingID": null,
+      "Family": "Fulvius",
+      "Class": 1,
+      "Traits": [
+        "Ambitious"
+      ],
+      "Wealth": 710,
+      "Influence": 3
+    },
+    {
+      "ID": 46,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Fulvius",
+        "Cognomen": "Flaccus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 43,
+      "MotherID": 44,
+      "SiblingID": null,
+      "Family": "Fulvius",
+      "Class": 1,
+      "Traits": [
+        "Steady"
+      ],
+      "Wealth": 690,
+      "Influence": 3
+    },
+    {
+      "ID": 47,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fulvia",
+        "Cognomen": "Flacca",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 43,
+      "MotherID": 44,
+      "SiblingID": null,
+      "Family": "Fulvius",
+      "Class": 1,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 660,
+      "Influence": 2
+    },
+    {
+      "ID": 48,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fulvia",
+        "Cognomen": "Flacca",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 43,
+      "MotherID": 44,
+      "SiblingID": null,
+      "Family": "Fulvius",
+      "Class": 1,
+      "Traits": [
+        "Inquisitive"
+      ],
+      "Wealth": 640,
+      "Influence": 2
+    },
+    {
+      "ID": 49,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Caecilius",
+        "Cognomen": "Metellus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -286,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 50,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Caecilius",
+      "Class": 0,
+      "Traits": [
+        "Meticulous",
+        "Strategic"
+      ],
+      "Wealth": 5100,
+      "Influence": 7
+    },
+    {
+      "ID": 50,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Caecilia",
+        "Cognomen": "Metella",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -291,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 43,
+      "IsAlive": true,
+      "SpouseID": 49,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Caecilius",
+      "Class": 0,
+      "Traits": [
+        "Nurturing",
+        "Wise"
+      ],
+      "Wealth": 5000,
+      "Influence": 5
+    },
+    {
+      "ID": 51,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Caecilius",
+        "Cognomen": "Metellus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 49,
+      "MotherID": 50,
+      "SiblingID": null,
+      "Family": "Caecilius",
+      "Class": 0,
+      "Traits": [
+        "Orderly"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 52,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Caecilius",
+        "Cognomen": "Metellus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 49,
+      "MotherID": 50,
+      "SiblingID": null,
+      "Family": "Caecilius",
+      "Class": 0,
+      "Traits": [
+        "Ambitious"
+      ],
+      "Wealth": 780,
+      "Influence": 3
+    },
+    {
+      "ID": 53,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Caecilia",
+        "Cognomen": "Metella",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 49,
+      "MotherID": 50,
+      "SiblingID": null,
+      "Family": "Caecilius",
+      "Class": 0,
+      "Traits": [
+        "Dutiful"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 54,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Caecilia",
+        "Cognomen": "Metella",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 49,
+      "MotherID": 50,
+      "SiblingID": null,
+      "Family": "Caecilius",
+      "Class": 0,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 740,
+      "Influence": 2
+    },
+    {
+      "ID": 55,
+      "RomanName": {
+        "Praenomen": "Aulus",
+        "Nomen": "Manlius",
+        "Cognomen": "Vulso",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -287,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 56,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Manlius",
+      "Class": 0,
+      "Traits": [
+        "Resolute",
+        "Innovative"
+      ],
+      "Wealth": 5000,
+      "Influence": 7
+    },
+    {
+      "ID": 56,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Manlia",
+        "Cognomen": "Vulsa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -292,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 44,
+      "IsAlive": true,
+      "SpouseID": 55,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Manlius",
+      "Class": 0,
+      "Traits": [
+        "Patient",
+        "Wise"
+      ],
+      "Wealth": 4800,
+      "Influence": 5
+    },
+    {
+      "ID": 57,
+      "RomanName": {
+        "Praenomen": "Gnaeus",
+        "Nomen": "Manlius",
+        "Cognomen": "Vulso",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 55,
+      "MotherID": 56,
+      "SiblingID": null,
+      "Family": "Manlius",
+      "Class": 0,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 780,
+      "Influence": 3
+    },
+    {
+      "ID": 58,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Manlius",
+        "Cognomen": "Vulso",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 55,
+      "MotherID": 56,
+      "SiblingID": null,
+      "Family": "Manlius",
+      "Class": 0,
+      "Traits": [
+        "Analytical"
+      ],
+      "Wealth": 760,
+      "Influence": 3
+    },
+    {
+      "ID": 59,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Manlia",
+        "Cognomen": "Vulsa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -264,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 55,
+      "MotherID": 56,
+      "SiblingID": null,
+      "Family": "Manlius",
+      "Class": 0,
+      "Traits": [
+        "Calm"
+      ],
+      "Wealth": 740,
+      "Influence": 2
+    },
+    {
+      "ID": 60,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Manlia",
+        "Cognomen": "Vulsa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 55,
+      "MotherID": 56,
+      "SiblingID": null,
+      "Family": "Manlius",
+      "Class": 0,
+      "Traits": [
+        "Lively"
+      ],
+      "Wealth": 720,
+      "Influence": 2
+    },
+    {
+      "ID": 61,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Sergius",
+        "Cognomen": "Silus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -285,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 37,
+      "IsAlive": true,
+      "SpouseID": 62,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sergius",
+      "Class": 1,
+      "Traits": [
+        "Brave",
+        "Steadfast"
+      ],
+      "Wealth": 3800,
+      "Influence": 5
+    },
+    {
+      "ID": 62,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sergia",
+        "Cognomen": "Sila",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -289,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 41,
+      "IsAlive": true,
+      "SpouseID": 61,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sergius",
+      "Class": 1,
+      "Traits": [
+        "Caring",
+        "Pious"
+      ],
+      "Wealth": 3600,
+      "Influence": 4
+    },
+    {
+      "ID": 63,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Sergius",
+        "Cognomen": "Silus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 61,
+      "MotherID": 62,
+      "SiblingID": null,
+      "Family": "Sergius",
+      "Class": 1,
+      "Traits": [
+        "Bold"
+      ],
+      "Wealth": 650,
+      "Influence": 3
+    },
+    {
+      "ID": 64,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Sergius",
+        "Cognomen": "Silus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 61,
+      "MotherID": 62,
+      "SiblingID": null,
+      "Family": "Sergius",
+      "Class": 1,
+      "Traits": [
+        "Thoughtful"
+      ],
+      "Wealth": 630,
+      "Influence": 3
+    },
+    {
+      "ID": 65,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sergia",
+        "Cognomen": "Sila",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 61,
+      "MotherID": 62,
+      "SiblingID": null,
+      "Family": "Sergius",
+      "Class": 1,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 610,
+      "Influence": 2
+    },
+    {
+      "ID": 66,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sergia",
+        "Cognomen": "Sila",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 61,
+      "MotherID": 62,
+      "SiblingID": null,
+      "Family": "Sergius",
+      "Class": 1,
+      "Traits": [
+        "Perceptive"
+      ],
+      "Wealth": 600,
+      "Influence": 2
+    },
+    {
+      "ID": 67,
+      "RomanName": {
+        "Praenomen": "Servius",
+        "Nomen": "Sulpicius",
+        "Cognomen": "Galba",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 68,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sulpicius",
+      "Class": 1,
+      "Traits": [
+        "Calculating",
+        "Eloquent"
+      ],
+      "Wealth": 3900,
+      "Influence": 5
+    },
+    {
+      "ID": 68,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sulpicia",
+        "Cognomen": "Galba",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 67,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sulpicius",
+      "Class": 1,
+      "Traits": [
+        "Devout",
+        "Insightful"
+      ],
+      "Wealth": 3700,
+      "Influence": 4
+    },
+    {
+      "ID": 69,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Sulpicius",
+        "Cognomen": "Galba",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 67,
+      "MotherID": 68,
+      "SiblingID": null,
+      "Family": "Sulpicius",
+      "Class": 1,
+      "Traits": [
+        "Persuasive"
+      ],
+      "Wealth": 660,
+      "Influence": 3
+    },
+    {
+      "ID": 70,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Sulpicius",
+        "Cognomen": "Galba",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 67,
+      "MotherID": 68,
+      "SiblingID": null,
+      "Family": "Sulpicius",
+      "Class": 1,
+      "Traits": [
+        "Strategic"
+      ],
+      "Wealth": 640,
+      "Influence": 3
+    },
+    {
+      "ID": 71,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sulpicia",
+        "Cognomen": "Galba",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 67,
+      "MotherID": 68,
+      "SiblingID": null,
+      "Family": "Sulpicius",
+      "Class": 1,
+      "Traits": [
+        "Observant"
+      ],
+      "Wealth": 620,
+      "Influence": 2
+    },
+    {
+      "ID": 72,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sulpicia",
+        "Cognomen": "Galba",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 67,
+      "MotherID": 68,
+      "SiblingID": null,
+      "Family": "Sulpicius",
+      "Class": 1,
+      "Traits": [
+        "Helpful"
+      ],
+      "Wealth": 600,
+      "Influence": 2
+    },
+    {
+      "ID": 73,
+      "RomanName": {
+        "Praenomen": "Aulus",
+        "Nomen": "Postumius",
+        "Cognomen": "Albinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -286,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 74,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Postumius",
+      "Class": 0,
+      "Traits": [
+        "Dutiful",
+        "Firm"
+      ],
+      "Wealth": 5000,
+      "Influence": 6
+    },
+    {
+      "ID": 74,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Postumia",
+        "Cognomen": "Albina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -290,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 42,
+      "IsAlive": true,
+      "SpouseID": 73,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Postumius",
+      "Class": 0,
+      "Traits": [
+        "Generous",
+        "Pious"
+      ],
+      "Wealth": 4800,
+      "Influence": 5
+    },
+    {
+      "ID": 75,
+      "RomanName": {
+        "Praenomen": "Spurius",
+        "Nomen": "Postumius",
+        "Cognomen": "Albinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 73,
+      "MotherID": 74,
+      "SiblingID": null,
+      "Family": "Postumius",
+      "Class": 0,
+      "Traits": [
+        "Composed"
+      ],
+      "Wealth": 780,
+      "Influence": 3
+    },
+    {
+      "ID": 76,
+      "RomanName": {
+        "Praenomen": "Aulus",
+        "Nomen": "Postumius",
+        "Cognomen": "Albinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 73,
+      "MotherID": 74,
+      "SiblingID": null,
+      "Family": "Postumius",
+      "Class": 0,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 760,
+      "Influence": 3
+    },
+    {
+      "ID": 77,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Postumia",
+        "Cognomen": "Albina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 73,
+      "MotherID": 74,
+      "SiblingID": null,
+      "Family": "Postumius",
+      "Class": 0,
+      "Traits": [
+        "Graceful"
+      ],
+      "Wealth": 740,
+      "Influence": 2
+    },
+    {
+      "ID": 78,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Postumia",
+        "Cognomen": "Albina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 73,
+      "MotherID": 74,
+      "SiblingID": null,
+      "Family": "Postumius",
+      "Class": 0,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 720,
+      "Influence": 2
+    },
+    {
+      "ID": 79,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Papirius",
+        "Cognomen": "Cursor",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -288,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 80,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Papirius",
+      "Class": 0,
+      "Traits": [
+        "Disciplined",
+        "Energetic"
+      ],
+      "Wealth": 5200,
+      "Influence": 7
+    },
+    {
+      "ID": 80,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Papiria",
+        "Cognomen": "Cursa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -292,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 44,
+      "IsAlive": true,
+      "SpouseID": 79,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Papirius",
+      "Class": 0,
+      "Traits": [
+        "Supportive",
+        "Stoic"
+      ],
+      "Wealth": 5000,
+      "Influence": 5
+    },
+    {
+      "ID": 81,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Papirius",
+        "Cognomen": "Cursor",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -270,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 22,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 79,
+      "MotherID": 80,
+      "SiblingID": null,
+      "Family": "Papirius",
+      "Class": 0,
+      "Traits": [
+        "Energetic"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 82,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Papirius",
+        "Cognomen": "Cursor",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 79,
+      "MotherID": 80,
+      "SiblingID": null,
+      "Family": "Papirius",
+      "Class": 0,
+      "Traits": [
+        "Disciplined"
+      ],
+      "Wealth": 780,
+      "Influence": 3
+    },
+    {
+      "ID": 83,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Papiria",
+        "Cognomen": "Cursa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -264,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 79,
+      "MotherID": 80,
+      "SiblingID": null,
+      "Family": "Papirius",
+      "Class": 0,
+      "Traits": [
+        "Pious"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 84,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Papiria",
+        "Cognomen": "Cursa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 79,
+      "MotherID": 80,
+      "SiblingID": null,
+      "Family": "Papirius",
+      "Class": 0,
+      "Traits": [
+        "Observant"
+      ],
+      "Wealth": 740,
+      "Influence": 2
+    },
+    {
+      "ID": 85,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Calpurnius",
+        "Cognomen": "Piso",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -283,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 35,
+      "IsAlive": true,
+      "SpouseID": 86,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Calpurnius",
+      "Class": 1,
+      "Traits": [
+        "Calculating",
+        "Prudent"
+      ],
+      "Wealth": 4100,
+      "Influence": 5
+    },
+    {
+      "ID": 86,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Calpurnia",
+        "Cognomen": "Piso",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -287,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 85,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Calpurnius",
+      "Class": 1,
+      "Traits": [
+        "Patient",
+        "Cultured"
+      ],
+      "Wealth": 3950,
+      "Influence": 4
+    },
+    {
+      "ID": 87,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Calpurnius",
+        "Cognomen": "Piso",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 85,
+      "MotherID": 86,
+      "SiblingID": null,
+      "Family": "Calpurnius",
+      "Class": 1,
+      "Traits": [
+        "Studious"
+      ],
+      "Wealth": 680,
+      "Influence": 3
+    },
+    {
+      "ID": 88,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Calpurnius",
+        "Cognomen": "Piso",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 85,
+      "MotherID": 86,
+      "SiblingID": null,
+      "Family": "Calpurnius",
+      "Class": 1,
+      "Traits": [
+        "Diligent"
+      ],
+      "Wealth": 660,
+      "Influence": 3
+    },
+    {
+      "ID": 89,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Calpurnia",
+        "Cognomen": "Piso",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 85,
+      "MotherID": 86,
+      "SiblingID": null,
+      "Family": "Calpurnius",
+      "Class": 1,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 640,
+      "Influence": 2
+    },
+    {
+      "ID": 90,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Calpurnia",
+        "Cognomen": "Piso",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 85,
+      "MotherID": 86,
+      "SiblingID": null,
+      "Family": "Calpurnius",
+      "Class": 1,
+      "Traits": [
+        "Insightful"
+      ],
+      "Wealth": 620,
+      "Influence": 2
+    },
+    {
+      "ID": 91,
+      "RomanName": {
+        "Praenomen": "Gnaeus",
+        "Nomen": "Marcius",
+        "Cognomen": "Rutilus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 92,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Marcius",
+      "Class": 1,
+      "Traits": [
+        "Stout",
+        "Loyal"
+      ],
+      "Wealth": 3900,
+      "Influence": 5
+    },
+    {
+      "ID": 92,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Marcia",
+        "Cognomen": "Rutila",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 91,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Marcius",
+      "Class": 1,
+      "Traits": [
+        "Kind",
+        "Resolute"
+      ],
+      "Wealth": 3700,
+      "Influence": 4
+    },
+    {
+      "ID": 93,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Marcius",
+        "Cognomen": "Rutilus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 91,
+      "MotherID": 92,
+      "SiblingID": null,
+      "Family": "Marcius",
+      "Class": 1,
+      "Traits": [
+        "Observant"
+      ],
+      "Wealth": 650,
+      "Influence": 3
+    },
+    {
+      "ID": 94,
+      "RomanName": {
+        "Praenomen": "Titus",
+        "Nomen": "Marcius",
+        "Cognomen": "Rutilus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 91,
+      "MotherID": 92,
+      "SiblingID": null,
+      "Family": "Marcius",
+      "Class": 1,
+      "Traits": [
+        "Energetic"
+      ],
+      "Wealth": 630,
+      "Influence": 3
+    },
+    {
+      "ID": 95,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Marcia",
+        "Cognomen": "Rutila",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 91,
+      "MotherID": 92,
+      "SiblingID": null,
+      "Family": "Marcius",
+      "Class": 1,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 610,
+      "Influence": 2
+    },
+    {
+      "ID": 96,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Marcia",
+        "Cognomen": "Rutila",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 91,
+      "MotherID": 92,
+      "SiblingID": null,
+      "Family": "Marcius",
+      "Class": 1,
+      "Traits": [
+        "Patient"
+      ],
+      "Wealth": 600,
+      "Influence": 2
+    },
+    {
+      "ID": 97,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Livius",
+        "Cognomen": "Salinator",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -285,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 37,
+      "IsAlive": true,
+      "SpouseID": 98,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Livius",
+      "Class": 1,
+      "Traits": [
+        "Tenacious",
+        "Calculating"
+      ],
+      "Wealth": 4000,
+      "Influence": 6
+    },
+    {
+      "ID": 98,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Livia",
+        "Cognomen": "Salinatrix",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -289,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 41,
+      "IsAlive": true,
+      "SpouseID": 97,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Livius",
+      "Class": 1,
+      "Traits": [
+        "Vigilant",
+        "Pious"
+      ],
+      "Wealth": 3800,
+      "Influence": 4
+    },
+    {
+      "ID": 99,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Livius",
+        "Cognomen": "Salinator",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 97,
+      "MotherID": 98,
+      "SiblingID": null,
+      "Family": "Livius",
+      "Class": 1,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 670,
+      "Influence": 3
+    },
+    {
+      "ID": 100,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Livius",
+        "Cognomen": "Salinator",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 97,
+      "MotherID": 98,
+      "SiblingID": null,
+      "Family": "Livius",
+      "Class": 1,
+      "Traits": [
+        "Studious"
+      ],
+      "Wealth": 650,
+      "Influence": 3
+    },
+    {
+      "ID": 101,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Livia",
+        "Cognomen": "Salinatrix",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 97,
+      "MotherID": 98,
+      "SiblingID": null,
+      "Family": "Livius",
+      "Class": 1,
+      "Traits": [
+        "Graceful"
+      ],
+      "Wealth": 630,
+      "Influence": 2
+    },
+    {
+      "ID": 102,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Livia",
+        "Cognomen": "Salinatrix",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 97,
+      "MotherID": 98,
+      "SiblingID": null,
+      "Family": "Livius",
+      "Class": 1,
+      "Traits": [
+        "Attentive"
+      ],
+      "Wealth": 610,
+      "Influence": 2
+    },
+    {
+      "ID": 103,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Licinius",
+        "Cognomen": "Crassus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -283,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 35,
+      "IsAlive": true,
+      "SpouseID": 104,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Licinius",
+      "Class": 1,
+      "Traits": [
+        "Shrewd",
+        "Ambitious"
+      ],
+      "Wealth": 4200,
+      "Influence": 6
+    },
+    {
+      "ID": 104,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Licinia",
+        "Cognomen": "Crassa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -287,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 103,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Licinius",
+      "Class": 1,
+      "Traits": [
+        "Supportive",
+        "Insightful"
+      ],
+      "Wealth": 4050,
+      "Influence": 4
+    },
+    {
+      "ID": 105,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Licinius",
+        "Cognomen": "Crassus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 103,
+      "MotherID": 104,
+      "SiblingID": null,
+      "Family": "Licinius",
+      "Class": 1,
+      "Traits": [
+        "Calculating"
+      ],
+      "Wealth": 690,
+      "Influence": 3
+    },
+    {
+      "ID": 106,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Licinius",
+        "Cognomen": "Crassus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 103,
+      "MotherID": 104,
+      "SiblingID": null,
+      "Family": "Licinius",
+      "Class": 1,
+      "Traits": [
+        "Confident"
+      ],
+      "Wealth": 670,
+      "Influence": 3
+    },
+    {
+      "ID": 107,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Licinia",
+        "Cognomen": "Crassa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 103,
+      "MotherID": 104,
+      "SiblingID": null,
+      "Family": "Licinius",
+      "Class": 1,
+      "Traits": [
+        "Poised"
+      ],
+      "Wealth": 650,
+      "Influence": 2
+    },
+    {
+      "ID": 108,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Licinia",
+        "Cognomen": "Crassa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 103,
+      "MotherID": 104,
+      "SiblingID": null,
+      "Family": "Licinius",
+      "Class": 1,
+      "Traits": [
+        "Clever"
+      ],
+      "Wealth": 630,
+      "Influence": 2
+    },
+    {
+      "ID": 109,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Antonius",
+        "Cognomen": "Merenda",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -282,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 34,
+      "IsAlive": true,
+      "SpouseID": 110,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Antonius",
+      "Class": 2,
+      "Traits": [
+        "Industrious",
+        "Assertive"
+      ],
+      "Wealth": 3000,
+      "Influence": 4
+    },
+    {
+      "ID": 110,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Antonia",
+        "Cognomen": "Merenda",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -286,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 109,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Antonius",
+      "Class": 2,
+      "Traits": [
+        "Patient",
+        "Practical"
+      ],
+      "Wealth": 2800,
+      "Influence": 3
+    },
+    {
+      "ID": 111,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Antonius",
+        "Cognomen": "Merenda",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 109,
+      "MotherID": 110,
+      "SiblingID": null,
+      "Family": "Antonius",
+      "Class": 2,
+      "Traits": [
+        "Earnest"
+      ],
+      "Wealth": 520,
+      "Influence": 2
+    },
+    {
+      "ID": 112,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Antonius",
+        "Cognomen": "Merenda",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -264,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 109,
+      "MotherID": 110,
+      "SiblingID": null,
+      "Family": "Antonius",
+      "Class": 2,
+      "Traits": [
+        "Thoughtful"
+      ],
+      "Wealth": 500,
+      "Influence": 2
+    },
+    {
+      "ID": 113,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Antonia",
+        "Cognomen": "Merenda",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 109,
+      "MotherID": 110,
+      "SiblingID": null,
+      "Family": "Antonius",
+      "Class": 2,
+      "Traits": [
+        "Helpful"
+      ],
+      "Wealth": 480,
+      "Influence": 1
+    },
+    {
+      "ID": 114,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Antonia",
+        "Cognomen": "Merenda",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 109,
+      "MotherID": 110,
+      "SiblingID": null,
+      "Family": "Antonius",
+      "Class": 2,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 460,
+      "Influence": 1
+    },
+    {
+      "ID": 115,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Plautius",
+        "Cognomen": "Hypsaeus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 116,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Plautius",
+      "Class": 1,
+      "Traits": [
+        "Decisive",
+        "Charismatic"
+      ],
+      "Wealth": 3600,
+      "Influence": 5
+    },
+    {
+      "ID": 116,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Plautia",
+        "Cognomen": "Hypsaea",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 115,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Plautius",
+      "Class": 1,
+      "Traits": [
+        "Diplomatic",
+        "Pious"
+      ],
+      "Wealth": 3400,
+      "Influence": 4
+    },
+    {
+      "ID": 117,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Plautius",
+        "Cognomen": "Hypsaeus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 115,
+      "MotherID": 116,
+      "SiblingID": null,
+      "Family": "Plautius",
+      "Class": 1,
+      "Traits": [
+        "Confident"
+      ],
+      "Wealth": 610,
+      "Influence": 3
+    },
+    {
+      "ID": 118,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Plautius",
+        "Cognomen": "Hypsaeus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 115,
+      "MotherID": 116,
+      "SiblingID": null,
+      "Family": "Plautius",
+      "Class": 1,
+      "Traits": [
+        "Alert"
+      ],
+      "Wealth": 590,
+      "Influence": 3
+    },
+    {
+      "ID": 119,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Plautia",
+        "Cognomen": "Hypsaea",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 115,
+      "MotherID": 116,
+      "SiblingID": null,
+      "Family": "Plautius",
+      "Class": 1,
+      "Traits": [
+        "Calm"
+      ],
+      "Wealth": 570,
+      "Influence": 2
+    },
+    {
+      "ID": 120,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Plautia",
+        "Cognomen": "Hypsaea",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 115,
+      "MotherID": 116,
+      "SiblingID": null,
+      "Family": "Plautius",
+      "Class": 1,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 550,
+      "Influence": 2
+    },
+    {
+      "ID": 121,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Mucius",
+        "Cognomen": "Scaevola",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -287,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 122,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Mucius",
+      "Class": 0,
+      "Traits": [
+        "Judicious",
+        "Calm"
+      ],
+      "Wealth": 5200,
+      "Influence": 7
+    },
+    {
+      "ID": 122,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Mucia",
+        "Cognomen": "Scaevola",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -291,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 43,
+      "IsAlive": true,
+      "SpouseID": 121,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Mucius",
+      "Class": 0,
+      "Traits": [
+        "Pious",
+        "Perceptive"
+      ],
+      "Wealth": 5000,
+      "Influence": 5
+    },
+    {
+      "ID": 123,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Mucius",
+        "Cognomen": "Scaevola",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 121,
+      "MotherID": 122,
+      "SiblingID": null,
+      "Family": "Mucius",
+      "Class": 0,
+      "Traits": [
+        "Meticulous"
+      ],
+      "Wealth": 820,
+      "Influence": 3
+    },
+    {
+      "ID": 124,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Mucius",
+        "Cognomen": "Scaevola",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 121,
+      "MotherID": 122,
+      "SiblingID": null,
+      "Family": "Mucius",
+      "Class": 0,
+      "Traits": [
+        "Insightful"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 125,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Mucia",
+        "Cognomen": "Scaevola",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 121,
+      "MotherID": 122,
+      "SiblingID": null,
+      "Family": "Mucius",
+      "Class": 0,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 126,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Mucia",
+        "Cognomen": "Scaevola",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 121,
+      "MotherID": 122,
+      "SiblingID": null,
+      "Family": "Mucius",
+      "Class": 0,
+      "Traits": [
+        "Cautious"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 127,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Tullius",
+        "Cognomen": "Rufus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -282,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 34,
+      "IsAlive": true,
+      "SpouseID": 128,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Tullius",
+      "Class": 2,
+      "Traits": [
+        "Diligent",
+        "Pragmatic"
+      ],
+      "Wealth": 3100,
+      "Influence": 4
+    },
+    {
+      "ID": 128,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Tullia",
+        "Cognomen": "Rufa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -286,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 127,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Tullius",
+      "Class": 2,
+      "Traits": [
+        "Cheerful",
+        "Kind"
+      ],
+      "Wealth": 2900,
+      "Influence": 3
+    },
+    {
+      "ID": 129,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Tullius",
+        "Cognomen": "Rufus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 127,
+      "MotherID": 128,
+      "SiblingID": null,
+      "Family": "Tullius",
+      "Class": 2,
+      "Traits": [
+        "Studious"
+      ],
+      "Wealth": 520,
+      "Influence": 2
+    },
+    {
+      "ID": 130,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Tullius",
+        "Cognomen": "Rufus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -264,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 127,
+      "MotherID": 128,
+      "SiblingID": null,
+      "Family": "Tullius",
+      "Class": 2,
+      "Traits": [
+        "Calm"
+      ],
+      "Wealth": 500,
+      "Influence": 2
+    },
+    {
+      "ID": 131,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Tullia",
+        "Cognomen": "Rufa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 127,
+      "MotherID": 128,
+      "SiblingID": null,
+      "Family": "Tullius",
+      "Class": 2,
+      "Traits": [
+        "Helpful"
+      ],
+      "Wealth": 480,
+      "Influence": 1
+    },
+    {
+      "ID": 132,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Tullia",
+        "Cognomen": "Rufa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 127,
+      "MotherID": 128,
+      "SiblingID": null,
+      "Family": "Tullius",
+      "Class": 2,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 460,
+      "Influence": 1
+    },
+    {
+      "ID": 133,
+      "RomanName": {
+        "Praenomen": "Aulus",
+        "Nomen": "Hostilius",
+        "Cognomen": "Mancinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 134,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Hostilius",
+      "Class": 1,
+      "Traits": [
+        "Courageous",
+        "Determined"
+      ],
+      "Wealth": 3600,
+      "Influence": 5
+    },
+    {
+      "ID": 134,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Hostilia",
+        "Cognomen": "Mancina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 133,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Hostilius",
+      "Class": 1,
+      "Traits": [
+        "Steadfast",
+        "Pious"
+      ],
+      "Wealth": 3400,
+      "Influence": 4
+    },
+    {
+      "ID": 135,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Hostilius",
+        "Cognomen": "Mancinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 133,
+      "MotherID": 134,
+      "SiblingID": null,
+      "Family": "Hostilius",
+      "Class": 1,
+      "Traits": [
+        "Brave"
+      ],
+      "Wealth": 600,
+      "Influence": 3
+    },
+    {
+      "ID": 136,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Hostilius",
+        "Cognomen": "Mancinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 133,
+      "MotherID": 134,
+      "SiblingID": null,
+      "Family": "Hostilius",
+      "Class": 1,
+      "Traits": [
+        "Thoughtful"
+      ],
+      "Wealth": 580,
+      "Influence": 3
+    },
+    {
+      "ID": 137,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Hostilia",
+        "Cognomen": "Mancina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 133,
+      "MotherID": 134,
+      "SiblingID": null,
+      "Family": "Hostilius",
+      "Class": 1,
+      "Traits": [
+        "Loyal"
+      ],
+      "Wealth": 560,
+      "Influence": 2
+    },
+    {
+      "ID": 138,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Hostilia",
+        "Cognomen": "Mancina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 133,
+      "MotherID": 134,
+      "SiblingID": null,
+      "Family": "Hostilius",
+      "Class": 1,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 540,
+      "Influence": 2
+    },
+    {
+      "ID": 139,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Furius",
+        "Cognomen": "Camillus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -287,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 140,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Furius",
+      "Class": 0,
+      "Traits": [
+        "Strategic",
+        "Calm"
+      ],
+      "Wealth": 5100,
+      "Influence": 7
+    },
+    {
+      "ID": 140,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Furia",
+        "Cognomen": "Camilla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -292,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 44,
+      "IsAlive": true,
+      "SpouseID": 139,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Furius",
+      "Class": 0,
+      "Traits": [
+        "Wise",
+        "Kind"
+      ],
+      "Wealth": 4900,
+      "Influence": 5
+    },
+    {
+      "ID": 141,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Furius",
+        "Cognomen": "Camillus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 139,
+      "MotherID": 140,
+      "SiblingID": null,
+      "Family": "Furius",
+      "Class": 0,
+      "Traits": [
+        "Courageous"
+      ],
+      "Wealth": 820,
+      "Influence": 3
+    },
+    {
+      "ID": 142,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Furius",
+        "Cognomen": "Camillus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 139,
+      "MotherID": 140,
+      "SiblingID": null,
+      "Family": "Furius",
+      "Class": 0,
+      "Traits": [
+        "Studious"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 143,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Furia",
+        "Cognomen": "Camilla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 139,
+      "MotherID": 140,
+      "SiblingID": null,
+      "Family": "Furius",
+      "Class": 0,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 144,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Furia",
+        "Cognomen": "Camilla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 139,
+      "MotherID": 140,
+      "SiblingID": null,
+      "Family": "Furius",
+      "Class": 0,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 145,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Atilius",
+        "Cognomen": "Calatinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -285,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 37,
+      "IsAlive": true,
+      "SpouseID": 146,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Vigorous",
+        "Resolute"
+      ],
+      "Wealth": 3800,
+      "Influence": 5
+    },
+    {
+      "ID": 146,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Atilia",
+        "Cognomen": "Calatina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -289,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 41,
+      "IsAlive": true,
+      "SpouseID": 145,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Patient",
+        "Pious"
+      ],
+      "Wealth": 3600,
+      "Influence": 4
+    },
+    {
+      "ID": 147,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Atilius",
+        "Cognomen": "Calatinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 145,
+      "MotherID": 146,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 620,
+      "Influence": 3
+    },
+    {
+      "ID": 148,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Atilius",
+        "Cognomen": "Calatinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 145,
+      "MotherID": 146,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Prudent"
+      ],
+      "Wealth": 600,
+      "Influence": 3
+    },
+    {
+      "ID": 149,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Atilia",
+        "Cognomen": "Calatina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 145,
+      "MotherID": 146,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Caring"
+      ],
+      "Wealth": 580,
+      "Influence": 2
+    },
+    {
+      "ID": 150,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Atilia",
+        "Cognomen": "Calatina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 145,
+      "MotherID": 146,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 560,
+      "Influence": 2
+    },
+    {
+      "ID": 151,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Ogulnius",
+        "Cognomen": "Gallus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -283,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 35,
+      "IsAlive": true,
+      "SpouseID": 152,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Ogulnius",
+      "Class": 2,
+      "Traits": [
+        "Insightful",
+        "Patient"
+      ],
+      "Wealth": 3200,
+      "Influence": 4
+    },
+    {
+      "ID": 152,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Ogulnia",
+        "Cognomen": "Galla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -287,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 151,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Ogulnius",
+      "Class": 2,
+      "Traits": [
+        "Gentle",
+        "Devout"
+      ],
+      "Wealth": 3000,
+      "Influence": 3
+    },
+    {
+      "ID": 153,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Ogulnius",
+        "Cognomen": "Gallus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 151,
+      "MotherID": 152,
+      "SiblingID": null,
+      "Family": "Ogulnius",
+      "Class": 2,
+      "Traits": [
+        "Studious"
+      ],
+      "Wealth": 540,
+      "Influence": 2
+    },
+    {
+      "ID": 154,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Ogulnius",
+        "Cognomen": "Gallus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -264,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 151,
+      "MotherID": 152,
+      "SiblingID": null,
+      "Family": "Ogulnius",
+      "Class": 2,
+      "Traits": [
+        "Bold"
+      ],
+      "Wealth": 520,
+      "Influence": 2
+    },
+    {
+      "ID": 155,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Ogulnia",
+        "Cognomen": "Galla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 151,
+      "MotherID": 152,
+      "SiblingID": null,
+      "Family": "Ogulnius",
+      "Class": 2,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 500,
+      "Influence": 1
+    },
+    {
+      "ID": 156,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Ogulnia",
+        "Cognomen": "Galla",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -258,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 10,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 151,
+      "MotherID": 152,
+      "SiblingID": null,
+      "Family": "Ogulnius",
+      "Class": 2,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 480,
+      "Influence": 1
+    },
+    {
+      "ID": 157,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Minucius",
+        "Cognomen": "Thermus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 158,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Minucius",
+      "Class": 1,
+      "Traits": [
+        "Alert",
+        "Resourceful"
+      ],
+      "Wealth": 3700,
+      "Influence": 5
+    },
+    {
+      "ID": 158,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Minucia",
+        "Cognomen": "Therma",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 157,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Minucius",
+      "Class": 1,
+      "Traits": [
+        "Patient",
+        "Organized"
+      ],
+      "Wealth": 3500,
+      "Influence": 4
+    },
+    {
+      "ID": 159,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Minucius",
+        "Cognomen": "Thermus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 157,
+      "MotherID": 158,
+      "SiblingID": null,
+      "Family": "Minucius",
+      "Class": 1,
+      "Traits": [
+        "Inventive"
+      ],
+      "Wealth": 600,
+      "Influence": 3
+    },
+    {
+      "ID": 160,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Minucius",
+        "Cognomen": "Thermus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 157,
+      "MotherID": 158,
+      "SiblingID": null,
+      "Family": "Minucius",
+      "Class": 1,
+      "Traits": [
+        "Calm"
+      ],
+      "Wealth": 580,
+      "Influence": 3
+    },
+    {
+      "ID": 161,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Minucia",
+        "Cognomen": "Therma",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 157,
+      "MotherID": 158,
+      "SiblingID": null,
+      "Family": "Minucius",
+      "Class": 1,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 560,
+      "Influence": 2
+    },
+    {
+      "ID": 162,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Minucia",
+        "Cognomen": "Therma",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 157,
+      "MotherID": 158,
+      "SiblingID": null,
+      "Family": "Minucius",
+      "Class": 1,
+      "Traits": [
+        "Observant"
+      ],
+      "Wealth": 540,
+      "Influence": 2
+    },
+    {
+      "ID": 163,
+      "RomanName": {
+        "Praenomen": "Titus",
+        "Nomen": "Quinctilius",
+        "Cognomen": "Varus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -283,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 35,
+      "IsAlive": true,
+      "SpouseID": 164,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Quinctilius",
+      "Class": 1,
+      "Traits": [
+        "Prudent",
+        "Resolute"
+      ],
+      "Wealth": 3600,
+      "Influence": 5
+    },
+    {
+      "ID": 164,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Quinctilia",
+        "Cognomen": "Vara",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -287,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 163,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Quinctilius",
+      "Class": 1,
+      "Traits": [
+        "Gentle",
+        "Perceptive"
+      ],
+      "Wealth": 3400,
+      "Influence": 4
+    },
+    {
+      "ID": 165,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Quinctilius",
+        "Cognomen": "Varus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 163,
+      "MotherID": 164,
+      "SiblingID": null,
+      "Family": "Quinctilius",
+      "Class": 1,
+      "Traits": [
+        "Diligent"
+      ],
+      "Wealth": 590,
+      "Influence": 3
+    },
+    {
+      "ID": 166,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Quinctilius",
+        "Cognomen": "Varus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -264,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 163,
+      "MotherID": 164,
+      "SiblingID": null,
+      "Family": "Quinctilius",
+      "Class": 1,
+      "Traits": [
+        "Calm"
+      ],
+      "Wealth": 570,
+      "Influence": 3
+    },
+    {
+      "ID": 167,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Quinctilia",
+        "Cognomen": "Vara",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 163,
+      "MotherID": 164,
+      "SiblingID": null,
+      "Family": "Quinctilius",
+      "Class": 1,
+      "Traits": [
+        "Caring"
+      ],
+      "Wealth": 550,
+      "Influence": 2
+    },
+    {
+      "ID": 168,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Quinctilia",
+        "Cognomen": "Vara",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -258,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 10,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 163,
+      "MotherID": 164,
+      "SiblingID": null,
+      "Family": "Quinctilius",
+      "Class": 1,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 530,
+      "Influence": 2
+    },
+    {
+      "ID": 169,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Cornelius",
+        "Cognomen": "Lentulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -286,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 170,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Shrewd",
+        "Charismatic"
+      ],
+      "Wealth": 5400,
+      "Influence": 7
+    },
+    {
+      "ID": 170,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Lentula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -290,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 42,
+      "IsAlive": true,
+      "SpouseID": 169,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Diplomatic",
+        "Pious"
+      ],
+      "Wealth": 5200,
+      "Influence": 6
+    },
+    {
+      "ID": 171,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Cornelius",
+        "Cognomen": "Lentulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 169,
+      "MotherID": 170,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Astute"
+      ],
+      "Wealth": 840,
+      "Influence": 3
+    },
+    {
+      "ID": 172,
+      "RomanName": {
+        "Praenomen": "Gnaeus",
+        "Nomen": "Cornelius",
+        "Cognomen": "Lentulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 169,
+      "MotherID": 170,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Confident"
+      ],
+      "Wealth": 820,
+      "Influence": 3
+    },
+    {
+      "ID": 173,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Lentula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 169,
+      "MotherID": 170,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Cultured"
+      ],
+      "Wealth": 800,
+      "Influence": 2
+    },
+    {
+      "ID": 174,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Lentula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 169,
+      "MotherID": 170,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 175,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Aemilius",
+        "Cognomen": "Barbula",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -287,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 176,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Resolute",
+        "Strategic"
+      ],
+      "Wealth": 5300,
+      "Influence": 7
+    },
+    {
+      "ID": 176,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Aemilia",
+        "Cognomen": "Barbula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -292,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 44,
+      "IsAlive": true,
+      "SpouseID": 175,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Kind",
+        "Wise"
+      ],
+      "Wealth": 5100,
+      "Influence": 5
+    },
+    {
+      "ID": 177,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Aemilius",
+        "Cognomen": "Barbula",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 175,
+      "MotherID": 176,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Diligent"
+      ],
+      "Wealth": 830,
+      "Influence": 3
+    },
+    {
+      "ID": 178,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Aemilius",
+        "Cognomen": "Barbula",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 175,
+      "MotherID": 176,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Bold"
+      ],
+      "Wealth": 810,
+      "Influence": 3
+    },
+    {
+      "ID": 179,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Aemilia",
+        "Cognomen": "Barbula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 175,
+      "MotherID": 176,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 790,
+      "Influence": 2
+    },
+    {
+      "ID": 180,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Aemilia",
+        "Cognomen": "Barbula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 175,
+      "MotherID": 176,
+      "SiblingID": null,
+      "Family": "Aemilius",
+      "Class": 0,
+      "Traits": [
+        "Perceptive"
+      ],
+      "Wealth": 770,
+      "Influence": 2
+    },
+    {
+      "ID": 181,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Fabia",
+        "Cognomen": "Pictor",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -288,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 182,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Fabia",
+      "Class": 0,
+      "Traits": [
+        "Artistic",
+        "Studious"
+      ],
+      "Wealth": 5000,
+      "Influence": 6
+    },
+    {
+      "ID": 182,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fabia",
+        "Cognomen": "Picta",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -292,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 44,
+      "IsAlive": true,
+      "SpouseID": 181,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Fabia",
+      "Class": 0,
+      "Traits": [
+        "Cultured",
+        "Pious"
+      ],
+      "Wealth": 4800,
+      "Influence": 5
+    },
+    {
+      "ID": 183,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Fabia",
+        "Cognomen": "Pictor",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 181,
+      "MotherID": 182,
+      "SiblingID": null,
+      "Family": "Fabia",
+      "Class": 0,
+      "Traits": [
+        "Creative"
+      ],
+      "Wealth": 790,
+      "Influence": 3
+    },
+    {
+      "ID": 184,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Fabia",
+        "Cognomen": "Pictor",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 181,
+      "MotherID": 182,
+      "SiblingID": null,
+      "Family": "Fabia",
+      "Class": 0,
+      "Traits": [
+        "Diligent"
+      ],
+      "Wealth": 770,
+      "Influence": 3
+    },
+    {
+      "ID": 185,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fabia",
+        "Cognomen": "Picta",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 181,
+      "MotherID": 182,
+      "SiblingID": null,
+      "Family": "Fabia",
+      "Class": 0,
+      "Traits": [
+        "Artistic"
+      ],
+      "Wealth": 750,
+      "Influence": 2
+    },
+    {
+      "ID": 186,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Fabia",
+        "Cognomen": "Picta",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 181,
+      "MotherID": 182,
+      "SiblingID": null,
+      "Family": "Fabia",
+      "Class": 0,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 730,
+      "Influence": 2
+    },
+    {
+      "ID": 187,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Claudia",
+        "Cognomen": "Centho",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -287,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 39,
+      "IsAlive": true,
+      "SpouseID": 188,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Claudia",
+      "Class": 0,
+      "Traits": [
+        "Charismatic",
+        "Strategic"
+      ],
+      "Wealth": 5200,
+      "Influence": 7
+    },
+    {
+      "ID": 188,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Claudia",
+        "Cognomen": "Centho",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -291,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 43,
+      "IsAlive": true,
+      "SpouseID": 187,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Claudia",
+      "Class": 0,
+      "Traits": [
+        "Proud",
+        "Insightful"
+      ],
+      "Wealth": 5000,
+      "Influence": 6
+    },
+    {
+      "ID": 189,
+      "RomanName": {
+        "Praenomen": "Appius",
+        "Nomen": "Claudia",
+        "Cognomen": "Centho",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 187,
+      "MotherID": 188,
+      "SiblingID": null,
+      "Family": "Claudia",
+      "Class": 0,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 820,
+      "Influence": 3
+    },
+    {
+      "ID": 190,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Claudia",
+        "Cognomen": "Centho",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 187,
+      "MotherID": 188,
+      "SiblingID": null,
+      "Family": "Claudia",
+      "Class": 0,
+      "Traits": [
+        "Diplomatic"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 191,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Claudia",
+        "Cognomen": "Centho",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 187,
+      "MotherID": 188,
+      "SiblingID": null,
+      "Family": "Claudia",
+      "Class": 0,
+      "Traits": [
+        "Elegant"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 192,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Claudia",
+        "Cognomen": "Centho",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 187,
+      "MotherID": 188,
+      "SiblingID": null,
+      "Family": "Claudia",
+      "Class": 0,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 193,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Curtius",
+        "Cognomen": "Philippus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -286,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 194,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Astute",
+        "Calm"
+      ],
+      "Wealth": 5100,
+      "Influence": 6
+    },
+    {
+      "ID": 194,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Curtia",
+        "Cognomen": "Philippa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -290,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 42,
+      "IsAlive": true,
+      "SpouseID": 193,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Nurturing",
+        "Wise"
+      ],
+      "Wealth": 4900,
+      "Influence": 5
+    },
+    {
+      "ID": 195,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Curtius",
+        "Cognomen": "Philippus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 193,
+      "MotherID": 194,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Prudent"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 196,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Curtius",
+        "Cognomen": "Philippus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 193,
+      "MotherID": 194,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Confident"
+      ],
+      "Wealth": 780,
+      "Influence": 3
+    },
+    {
+      "ID": 197,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Curtia",
+        "Cognomen": "Philippa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 193,
+      "MotherID": 194,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 198,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Curtia",
+        "Cognomen": "Philippa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 193,
+      "MotherID": 194,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 740,
+      "Influence": 2
+    },
+    {
+      "ID": 199,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Curtius",
+        "Cognomen": "Rufinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -288,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 200,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Resolute",
+        "Courageous"
+      ],
+      "Wealth": 5000,
+      "Influence": 6
+    },
+    {
+      "ID": 200,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Curtia",
+        "Cognomen": "Rufina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -292,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 44,
+      "IsAlive": true,
+      "SpouseID": 199,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Pious",
+        "Kind"
+      ],
+      "Wealth": 4800,
+      "Influence": 5
+    },
+    {
+      "ID": 201,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Curtius",
+        "Cognomen": "Rufinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -269,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 21,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 199,
+      "MotherID": 200,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Bold"
+      ],
+      "Wealth": 790,
+      "Influence": 3
+    },
+    {
+      "ID": 202,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Curtius",
+        "Cognomen": "Rufinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -266,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 18,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 199,
+      "MotherID": 200,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Steady"
+      ],
+      "Wealth": 770,
+      "Influence": 3
+    },
+    {
+      "ID": 203,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Curtia",
+        "Cognomen": "Rufina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -263,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 15,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 199,
+      "MotherID": 200,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Attentive"
+      ],
+      "Wealth": 750,
+      "Influence": 2
+    },
+    {
+      "ID": 204,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Curtia",
+        "Cognomen": "Rufina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -260,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 12,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 199,
+      "MotherID": 200,
+      "SiblingID": null,
+      "Family": "Curtius",
+      "Class": 0,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 730,
+      "Influence": 2
+    },
+    {
+      "ID": 205,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Trebonius",
+        "Cognomen": "Varro",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -282,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 34,
+      "IsAlive": true,
+      "SpouseID": 206,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Trebonius",
+      "Class": 2,
+      "Traits": [
+        "Organized",
+        "Patient"
+      ],
+      "Wealth": 3100,
+      "Influence": 4
+    },
+    {
+      "ID": 206,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Trebonia",
+        "Cognomen": "Varra",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -286,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 205,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Trebonius",
+      "Class": 2,
+      "Traits": [
+        "Kind",
+        "Devout"
+      ],
+      "Wealth": 2900,
+      "Influence": 3
+    },
+    {
+      "ID": 207,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Trebonius",
+        "Cognomen": "Varro",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 205,
+      "MotherID": 206,
+      "SiblingID": null,
+      "Family": "Trebonius",
+      "Class": 2,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 520,
+      "Influence": 2
+    },
+    {
+      "ID": 208,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Trebonius",
+        "Cognomen": "Varro",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -264,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 205,
+      "MotherID": 206,
+      "SiblingID": null,
+      "Family": "Trebonius",
+      "Class": 2,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 500,
+      "Influence": 2
+    },
+    {
+      "ID": 209,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Trebonia",
+        "Cognomen": "Varra",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 205,
+      "MotherID": 206,
+      "SiblingID": null,
+      "Family": "Trebonius",
+      "Class": 2,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 480,
+      "Influence": 1
+    },
+    {
+      "ID": 210,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Trebonia",
+        "Cognomen": "Varra",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -258,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 10,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 205,
+      "MotherID": 206,
+      "SiblingID": null,
+      "Family": "Trebonius",
+      "Class": 2,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 460,
+      "Influence": 1
+    },
+    {
+      "ID": 211,
+      "RomanName": {
+        "Praenomen": "Aulus",
+        "Nomen": "Plautia",
+        "Cognomen": "Plautius",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 212,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Plautia",
+      "Class": 1,
+      "Traits": [
+        "Decisive",
+        "Cautious"
+      ],
+      "Wealth": 3700,
+      "Influence": 5
+    },
+    {
+      "ID": 212,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Plautia",
+        "Cognomen": "Plautina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 211,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Plautia",
+      "Class": 1,
+      "Traits": [
+        "Devout",
+        "Patient"
+      ],
+      "Wealth": 3500,
+      "Influence": 4
+    },
+    {
+      "ID": 213,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Plautia",
+        "Cognomen": "Plautius",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 211,
+      "MotherID": 212,
+      "SiblingID": null,
+      "Family": "Plautia",
+      "Class": 1,
+      "Traits": [
+        "Steady"
+      ],
+      "Wealth": 600,
+      "Influence": 3
+    },
+    {
+      "ID": 214,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Plautia",
+        "Cognomen": "Plautius",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 211,
+      "MotherID": 212,
+      "SiblingID": null,
+      "Family": "Plautia",
+      "Class": 1,
+      "Traits": [
+        "Calm"
+      ],
+      "Wealth": 580,
+      "Influence": 3
+    },
+    {
+      "ID": 215,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Plautia",
+        "Cognomen": "Plautina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 211,
+      "MotherID": 212,
+      "SiblingID": null,
+      "Family": "Plautia",
+      "Class": 1,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 560,
+      "Influence": 2
+    },
+    {
+      "ID": 216,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Plautia",
+        "Cognomen": "Plautina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 211,
+      "MotherID": 212,
+      "SiblingID": null,
+      "Family": "Plautia",
+      "Class": 1,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 540,
+      "Influence": 2
+    },
+    {
+      "ID": 217,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Decius",
+        "Cognomen": "Mus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -285,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 37,
+      "IsAlive": true,
+      "SpouseID": 218,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Decius",
+      "Class": 1,
+      "Traits": [
+        "Courageous",
+        "Devout"
+      ],
+      "Wealth": 3800,
+      "Influence": 5
+    },
+    {
+      "ID": 218,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Decia",
+        "Cognomen": "Musa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -289,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 41,
+      "IsAlive": true,
+      "SpouseID": 217,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Decius",
+      "Class": 1,
+      "Traits": [
+        "Compassionate",
+        "Pious"
+      ],
+      "Wealth": 3600,
+      "Influence": 4
+    },
+    {
+      "ID": 219,
+      "RomanName": {
+        "Praenomen": "Quintus",
+        "Nomen": "Decius",
+        "Cognomen": "Mus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 217,
+      "MotherID": 218,
+      "SiblingID": null,
+      "Family": "Decius",
+      "Class": 1,
+      "Traits": [
+        "Brave"
+      ],
+      "Wealth": 610,
+      "Influence": 3
+    },
+    {
+      "ID": 220,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Decius",
+        "Cognomen": "Mus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 217,
+      "MotherID": 218,
+      "SiblingID": null,
+      "Family": "Decius",
+      "Class": 1,
+      "Traits": [
+        "Disciplined"
+      ],
+      "Wealth": 590,
+      "Influence": 3
+    },
+    {
+      "ID": 221,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Decia",
+        "Cognomen": "Musa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 217,
+      "MotherID": 218,
+      "SiblingID": null,
+      "Family": "Decius",
+      "Class": 1,
+      "Traits": [
+        "Kind"
+      ],
+      "Wealth": 570,
+      "Influence": 2
+    },
+    {
+      "ID": 222,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Decia",
+        "Cognomen": "Musa",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 217,
+      "MotherID": 218,
+      "SiblingID": null,
+      "Family": "Decius",
+      "Class": 1,
+      "Traits": [
+        "Curious"
+      ],
+      "Wealth": 550,
+      "Influence": 2
+    },
+    {
+      "ID": 223,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Cornelius",
+        "Cognomen": "Cethegus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -286,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 224,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Astute",
+        "Eloquent"
+      ],
+      "Wealth": 5300,
+      "Influence": 7
+    },
+    {
+      "ID": 224,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Cethega",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -291,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 43,
+      "IsAlive": true,
+      "SpouseID": 223,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Diplomatic",
+        "Pious"
+      ],
+      "Wealth": 5100,
+      "Influence": 6
+    },
+    {
+      "ID": 225,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Cornelius",
+        "Cognomen": "Cethegus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 223,
+      "MotherID": 224,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Persuasive"
+      ],
+      "Wealth": 820,
+      "Influence": 3
+    },
+    {
+      "ID": 226,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Cornelius",
+        "Cognomen": "Cethegus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 223,
+      "MotherID": 224,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Steady"
+      ],
+      "Wealth": 800,
+      "Influence": 3
+    },
+    {
+      "ID": 227,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Cethega",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 223,
+      "MotherID": 224,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Graceful"
+      ],
+      "Wealth": 780,
+      "Influence": 2
+    },
+    {
+      "ID": 228,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Cornelia",
+        "Cognomen": "Cethega",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 223,
+      "MotherID": 224,
+      "SiblingID": null,
+      "Family": "Cornelius",
+      "Class": 0,
+      "Traits": [
+        "Insightful"
+      ],
+      "Wealth": 760,
+      "Influence": 2
+    },
+    {
+      "ID": 229,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Sicinius",
+        "Cognomen": "Dentatus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -282,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 34,
+      "IsAlive": true,
+      "SpouseID": 230,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sicinius",
+      "Class": 2,
+      "Traits": [
+        "Resolute",
+        "Hardy"
+      ],
+      "Wealth": 3200,
+      "Influence": 4
+    },
+    {
+      "ID": 230,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sicinia",
+        "Cognomen": "Dentata",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -286,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 38,
+      "IsAlive": true,
+      "SpouseID": 229,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sicinius",
+      "Class": 2,
+      "Traits": [
+        "Practical",
+        "Kind"
+      ],
+      "Wealth": 3000,
+      "Influence": 3
+    },
+    {
+      "ID": 231,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Sicinius",
+        "Cognomen": "Dentatus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 229,
+      "MotherID": 230,
+      "SiblingID": null,
+      "Family": "Sicinius",
+      "Class": 2,
+      "Traits": [
+        "Energetic"
+      ],
+      "Wealth": 540,
+      "Influence": 2
+    },
+    {
+      "ID": 232,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Sicinius",
+        "Cognomen": "Dentatus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -264,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 229,
+      "MotherID": 230,
+      "SiblingID": null,
+      "Family": "Sicinius",
+      "Class": 2,
+      "Traits": [
+        "Sturdy"
+      ],
+      "Wealth": 520,
+      "Influence": 2
+    },
+    {
+      "ID": 233,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sicinia",
+        "Cognomen": "Dentata",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 229,
+      "MotherID": 230,
+      "SiblingID": null,
+      "Family": "Sicinius",
+      "Class": 2,
+      "Traits": [
+        "Warm"
+      ],
+      "Wealth": 500,
+      "Influence": 1
+    },
+    {
+      "ID": 234,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sicinia",
+        "Cognomen": "Dentata",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -258,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 10,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 229,
+      "MotherID": 230,
+      "SiblingID": null,
+      "Family": "Sicinius",
+      "Class": 2,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 480,
+      "Influence": 1
+    },
+    {
+      "ID": 235,
+      "RomanName": {
+        "Praenomen": "Publius",
+        "Nomen": "Sestius",
+        "Cognomen": "Capitolinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 236,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sestius",
+      "Class": 1,
+      "Traits": [
+        "Dignified",
+        "Resolute"
+      ],
+      "Wealth": 3700,
+      "Influence": 5
+    },
+    {
+      "ID": 236,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sestia",
+        "Cognomen": "Capitolina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 235,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Sestius",
+      "Class": 1,
+      "Traits": [
+        "Pious",
+        "Cultured"
+      ],
+      "Wealth": 3500,
+      "Influence": 4
+    },
+    {
+      "ID": 237,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Sestius",
+        "Cognomen": "Capitolinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 235,
+      "MotherID": 236,
+      "SiblingID": null,
+      "Family": "Sestius",
+      "Class": 1,
+      "Traits": [
+        "Calm"
+      ],
+      "Wealth": 600,
+      "Influence": 3
+    },
+    {
+      "ID": 238,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Sestius",
+        "Cognomen": "Capitolinus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 235,
+      "MotherID": 236,
+      "SiblingID": null,
+      "Family": "Sestius",
+      "Class": 1,
+      "Traits": [
+        "Astute"
+      ],
+      "Wealth": 580,
+      "Influence": 3
+    },
+    {
+      "ID": 239,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sestia",
+        "Cognomen": "Capitolina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 235,
+      "MotherID": 236,
+      "SiblingID": null,
+      "Family": "Sestius",
+      "Class": 1,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 560,
+      "Influence": 2
+    },
+    {
+      "ID": 240,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Sestia",
+        "Cognomen": "Capitolina",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 235,
+      "MotherID": 236,
+      "SiblingID": null,
+      "Family": "Sestius",
+      "Class": 1,
+      "Traits": [
+        "Diligent"
+      ],
+      "Wealth": 540,
+      "Influence": 2
+    },
+    {
+      "ID": 241,
+      "RomanName": {
+        "Praenomen": "Aulus",
+        "Nomen": "Verginius",
+        "Cognomen": "Tricostus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -285,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 37,
+      "IsAlive": true,
+      "SpouseID": 242,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Verginius",
+      "Class": 1,
+      "Traits": [
+        "Resolute",
+        "Cautious"
+      ],
+      "Wealth": 3600,
+      "Influence": 5
+    },
+    {
+      "ID": 242,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Verginia",
+        "Cognomen": "Tricosta",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -289,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 41,
+      "IsAlive": true,
+      "SpouseID": 241,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Verginius",
+      "Class": 1,
+      "Traits": [
+        "Kind",
+        "Pious"
+      ],
+      "Wealth": 3400,
+      "Influence": 4
+    },
+    {
+      "ID": 243,
+      "RomanName": {
+        "Praenomen": "Lucius",
+        "Nomen": "Verginius",
+        "Cognomen": "Tricostus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -268,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 20,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 241,
+      "MotherID": 242,
+      "SiblingID": null,
+      "Family": "Verginius",
+      "Class": 1,
+      "Traits": [
+        "Steady"
+      ],
+      "Wealth": 590,
+      "Influence": 3
+    },
+    {
+      "ID": 244,
+      "RomanName": {
+        "Praenomen": "Titus",
+        "Nomen": "Verginius",
+        "Cognomen": "Tricostus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -265,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 17,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 241,
+      "MotherID": 242,
+      "SiblingID": null,
+      "Family": "Verginius",
+      "Class": 1,
+      "Traits": [
+        "Alert"
+      ],
+      "Wealth": 570,
+      "Influence": 3
+    },
+    {
+      "ID": 245,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Verginia",
+        "Cognomen": "Tricosta",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -262,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 14,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 241,
+      "MotherID": 242,
+      "SiblingID": null,
+      "Family": "Verginius",
+      "Class": 1,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 550,
+      "Influence": 2
+    },
+    {
+      "ID": 246,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Verginia",
+        "Cognomen": "Tricosta",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -259,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 11,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 241,
+      "MotherID": 242,
+      "SiblingID": null,
+      "Family": "Verginius",
+      "Class": 1,
+      "Traits": [
+        "Cheerful"
+      ],
+      "Wealth": 530,
+      "Influence": 2
+    },
+    {
+      "ID": 247,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Atilius",
+        "Cognomen": "Regulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -284,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 36,
+      "IsAlive": true,
+      "SpouseID": 248,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Bold",
+        "Resilient"
+      ],
+      "Wealth": 3750,
+      "Influence": 5
+    },
+    {
+      "ID": 248,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Atilia",
+        "Cognomen": "Regula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -288,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 40,
+      "IsAlive": true,
+      "SpouseID": 247,
+      "FatherID": null,
+      "MotherID": null,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Devout",
+        "Steadfast"
+      ],
+      "Wealth": 3550,
+      "Influence": 4
+    },
+    {
+      "ID": 249,
+      "RomanName": {
+        "Praenomen": "Gaius",
+        "Nomen": "Atilius",
+        "Cognomen": "Regulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -267,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 19,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 247,
+      "MotherID": 248,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Energetic"
+      ],
+      "Wealth": 600,
+      "Influence": 3
+    },
+    {
+      "ID": 250,
+      "RomanName": {
+        "Praenomen": "Marcus",
+        "Nomen": "Atilius",
+        "Cognomen": "Regulus",
+        "Gender": 0
+      },
+      "Gender": 0,
+      "BirthYear": -264,
+      "BirthMonth": 3,
+      "BirthDay": 12,
+      "Age": 16,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 247,
+      "MotherID": 248,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Determined"
+      ],
+      "Wealth": 580,
+      "Influence": 3
+    },
+    {
+      "ID": 251,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Atilia",
+        "Cognomen": "Regula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -261,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 13,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 247,
+      "MotherID": 248,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Pious"
+      ],
+      "Wealth": 560,
+      "Influence": 2
+    },
+    {
+      "ID": 252,
+      "RomanName": {
+        "Praenomen": null,
+        "Nomen": "Atilia",
+        "Cognomen": "Regula",
+        "Gender": 1
+      },
+      "Gender": 1,
+      "BirthYear": -258,
+      "BirthMonth": 7,
+      "BirthDay": 6,
+      "Age": 10,
+      "IsAlive": true,
+      "SpouseID": null,
+      "FatherID": 247,
+      "MotherID": 248,
+      "SiblingID": null,
+      "Family": "Atilius",
+      "Class": 1,
+      "Traits": [
+        "Gentle"
+      ],
+      "Wealth": 540,
+      "Influence": 2
+    }
+  ]
+}

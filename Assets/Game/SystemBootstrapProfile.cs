@@ -43,6 +43,28 @@ namespace Game.Core
                     typeof(Game.Systems.EventBus.EventBus),
                     typeof(Game.Systems.CharacterSystem.CharacterSystem)
                 }),
+            SystemDescriptor.For<Game.Systems.Politics.Offices.OfficeSystem>(
+                resolver => new Game.Systems.Politics.Offices.OfficeSystem(
+                    resolver.Resolve<Game.Systems.EventBus.EventBus>(),
+                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
+                new[]
+                {
+                    typeof(Game.Systems.EventBus.EventBus),
+                    typeof(Game.Systems.CharacterSystem.CharacterSystem)
+                }),
+            SystemDescriptor.For<Game.Systems.Politics.Elections.ElectionSystem>(
+                resolver => new Game.Systems.Politics.Elections.ElectionSystem(
+                    resolver.Resolve<Game.Systems.EventBus.EventBus>(),
+                    resolver.Resolve<Game.Systems.TimeSystem.TimeSystem>(),
+                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>(),
+                    resolver.Resolve<Game.Systems.Politics.Offices.OfficeSystem>()),
+                new[]
+                {
+                    typeof(Game.Systems.EventBus.EventBus),
+                    typeof(Game.Systems.TimeSystem.TimeSystem),
+                    typeof(Game.Systems.CharacterSystem.CharacterSystem),
+                    typeof(Game.Systems.Politics.Offices.OfficeSystem)
+                }),
             SystemDescriptor.For<Game.Systems.BirthSystem.BirthSystem>(
                 resolver => new Game.Systems.BirthSystem.BirthSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),

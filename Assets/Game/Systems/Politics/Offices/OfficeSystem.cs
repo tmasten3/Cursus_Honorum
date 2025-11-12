@@ -1,0 +1,883 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Game.Core;
+using Game.Data.Characters;
+using Game.Systems.EventBus;
+using Game.Systems.Politics.Elections;
+using UnityEngine;
+
+namespace Game.Systems.Politics.Offices
+{
+    public class OfficeSystem : GameSystemBase
+    {
+        public override string Name => "Office System";
+        public override IEnumerable<Type> Dependencies => new[]
+        {
+            typeof(EventBus.EventBus),
+            typeof(Game.Systems.CharacterSystem.CharacterSystem)
+        };
+
+        private readonly EventBus.EventBus eventBus;
+        private readonly Game.Systems.CharacterSystem.CharacterSystem characterSystem;
+
+        private readonly Dictionary<string, OfficeDefinition> definitions = new();
+        private readonly Dictionary<string, List<OfficeSeat>> seatsByOffice = new();
+        private readonly Dictionary<int, List<ActiveOfficeRecord>> activeByCharacter = new();
+        private readonly Dictionary<int, List<PendingOfficeRecord>> pendingByCharacter = new();
+        private readonly Dictionary<int, List<OfficeCareerRecord>> historyByCharacter = new();
+        private readonly Dictionary<(int characterId, string officeId), int> lastHeldYear = new();
+
+        private readonly string dataPath;
+
+        private int currentYear;
+        private int currentMonth;
+        private int currentDay;
+
+        public bool DebugMode { get; set; }
+
+        public OfficeSystem(EventBus.EventBus eventBus, Game.Systems.CharacterSystem.CharacterSystem characterSystem,
+            string customDataPath = null)
+        {
+            this.eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+            this.characterSystem = characterSystem ?? throw new ArgumentNullException(nameof(characterSystem));
+            dataPath = string.IsNullOrWhiteSpace(customDataPath)
+                ? Path.Combine("Assets", "Game", "Data", "BaseOffices.json")
+                : customDataPath;
+        }
+
+        public override void Initialize(GameState state)
+        {
+            base.Initialize(state);
+            LoadDefinitions();
+
+            eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
+            eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
+        }
+
+        public override void Update(GameState state) { }
+
+        private void LoadDefinitions()
+        {
+            if (!File.Exists(dataPath))
+            {
+                LogWarn($"No office definition file found at {dataPath}.");
+                return;
+            }
+
+            try
+            {
+                var json = File.ReadAllText(dataPath);
+                var wrapper = JsonUtility.FromJson<OfficeDefinitionCollection>(json);
+                if (wrapper?.Offices == null)
+                {
+                    LogWarn("Office definition file did not contain any offices.");
+                    return;
+                }
+
+                foreach (var def in wrapper.Offices)
+                {
+                    if (def == null || string.IsNullOrWhiteSpace(def.Id))
+                        continue;
+
+                    def.Id = def.Id.Trim().ToLowerInvariant();
+                    def.Name ??= def.Id;
+                    def.Seats = Math.Max(1, def.Seats);
+                    def.TermLengthYears = Math.Max(1, def.TermLengthYears);
+                    def.ReelectionGapYears = Math.Max(0, def.ReelectionGapYears);
+
+                    definitions[def.Id] = def;
+
+                    if (!seatsByOffice.ContainsKey(def.Id))
+                    {
+                        var seats = new List<OfficeSeat>();
+                        for (int i = 0; i < def.Seats; i++)
+                            seats.Add(new OfficeSeat { SeatIndex = i });
+                        seatsByOffice[def.Id] = seats;
+                    }
+                }
+
+                LogInfo($"Loaded {definitions.Count} offices from data file.");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Failed to load office definitions: {ex.Message}");
+            }
+        }
+
+        private void OnNewDay(OnNewDayEvent e)
+        {
+            currentYear = e.Year;
+            currentMonth = e.Month;
+            currentDay = e.Day;
+            if (currentMonth == 1 && currentDay == 1)
+            {
+                ExpireCompletedTerms();
+            }
+            ActivatePendingAssignments();
+        }
+
+        private void ExpireCompletedTerms()
+        {
+            foreach (var kvp in seatsByOffice)
+            {
+                string officeId = kvp.Key;
+                foreach (var seat in kvp.Value)
+                {
+                    if (seat.HolderId.HasValue && currentYear > seat.EndYear)
+                    {
+                        if (!seat.PendingHolderId.HasValue || seat.PendingStartYear > currentYear)
+                        {
+                            // No successor has been scheduled yet; extend the current holder through the present year
+                            seat.EndYear = currentYear;
+
+                            if (activeByCharacter.TryGetValue(seat.HolderId.Value, out var activeList))
+                            {
+                                var activeRecord = activeList.FirstOrDefault(a =>
+                                    a.OfficeId == officeId && a.SeatIndex == seat.SeatIndex);
+                                if (activeRecord != null)
+                                {
+                                    activeRecord.EndYear = seat.EndYear;
+                                }
+                            }
+
+                            continue;
+                        }
+
+                        VacateSeat(officeId, seat, seat.EndYear);
+                    }
+                }
+            }
+        }
+
+        private void ActivatePendingAssignments()
+        {
+            foreach (var kvp in seatsByOffice)
+            {
+                string officeId = kvp.Key;
+                var def = GetDefinition(officeId);
+                if (def == null)
+                    continue;
+
+                foreach (var seat in kvp.Value)
+                {
+                    if (!seat.HolderId.HasValue && seat.PendingHolderId.HasValue && seat.PendingStartYear <= currentYear)
+                    {
+                        ActivateSeat(officeId, def, seat);
+                    }
+                }
+            }
+        }
+
+        private void ActivateSeat(string officeId, OfficeDefinition definition, OfficeSeat seat)
+        {
+            if (!seat.PendingHolderId.HasValue)
+                return;
+
+            int characterId = seat.PendingHolderId.Value;
+
+            seat.HolderId = characterId;
+            seat.StartYear = currentYear;
+            seat.EndYear = currentYear + definition.TermLengthYears - 1;
+            seat.PendingHolderId = null;
+            seat.PendingStartYear = 0;
+
+            if (pendingByCharacter.TryGetValue(characterId, out var pendingList))
+            {
+                pendingList.RemoveAll(p => p.OfficeId == officeId && p.SeatIndex == seat.SeatIndex);
+                if (pendingList.Count == 0)
+                    pendingByCharacter.Remove(characterId);
+            }
+
+            if (!activeByCharacter.TryGetValue(characterId, out var activeList))
+            {
+                activeList = new List<ActiveOfficeRecord>();
+                activeByCharacter[characterId] = activeList;
+            }
+
+            activeList.RemoveAll(a => a.OfficeId == officeId && a.SeatIndex == seat.SeatIndex);
+
+            activeList.Add(new ActiveOfficeRecord
+            {
+                OfficeId = officeId,
+                SeatIndex = seat.SeatIndex,
+                EndYear = seat.EndYear
+            });
+
+            string name = ResolveCharacterName(characterId);
+
+            eventBus.Publish(new OfficeAssignedEvent(currentYear, currentMonth, currentDay,
+                officeId, definition.Name, characterId, seat.SeatIndex, seat.StartYear, seat.EndYear, name));
+
+            if (DebugMode)
+            {
+                LogInfo($"Activated {name}#{characterId} as {definition.Name} seat {seat.SeatIndex} ({seat.StartYear}-{seat.EndYear}).");
+            }
+        }
+
+        private void CancelPendingAssignment(string officeId, OfficeSeat seat)
+        {
+            if (!seat.PendingHolderId.HasValue)
+                return;
+
+            int characterId = seat.PendingHolderId.Value;
+
+            if (pendingByCharacter.TryGetValue(characterId, out var list))
+            {
+                list.RemoveAll(p => p.OfficeId == officeId && p.SeatIndex == seat.SeatIndex);
+                if (list.Count == 0)
+                    pendingByCharacter.Remove(characterId);
+            }
+
+            if (DebugMode)
+            {
+                string name = ResolveCharacterName(characterId);
+                LogInfo($"Canceled pending assignment of {name}#{characterId} to {officeId} seat {seat.SeatIndex}.");
+            }
+
+            seat.PendingHolderId = null;
+            seat.PendingStartYear = 0;
+        }
+
+        private void OnCharacterDied(OnCharacterDied e)
+        {
+            foreach (var kvp in seatsByOffice)
+            {
+                string officeId = kvp.Key;
+                foreach (var seat in kvp.Value)
+                {
+                    if (seat.HolderId == e.CharacterID)
+                    {
+                        VacateSeat(officeId, seat, currentYear);
+                    }
+                    else if (seat.PendingHolderId == e.CharacterID)
+                    {
+                        CancelPendingAssignment(officeId, seat);
+                    }
+                }
+            }
+        }
+
+        private void VacateSeat(string officeId, OfficeSeat seat, int endYear)
+        {
+            if (!seat.HolderId.HasValue)
+                return;
+
+            int holderId = seat.HolderId.Value;
+            int startYear = seat.StartYear;
+            string name = ResolveCharacterName(holderId);
+
+            if (DebugMode)
+            {
+                LogInfo($"Vacating {officeId} seat {seat.SeatIndex} held by {name}#{holderId} (term {startYear}-{endYear}).");
+            }
+
+            seat.HolderId = null;
+            seat.StartYear = 0;
+            seat.EndYear = 0;
+
+            if (startYear != 0 || endYear != 0)
+            {
+                if (!historyByCharacter.TryGetValue(holderId, out var list))
+                {
+                    list = new List<OfficeCareerRecord>();
+                    historyByCharacter[holderId] = list;
+                }
+
+                list.Add(new OfficeCareerRecord
+                {
+                    OfficeId = officeId,
+                    SeatIndex = seat.SeatIndex,
+                    HolderId = holderId,
+                    StartYear = startYear,
+                    EndYear = endYear
+                });
+
+                lastHeldYear[(holderId, officeId)] = endYear;
+            }
+
+            if (activeByCharacter.TryGetValue(holderId, out var activeList))
+            {
+                activeList.RemoveAll(a => a.OfficeId == officeId && a.SeatIndex == seat.SeatIndex);
+                if (activeList.Count == 0)
+                    activeByCharacter.Remove(holderId);
+            }
+        }
+
+        public OfficeDefinition GetDefinition(string officeId)
+        {
+            officeId = officeId?.Trim().ToLowerInvariant();
+            if (officeId != null && definitions.TryGetValue(officeId, out var def))
+                return def;
+            return null;
+        }
+
+        public IReadOnlyList<OfficeDefinition> GetAllDefinitions() => definitions.Values.ToList();
+
+        public IReadOnlyList<OfficeSeatDescriptor> GetCurrentHoldings(int characterId)
+        {
+            var result = new List<OfficeSeatDescriptor>();
+            foreach (var kvp in seatsByOffice)
+            {
+                foreach (var seat in kvp.Value)
+                {
+                    if (seat.HolderId == characterId)
+                    {
+                        result.Add(new OfficeSeatDescriptor
+                        {
+                            OfficeId = kvp.Key,
+                            SeatIndex = seat.SeatIndex,
+                            HolderId = seat.HolderId,
+                            StartYear = seat.StartYear,
+                            EndYear = seat.EndYear,
+                            PendingHolderId = seat.PendingHolderId,
+                            PendingStartYear = seat.PendingStartYear
+                        });
+                    }
+                }
+            }
+            return result;
+        }
+
+        public bool IsEligible(Character character, OfficeDefinition definition, int year, out string reason)
+        {
+            reason = null;
+
+            if (character == null)
+            {
+                reason = "No character";
+                return false;
+            }
+
+            if (definition == null)
+            {
+                reason = "No office";
+                return false;
+            }
+
+            if (!character.IsAlive)
+            {
+                reason = "Deceased";
+                return false;
+            }
+
+            if (!character.IsMale)
+            {
+                reason = "Office restricted to men";
+                return false;
+            }
+
+            if (character.Age < definition.MinAge)
+            {
+                reason = "Too young";
+                return false;
+            }
+
+            if (definition.RequiresPlebeian && character.Class != SocialClass.Plebeian)
+            {
+                reason = "Requires plebeian status";
+                return false;
+            }
+
+            if (definition.RequiresPatrician && character.Class != SocialClass.Patrician)
+            {
+                reason = "Requires patrician status";
+                return false;
+            }
+
+            if (definition.PrerequisitesAll != null)
+            {
+                foreach (var prereq in definition.PrerequisitesAll)
+                {
+                    if (string.IsNullOrWhiteSpace(prereq))
+                        continue;
+
+                    if (!HasCompletedOffice(character.ID, prereq))
+                    {
+                        reason = $"Requires prior service as {prereq}";
+                        return false;
+                    }
+                }
+            }
+
+            if (definition.PrerequisitesAny != null && definition.PrerequisitesAny.Count > 0)
+            {
+                bool satisfied = definition.PrerequisitesAny.Any(p => HasCompletedOffice(character.ID, p));
+                if (!satisfied)
+                {
+                    reason = "Prerequisite offices not held";
+                    return false;
+                }
+            }
+
+            if (lastHeldYear.TryGetValue((character.ID, definition.Id), out var lastYear))
+            {
+                int diff = year - lastYear;
+                if (diff < definition.ReelectionGapYears)
+                {
+                    reason = $"Must wait {definition.ReelectionGapYears - diff} more years";
+                    return false;
+                }
+            }
+
+            if (activeByCharacter.TryGetValue(character.ID, out var activeList))
+            {
+                foreach (var active in activeList)
+                {
+                    if (active.OfficeId == definition.Id && active.EndYear >= year)
+                    {
+                        reason = "Currently holds this office";
+                        return false;
+                    }
+
+                    if (active.EndYear > year)
+                    {
+                        reason = "Currently serving another magistracy";
+                        return false;
+                    }
+                }
+            }
+
+            if (pendingByCharacter.TryGetValue(character.ID, out var pendingList))
+            {
+                foreach (var pending in pendingList)
+                {
+                    if (pending.OfficeId == definition.Id)
+                    {
+                        reason = "Already elected to this office";
+                        return false;
+                    }
+
+                    if (pending.StartYear >= year)
+                    {
+                        reason = "Awaiting another magistracy";
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private bool HasCompletedOffice(int characterId, string officeId)
+        {
+            officeId = officeId?.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(officeId))
+                return false;
+
+            if (historyByCharacter.TryGetValue(characterId, out var records))
+            {
+                return records.Any(r => r.OfficeId == officeId);
+            }
+
+            return false;
+        }
+
+        public IReadOnlyList<OfficeDefinition> GetEligibleOffices(Character character, int year)
+        {
+            var result = new List<OfficeDefinition>();
+            foreach (var def in definitions.Values)
+            {
+                if (IsEligible(character, def, year, out _))
+                    result.Add(def);
+            }
+
+            return result.OrderBy(d => d.Rank).ThenBy(d => d.MinAge).ToList();
+        }
+
+        public IReadOnlyList<OfficeElectionInfo> GetElectionInfos(int year)
+        {
+            var elections = new List<OfficeElectionInfo>();
+
+            foreach (var kvp in seatsByOffice)
+            {
+                var def = GetDefinition(kvp.Key);
+                if (def == null)
+                    continue;
+
+                var descriptors = new List<OfficeSeatDescriptor>();
+                foreach (var seat in kvp.Value)
+                {
+                    bool hasPending = seat.PendingHolderId.HasValue;
+                    bool isVacant = !seat.HolderId.HasValue && !hasPending;
+                    bool expiring = seat.HolderId.HasValue && seat.EndYear <= year && !hasPending;
+                    if (isVacant || expiring)
+                    {
+                        descriptors.Add(new OfficeSeatDescriptor
+                        {
+                            OfficeId = kvp.Key,
+                            SeatIndex = seat.SeatIndex,
+                            HolderId = seat.HolderId,
+                            StartYear = seat.StartYear,
+                            EndYear = seat.EndYear,
+                            PendingHolderId = seat.PendingHolderId,
+                            PendingStartYear = seat.PendingStartYear
+                        });
+                    }
+                }
+
+                if (descriptors.Count > 0)
+                {
+                    elections.Add(new OfficeElectionInfo
+                    {
+                        Definition = def,
+                        SeatsAvailable = descriptors.Count,
+                        Seats = descriptors
+                    });
+                }
+            }
+
+            return elections
+                .OrderByDescending(e => e.Definition.Rank)
+                .ThenBy(e => e.Definition.MinAge)
+                .ToList();
+        }
+
+        public OfficeSeatDescriptor AssignOffice(string officeId, int characterId, int year, bool deferToNextYear = true)
+        {
+            officeId = officeId?.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(officeId))
+                throw new ArgumentException("Invalid office id", nameof(officeId));
+
+            if (!definitions.TryGetValue(officeId, out var def))
+                throw new InvalidOperationException($"Unknown office {officeId}");
+
+            if (!seatsByOffice.TryGetValue(officeId, out var seats))
+            {
+                seats = new List<OfficeSeat>();
+                seatsByOffice[officeId] = seats;
+            }
+
+            OfficeSeat seat = null;
+
+            if (deferToNextYear)
+            {
+                seat = seats.FirstOrDefault(s => s.HolderId.HasValue && s.EndYear <= year && !s.PendingHolderId.HasValue)
+                    ?? seats.FirstOrDefault(s => !s.HolderId.HasValue && !s.PendingHolderId.HasValue)
+                    ?? seats.FirstOrDefault(s => !s.PendingHolderId.HasValue);
+            }
+            else
+            {
+                seat = seats.FirstOrDefault(s => !s.HolderId.HasValue);
+                if (seat == null)
+                    seat = seats.FirstOrDefault(s => s.HolderId.HasValue && s.EndYear <= year);
+            }
+
+            if (seat == null)
+            {
+                seat = new OfficeSeat { SeatIndex = seats.Count };
+                seats.Add(seat);
+            }
+
+            if (deferToNextYear)
+            {
+                CancelPendingAssignment(officeId, seat);
+
+                int startYear = year + 1;
+
+                seat.PendingHolderId = characterId;
+                seat.PendingStartYear = startYear;
+
+                if (!pendingByCharacter.TryGetValue(characterId, out var pendingList))
+                {
+                    pendingList = new List<PendingOfficeRecord>();
+                    pendingByCharacter[characterId] = pendingList;
+                }
+
+                pendingList.RemoveAll(p => p.OfficeId == officeId && p.SeatIndex == seat.SeatIndex);
+                pendingList.Add(new PendingOfficeRecord
+                {
+                    OfficeId = officeId,
+                    SeatIndex = seat.SeatIndex,
+                    StartYear = startYear
+                });
+
+                if (DebugMode)
+                {
+                    string name = ResolveCharacterName(characterId);
+                    LogInfo($"Scheduled {name}#{characterId} to assume {def.Name} seat {seat.SeatIndex} on January 1, {startYear}.");
+                }
+
+                return new OfficeSeatDescriptor
+                {
+                    OfficeId = officeId,
+                    SeatIndex = seat.SeatIndex,
+                    HolderId = characterId,
+                    StartYear = startYear,
+                    EndYear = startYear + def.TermLengthYears - 1,
+                    PendingHolderId = characterId,
+                    PendingStartYear = startYear
+                };
+            }
+            else
+            {
+                if (seat.HolderId.HasValue)
+                {
+                    VacateSeat(officeId, seat, seat.EndYear);
+                }
+
+                CancelPendingAssignment(officeId, seat);
+
+                seat.HolderId = characterId;
+                seat.StartYear = year;
+                seat.EndYear = year + def.TermLengthYears - 1;
+
+                if (!activeByCharacter.TryGetValue(characterId, out var activeList))
+                {
+                    activeList = new List<ActiveOfficeRecord>();
+                    activeByCharacter[characterId] = activeList;
+                }
+
+                activeList.RemoveAll(a => a.OfficeId == officeId && a.SeatIndex == seat.SeatIndex);
+                activeList.Add(new ActiveOfficeRecord
+                {
+                    OfficeId = officeId,
+                    SeatIndex = seat.SeatIndex,
+                    EndYear = seat.EndYear
+                });
+
+                string name = ResolveCharacterName(characterId);
+
+                eventBus.Publish(new OfficeAssignedEvent(year, currentMonth, currentDay,
+                    officeId, def.Name, characterId, seat.SeatIndex, seat.StartYear, seat.EndYear, name));
+
+                if (DebugMode)
+                {
+                    LogInfo($"Assigned {name}#{characterId} to {def.Name} seat {seat.SeatIndex} ({seat.StartYear}-{seat.EndYear}).");
+                }
+
+                return new OfficeSeatDescriptor
+                {
+                    OfficeId = officeId,
+                    SeatIndex = seat.SeatIndex,
+                    HolderId = characterId,
+                    StartYear = seat.StartYear,
+                    EndYear = seat.EndYear,
+                    PendingHolderId = seat.PendingHolderId,
+                    PendingStartYear = seat.PendingStartYear
+                };
+            }
+        }
+
+        private string ResolveCharacterName(int characterId)
+        {
+            var character = characterSystem.Get(characterId);
+            return character?.FullName ?? $"Character {characterId}";
+        }
+
+        public IReadOnlyList<OfficeCareerRecord> GetCareerHistory(int characterId)
+        {
+            if (historyByCharacter.TryGetValue(characterId, out var list))
+                return list;
+            return Array.Empty<OfficeCareerRecord>();
+        }
+
+        public override Dictionary<string, object> Save()
+        {
+            var blob = new OfficeSaveBlob
+            {
+                Year = currentYear,
+                Seats = seatsByOffice.Select(kvp => new OfficeSeatSave
+                {
+                    OfficeId = kvp.Key,
+                    Seats = kvp.Value.Select(seat => new SeatSaveData
+                    {
+                        SeatIndex = seat.SeatIndex,
+                        HolderId = seat.HolderId,
+                        StartYear = seat.StartYear,
+                        EndYear = seat.EndYear,
+                        PendingHolderId = seat.PendingHolderId,
+                        PendingStartYear = seat.PendingStartYear
+                    }).ToList()
+                }).ToList(),
+                LastHeld = lastHeldYear.Select(entry => new LastHeldEntry
+                {
+                    CharacterId = entry.Key.characterId,
+                    OfficeId = entry.Key.officeId,
+                    Year = entry.Value
+                }).ToList(),
+                History = historyByCharacter.Select(kvp => new HistoryEntry
+                {
+                    CharacterId = kvp.Key,
+                    Records = kvp.Value.Select(record => new CareerSaveData
+                    {
+                        OfficeId = record.OfficeId,
+                        SeatIndex = record.SeatIndex,
+                        HolderId = record.HolderId,
+                        StartYear = record.StartYear,
+                        EndYear = record.EndYear
+                    }).ToList()
+                }).ToList()
+            };
+
+            string json = JsonUtility.ToJson(blob);
+            return new Dictionary<string, object> { ["json"] = json };
+        }
+
+        public override void Load(Dictionary<string, object> data)
+        {
+            if (data == null || !data.TryGetValue("json", out var raw) || raw is not string json)
+                return;
+
+            try
+            {
+                var blob = JsonUtility.FromJson<OfficeSaveBlob>(json);
+                if (blob == null)
+                    return;
+
+                currentYear = blob.Year;
+
+                activeByCharacter.Clear();
+                pendingByCharacter.Clear();
+                if (blob.Seats != null)
+                {
+                    foreach (var seatEntry in blob.Seats)
+                    {
+                        if (!seatsByOffice.TryGetValue(seatEntry.OfficeId, out var seats))
+                        {
+                            seats = new List<OfficeSeat>();
+                            seatsByOffice[seatEntry.OfficeId] = seats;
+                        }
+
+                        seats.Clear();
+                        if (seatEntry.Seats == null) continue;
+
+                        foreach (var entry in seatEntry.Seats)
+                        {
+                            var seat = new OfficeSeat
+                            {
+                                SeatIndex = entry.SeatIndex,
+                                HolderId = entry.HolderId,
+                                StartYear = entry.StartYear,
+                                EndYear = entry.EndYear,
+                                PendingHolderId = entry.PendingHolderId,
+                                PendingStartYear = entry.PendingStartYear
+                            };
+
+                            seats.Add(seat);
+
+                            if (entry.HolderId.HasValue)
+                            {
+                                if (!activeByCharacter.TryGetValue(entry.HolderId.Value, out var activeList))
+                                {
+                                    activeList = new List<ActiveOfficeRecord>();
+                                    activeByCharacter[entry.HolderId.Value] = activeList;
+                                }
+
+                                activeList.Add(new ActiveOfficeRecord
+                                {
+                                    OfficeId = seatEntry.OfficeId,
+                                    SeatIndex = entry.SeatIndex,
+                                    EndYear = entry.EndYear
+                                });
+                            }
+
+                            if (entry.PendingHolderId.HasValue)
+                            {
+                                if (!pendingByCharacter.TryGetValue(entry.PendingHolderId.Value, out var pendingList))
+                                {
+                                    pendingList = new List<PendingOfficeRecord>();
+                                    pendingByCharacter[entry.PendingHolderId.Value] = pendingList;
+                                }
+
+                                pendingList.Add(new PendingOfficeRecord
+                                {
+                                    OfficeId = seatEntry.OfficeId,
+                                    SeatIndex = entry.SeatIndex,
+                                    StartYear = entry.PendingStartYear
+                                });
+                            }
+                        }
+                    }
+                }
+
+                lastHeldYear.Clear();
+                if (blob.LastHeld != null)
+                {
+                    foreach (var entry in blob.LastHeld)
+                    {
+                        lastHeldYear[(entry.CharacterId, entry.OfficeId)] = entry.Year;
+                    }
+                }
+
+                historyByCharacter.Clear();
+                if (blob.History != null)
+                {
+                    foreach (var entry in blob.History)
+                    {
+                        var list = new List<OfficeCareerRecord>();
+                        foreach (var record in entry.Records)
+                        {
+                            list.Add(new OfficeCareerRecord
+                            {
+                                OfficeId = record.OfficeId,
+                                SeatIndex = record.SeatIndex,
+                                HolderId = record.HolderId,
+                                StartYear = record.StartYear,
+                                EndYear = record.EndYear
+                            });
+                        }
+                        historyByCharacter[entry.CharacterId] = list;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError($"Failed to load office save data: {ex.Message}");
+            }
+        }
+
+        [Serializable]
+        private class OfficeSaveBlob
+        {
+            public int Year;
+            public List<OfficeSeatSave> Seats = new();
+            public List<LastHeldEntry> LastHeld = new();
+            public List<HistoryEntry> History = new();
+        }
+
+        [Serializable]
+        private class SeatSaveData
+        {
+            public int SeatIndex;
+            public int? HolderId;
+            public int StartYear;
+            public int EndYear;
+            public int? PendingHolderId;
+            public int PendingStartYear;
+        }
+
+        [Serializable]
+        private class OfficeSeatSave
+        {
+            public string OfficeId;
+            public List<SeatSaveData> Seats = new();
+        }
+
+        [Serializable]
+        private class LastHeldEntry
+        {
+            public int CharacterId;
+            public string OfficeId;
+            public int Year;
+        }
+
+        [Serializable]
+        private class CareerSaveData
+        {
+            public string OfficeId;
+            public int SeatIndex;
+            public int HolderId;
+            public int StartYear;
+            public int EndYear;
+        }
+
+        [Serializable]
+        private class HistoryEntry
+        {
+            public int CharacterId;
+            public List<CareerSaveData> Records = new();
+        }
+    }
+}
