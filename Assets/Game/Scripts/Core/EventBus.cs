@@ -15,6 +15,7 @@ namespace Game.Systems.EventBus
         private readonly Queue<GameEvent> nextQueue = new();
         private readonly Dictionary<Type, List<Action<GameEvent>>> subscribers = new();
         private readonly List<GameEvent> history = new();
+        private readonly HashSet<Type> unhandledTypesLogged = new();
 
         public override void Initialize(GameState state)
         {
@@ -46,6 +47,7 @@ namespace Game.Systems.EventBus
                 subscribers[eventType] = new List<Action<GameEvent>>();
 
             subscribers[eventType].Add(e => handler((T)e));
+            unhandledTypesLogged.Remove(eventType);
             LogInfo($"Subscribed to {eventType.Name}");
         }
 
@@ -62,7 +64,9 @@ namespace Game.Systems.EventBus
                 var e = currentQueue.Dequeue();
                 history.Add(e);
 
-                if (subscribers.TryGetValue(e.GetType(), out var handlers))
+                var eventType = e.GetType();
+
+                if (subscribers.TryGetValue(eventType, out var handlers))
                 {
                     foreach (var handler in handlers)
                     {
@@ -73,7 +77,10 @@ namespace Game.Systems.EventBus
                         }
                     }
                 }
-                else LogWarn($"No subscribers for {e.Name}");
+                else if (unhandledTypesLogged.Add(eventType))
+                {
+                    LogWarn($"No subscribers for {e.Name}");
+                }
             }
         }
 
