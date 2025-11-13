@@ -81,11 +81,21 @@ public class GameController : MonoBehaviour
     {
         if (gameState != null)
         {
-            GameStateShuttingDown?.Invoke();
-            gameState.Shutdown();
-            gameState = null;
-            timeSystem = null;
-            isInitialized = false;
+            try
+            {
+                GameStateShuttingDown?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("GameController", $"GameStateShuttingDown handler threw: {ex.Message}");
+            }
+            finally
+            {
+                gameState.Shutdown();
+                gameState = null;
+                timeSystem = null;
+                isInitialized = false;
+            }
         }
     }
 
