@@ -31,6 +31,7 @@ namespace Game.Systems.Politics
         private readonly Dictionary<int, List<string>> eligibilityByCharacter = new();
         private readonly Dictionary<(int Month, int Day), HashSet<int>> birthdayIndex = new();
         private readonly PoliticsModelFactory.ElectionCycleState cycleState = new();
+        private readonly HashSet<int> pendingTermHistoryRefresh = new();
 
         private bool subscriptionsActive;
         private int currentYear;
@@ -93,6 +94,7 @@ namespace Game.Systems.Politics
             eligibilityByCharacter.Clear();
             birthdayIndex.Clear();
             termTracker.Reset();
+            pendingTermHistoryRefresh.Clear();
 
             base.Shutdown();
         }
@@ -130,6 +132,7 @@ namespace Game.Systems.Politics
                 return;
 
             currentYear = e.Year;
+            ProcessPendingTermRefresh();
         }
 
         private void OnPopulationTick(OnPopulationTick e)
@@ -141,13 +144,18 @@ namespace Game.Systems.Politics
 
             var key = (e.Month, e.Day);
             if (!birthdayIndex.TryGetValue(key, out var ids) || ids.Count == 0)
+            {
+                ProcessPendingTermRefresh();
                 return;
+            }
 
             var toUpdate = new List<int>(ids);
             foreach (var characterId in toUpdate)
             {
                 UpdateEligibilityForCharacter(characterId);
             }
+
+            ProcessPendingTermRefresh();
         }
 
         private void OnElectionSeasonOpened(ElectionSeasonOpenedEvent e)
@@ -268,6 +276,7 @@ namespace Game.Systems.Politics
         private void SeedTermHistory()
         {
             termTracker.Reset();
+            pendingTermHistoryRefresh.Clear();
 
             var living = characterSystem.GetAllLiving();
             if (living == null)
@@ -356,6 +365,39 @@ namespace Game.Systems.Politics
 
             RemoveBirthdayEntry(e.CharacterID);
             eligibilityByCharacter.Remove(e.CharacterID);
+            QueueTermHistoryRefresh(e.CharacterID);
+        }
+
+        private void QueueTermHistoryRefresh(int characterId)
+        {
+            if (characterId <= 0)
+                return;
+
+            pendingTermHistoryRefresh.Add(characterId);
+        }
+
+        private void ProcessPendingTermRefresh()
+        {
+            if (pendingTermHistoryRefresh.Count == 0)
+                return;
+
+            var toRefresh = new List<int>(pendingTermHistoryRefresh);
+            pendingTermHistoryRefresh.Clear();
+
+            foreach (var characterId in toRefresh)
+            {
+                RefreshTermHistoryForCharacter(characterId);
+            }
+        }
+
+        private void RefreshTermHistoryForCharacter(int characterId)
+        {
+            if (characterId <= 0)
+                return;
+
+            var history = officeSystem.GetCareerHistory(characterId);
+            var holdings = officeSystem.GetCurrentHoldings(characterId);
+            termTracker.RebuildCharacterHistory(characterId, history, holdings, ResolveOfficeName);
         }
     }
 }
