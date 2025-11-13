@@ -69,7 +69,7 @@ namespace Game.Systems.CharacterSystem
                 try
                 {
                     CharacterFactory.EnsureLifecycleState(character, character.BirthYear + character.Age);
-                    familyService.AddCharacter(character, config.KeepDeadInMemory);
+                    familyService.AddCharacter(character, settings.KeepDeadInMemory);
                 }
                 catch (Exception ex)
                 {
@@ -144,7 +144,7 @@ namespace Game.Systems.CharacterSystem
                 evaluationYear = character.BirthYear + character.Age;
 
             CharacterFactory.EnsureLifecycleState(character, evaluationYear);
-            familyService.AddCharacter(character, config.KeepDeadInMemory); metrics.RecordBirth();
+            familyService.AddCharacter(character, settings.KeepDeadInMemory); metrics.RecordBirth();
         }
 
         public bool Kill(int id, string cause = "Natural causes")
@@ -215,11 +215,12 @@ namespace Game.Systems.CharacterSystem
                 foreach (var character in blob.Characters)
                 {
                     CharacterFactory.EnsureLifecycleState(character, character.BirthYear + character.Age);
-                    repository.Add(character, config.KeepDeadInMemory);
+                    repository.Add(character, settings.KeepDeadInMemory);
                 }
-                repository.ApplyLifeState(blob.AliveIDs, blob.DeadIDs, config.KeepDeadInMemory);
-                config.RngSeed = blob.Seed;
-                rng = new System.Random(config.RngSeed);
+                repository.ApplyLifeState(blob.AliveIDs, blob.DeadIDs, settings.KeepDeadInMemory);
+                rngSeed = blob.Seed;
+                settings.RngSeed = rngSeed;
+                rng = new System.Random(rngSeed);
                 mortality = new CharacterMortalityService(repository, rng, GetDailyHazard);
                 metrics.Reset();
 
