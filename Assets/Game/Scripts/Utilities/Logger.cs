@@ -165,7 +165,7 @@ namespace Game.Core
         {
             try
             {
-                string path = Path.Combine(Application.dataPath, "Game/Logs", fileName);
+                string path = Path.Combine(Application.persistentDataPath, "Game/Logs", fileName);
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
                 File.WriteAllLines(path, lines);
             }
