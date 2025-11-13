@@ -20,6 +20,8 @@ namespace Game.Core
             Error
         }
 
+        public static LogLevel MinimumLevel = LogLevel.Info;
+
         public readonly struct LogEntry
         {
             public readonly DateTime Timestamp;
@@ -81,6 +83,9 @@ namespace Game.Core
 
         private static void Write(LogLevel level, string category, string message)
         {
+            if (level < MinimumLevel)
+                return;
+
             if (string.IsNullOrWhiteSpace(category))
                 category = "General";
 
@@ -153,6 +158,20 @@ namespace Game.Core
             catch (Exception ex)
             {
                 Debug.LogWarning($"[Logger] Failed to write to log file: {ex.Message}");
+            }
+        }
+
+        public static void WriteToFile(string fileName, IEnumerable<string> lines)
+        {
+            try
+            {
+                string path = Path.Combine(Application.dataPath, "Game/Logs", fileName);
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllLines(path, lines);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Logger] Failed to write log file '{fileName}': {ex}");
             }
         }
 
