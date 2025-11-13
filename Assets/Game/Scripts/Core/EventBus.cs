@@ -123,7 +123,9 @@ namespace Game.Systems.EventBus
 
                 if (subscribers.TryGetValue(eventType, out var handlers))
                 {
-                    foreach (var handler in handlers)
+                    var handlerSnapshot = handlers.Count > 0 ? handlers.ToArray() : Array.Empty<Action<GameEvent>>();
+
+                    foreach (var handler in handlerSnapshot)
                     {
                         try { handler(e); }
                         catch (Exception ex)
