@@ -125,7 +125,7 @@ namespace Game.UI
             text.text = initialText;
             text.fontSize = 22f;
             text.color = Color.white;
-            text.textWrappingMode = TextWrappingModes.NoWrapping;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
 
             return text;
         }
