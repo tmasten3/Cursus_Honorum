@@ -30,12 +30,23 @@ namespace Game.Core
         /// </summary>
         public bool IsActive { get; private set; } = true;
 
+        /// <summary>
+        /// Whether Initialize() has been called successfully.
+        /// </summary>
+        protected bool IsInitialized { get; private set; }
+
         // --------------------------------------------------------------------
         // 🔹 Lifecycle
         // --------------------------------------------------------------------
         public virtual void Initialize(GameState state)
         {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+
+            if (IsInitialized)
+                throw new InvalidOperationException($"{Name} has already been initialized.");
+
             State = state; // store GameState for shared access
+            IsInitialized = true;
             LogInfo("Initialized (base)");
         }
 
@@ -43,7 +54,11 @@ namespace Game.Core
 
         public virtual void Shutdown()
         {
+            if (!IsInitialized)
+                return;
+
             LogInfo("Shutdown (base)");
+            IsInitialized = false;
         }
 
 

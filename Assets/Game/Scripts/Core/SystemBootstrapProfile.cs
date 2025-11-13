@@ -34,8 +34,8 @@ namespace Game.Core
                     typeof(Game.Systems.EventBus.EventBus),
                     typeof(Game.Systems.TimeSystem.TimeSystem)
                 }),
-            SystemDescriptor.For<Game.Systems.MarriageSystem.MarriageSystem>(
-                resolver => new Game.Systems.MarriageSystem.MarriageSystem(
+            SystemDescriptor.For<Game.Systems.BirthSystem.BirthSystem>(
+                resolver => new Game.Systems.BirthSystem.BirthSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
                     resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
                 new[]
@@ -45,6 +45,15 @@ namespace Game.Core
                 }),
             SystemDescriptor.For<Game.Systems.Politics.Offices.OfficeSystem>(
                 resolver => new Game.Systems.Politics.Offices.OfficeSystem(
+                    resolver.Resolve<Game.Systems.EventBus.EventBus>(),
+                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
+                new[]
+                {
+                    typeof(Game.Systems.EventBus.EventBus),
+                    typeof(Game.Systems.CharacterSystem.CharacterSystem)
+                }),
+            SystemDescriptor.For<Game.Systems.MarriageSystem.MarriageSystem>(
+                resolver => new Game.Systems.MarriageSystem.MarriageSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
                     resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
                 new[]
@@ -64,15 +73,6 @@ namespace Game.Core
                     typeof(Game.Systems.TimeSystem.TimeSystem),
                     typeof(Game.Systems.CharacterSystem.CharacterSystem),
                     typeof(Game.Systems.Politics.Offices.OfficeSystem)
-                }),
-            SystemDescriptor.For<Game.Systems.BirthSystem.BirthSystem>(
-                resolver => new Game.Systems.BirthSystem.BirthSystem(
-                    resolver.Resolve<Game.Systems.EventBus.EventBus>(),
-                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
-                new[]
-                {
-                    typeof(Game.Systems.EventBus.EventBus),
-                    typeof(Game.Systems.CharacterSystem.CharacterSystem)
                 })
         });
     }

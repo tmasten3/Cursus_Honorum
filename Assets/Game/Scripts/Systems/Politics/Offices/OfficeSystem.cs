@@ -36,6 +36,7 @@ namespace Game.Systems.Politics.Offices
         private int currentDay;
 
         private bool initialHoldersSeeded;
+        private bool subscriptionsActive;
 
         public bool DebugMode { get; set; }
 
@@ -85,13 +86,29 @@ namespace Game.Systems.Politics.Offices
             base.Initialize(state);
             LoadDefinitions();
 
-            eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
-            eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
+            if (!subscriptionsActive)
+            {
+                eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
+                eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
+                subscriptionsActive = true;
+            }
 
             SeedInitialOfficeHolders();
         }
 
         public override void Update(GameState state) { }
+
+        public override void Shutdown()
+        {
+            if (subscriptionsActive)
+            {
+                eventBus.Unsubscribe<OnNewDayEvent>(OnNewDay);
+                eventBus.Unsubscribe<OnCharacterDied>(OnCharacterDied);
+                subscriptionsActive = false;
+            }
+
+            base.Shutdown();
+        }
 
         private void LoadDefinitions()
         {
