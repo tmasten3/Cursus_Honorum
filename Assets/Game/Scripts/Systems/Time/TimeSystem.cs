@@ -42,7 +42,7 @@ namespace Game.Systems.Time
             if (!IsActive || IsPaused)
                 return;
 
-            elapsedRealTime += Time.deltaTime * speedMultiplier;
+            elapsedRealTime += UnityEngine.Time.deltaTime * speedMultiplier;
             if (elapsedRealTime >= configuration.SecondsPerDay)
             {
                 elapsedRealTime -= configuration.SecondsPerDay;
