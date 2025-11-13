@@ -63,6 +63,7 @@ namespace Game.UI
             Unsubscribe();
             eventBus = null;
             characterSystem = null;
+            ClearEntries();
         }
 
         public void SetVisible(bool visible)
@@ -247,6 +248,15 @@ namespace Game.UI
             }
 
             logText.text = builder.Length > 0 ? builder.ToString() : "No events recorded yet.";
+        }
+
+        private void ClearEntries()
+        {
+            entries.Clear();
+            builder.Clear();
+
+            if (logText != null)
+                logText.text = "No events recorded yet.";
         }
 
         private string ResolveName(int id)

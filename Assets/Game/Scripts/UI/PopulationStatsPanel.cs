@@ -71,6 +71,8 @@ namespace Game.UI
             eventBus = null;
             characterSystem = null;
             repository = null;
+            ResetDailyCounters();
+            ResetDisplayedText();
         }
 
         public void SetVisible(bool visible)
@@ -83,6 +85,25 @@ namespace Game.UI
         {
             RefreshTotals();
             UpdateDailyText();
+        }
+
+        private void ResetDailyCounters()
+        {
+            dailyBirths = 0;
+            dailyDeaths = 0;
+            dailyMarriages = 0;
+            lastYear = -1;
+            lastMonth = -1;
+            lastDay = -1;
+        }
+
+        private void ResetDisplayedText()
+        {
+            if (summaryText != null)
+                summaryText.text = "Living Citizens: 0\nFamilies: 0";
+
+            if (dailySummaryText != null)
+                dailySummaryText.text = "Daily Summary (pending)\nBirths: 0  |  Deaths: 0  |  Marriages: 0";
         }
 
         private void CreateHeader()
