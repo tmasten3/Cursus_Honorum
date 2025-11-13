@@ -121,7 +121,7 @@ namespace Game.Systems.Politics.Offices
                     return;
                 }
 
-                for (int i = 0; i < wrapper.Offices.Length; i++)
+                for (int i = 0; i < wrapper.Offices.Count; i++)
                 {
                     var def = wrapper.Offices[i];
                     if (def == null)
