@@ -97,7 +97,7 @@ namespace Game.Systems.BirthSystem
                 if (rng.NextDouble() < config.DailyBirthChanceIfMarried)
                 {
                     var father = characterSystem.Get(mother.SpouseID.Value);
-                    var due = AddDays(year, month, day, config.GestationDays);
+                    var due = CalendarUtility.AddDays(year, month, day, config.GestationDays);
 
                     pregnancies.Add(new Pregnancy
                     {
@@ -136,21 +136,5 @@ namespace Game.Systems.BirthSystem
             pregnancies.RemoveAll(p => p.DueYear == year && p.DueMonth == month && p.DueDay == day);
         }
 
-        private static (int Y, int M, int D) AddDays(int y, int m, int d, int days)
-        {
-            int[] dim = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-            int Y = y, M = m, D = d;
-
-            while (days-- > 0)
-            {
-                D++;
-                if (D > dim[M - 1])
-                {
-                    D = 1; M++;
-                    if (M > 12) { M = 1; Y++; if (Y == 0) Y = 1; }
-                }
-            }
-            return (Y, M, D);
-        }
     }
 }
