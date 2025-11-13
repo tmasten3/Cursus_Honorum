@@ -91,7 +91,7 @@ namespace Game.Systems.BirthSystem
                 if (rng.NextDouble() < settings.DailyBirthChanceIfMarried)
                 {
                     var father = characterSystem.Get(mother.SpouseID.Value);
-                    var due = CalendarUtility.AddDays(year, month, day, config.GestationDays);
+                    var due = CalendarUtility.AddDays(year, month, day, settings.GestationDays);
 
                     pregnancies.Add(new Pregnancy
                     {
