@@ -1,6 +1,5 @@
-﻿using System;
-using System.Linq;
-using UnityEngine;
+using System;
+using System.Collections.Generic;
 
 namespace Game.Data.Characters
 {
@@ -22,12 +21,30 @@ namespace Game.Data.Characters
 
         public string GetFullName()
         {
-            if (Gender == Gender.Male)
-                return string.Join(" ", new[] { Praenomen, Nomen, Cognomen }
-                    .Where(s => !string.IsNullOrWhiteSpace(s)));
-            else
-                return string.Join(" ", new[] { Nomen }
-                    .Where(s => !string.IsNullOrWhiteSpace(s)));
+            IEnumerable<string> segments = Gender == Gender.Male
+                ? new[] { Praenomen, Nomen, Cognomen }
+                : new[] { Nomen, Cognomen };
+
+            string last = null;
+            var filtered = new List<string>();
+
+            foreach (var raw in segments)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                    continue;
+
+                var value = raw.Trim();
+                if (value.Length == 0)
+                    continue;
+
+                if (last != null && string.Equals(last, value, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                filtered.Add(value);
+                last = value;
+            }
+
+            return string.Join(" ", filtered);
         }
     }
 }

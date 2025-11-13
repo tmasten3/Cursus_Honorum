@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using Game.Core;
 using UnityEngine;
 
 namespace Game.Data.Characters
@@ -11,17 +12,19 @@ namespace Game.Data.Characters
     /// </summary>
     public static class CharacterFactory
     {
+        private const string LogCategory = "CharacterData";
+
         private static readonly System.Random rng = new();
         private static int nextID = 1000;
 
-        // ----------------------------------------------------------------------
-        // 🔹 Load Base Characters
-        // ----------------------------------------------------------------------
+        // ------------------------------------------------------------------
+        // Loading
+        // ------------------------------------------------------------------
         public static List<Character> LoadBaseCharacters(string path)
         {
             if (!File.Exists(path))
             {
-                Debug.LogWarning($"[CharacterFactory] No character file found at {path}");
+                Logger.Warn(LogCategory, $"Base character file not found at '{path}'.");
                 return new List<Character>();
             }
 
@@ -29,67 +32,94 @@ namespace Game.Data.Characters
             var wrapper = JsonUtility.FromJson<CharacterDataWrapper>(json);
             if (wrapper == null || wrapper.Characters == null)
             {
-                Debug.LogError("[CharacterFactory] Failed to parse base character JSON.");
+                Logger.Error(LogCategory, $"Failed to parse base character JSON from '{path}'.");
                 return new List<Character>();
             }
 
-            // ensure every character has a RomanName structure
-            foreach (var c in wrapper.Characters)
+            foreach (var character in wrapper.Characters)
             {
-                if (c.RomanName == null)
-                {
-                    c.RomanName = RomanNamingRules.GenerateRomanName(c.Gender, c.Family, c.Class);
-                }
+                NormalizeCharacter(character, path);
             }
 
-            ValidateCharacters(wrapper.Characters);
+            ValidateCharacters(wrapper.Characters, path);
             UpdateNextID(wrapper.Characters);
             return wrapper.Characters;
         }
 
-        // ----------------------------------------------------------------------
-        // 🔹 Validation
-        // ----------------------------------------------------------------------
-        private static void ValidateCharacters(List<Character> chars)
+        private static void NormalizeCharacter(Character character, string sourcePath)
         {
-            var seenIDs = new HashSet<int>();
+            if (character == null)
+                return;
 
-            foreach (var c in chars)
+            var corrections = new List<string>();
+
+            var normalizedName = RomanNamingRules.NormalizeOrGenerateName(
+                character.Gender,
+                character.Class,
+                character.Family,
+                character.RomanName,
+                corrections);
+
+            character.RomanName = normalizedName;
+            if (character.RomanName != null)
+                character.RomanName.Gender = character.Gender;
+
+            string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, character.RomanName);
+            if (!string.IsNullOrEmpty(resolvedFamily) && !string.Equals(character.Family, resolvedFamily, StringComparison.Ordinal))
+                corrections.Add($"normalized gens to '{resolvedFamily}'");
+
+            if (!string.IsNullOrEmpty(resolvedFamily))
+                character.Family = resolvedFamily;
+
+            if (corrections.Count > 0)
             {
-                if (seenIDs.Contains(c.ID))
-                    Debug.LogWarning($"[CharacterFactory] Duplicate character ID {c.ID}: {c.FullName}");
-                else
-                    seenIDs.Add(c.ID);
+                Logger.Warn(LogCategory, $"{sourcePath}: Character #{character.ID} - {string.Join("; ", corrections)}");
+            }
+        }
+
+        private static void ValidateCharacters(List<Character> characters, string sourcePath)
+        {
+            CharacterDataValidator.Validate(characters, sourcePath);
+
+            foreach (var c in characters)
+            {
+                if (c == null)
+                    continue;
 
                 if (c.FatherID == c.ID || c.MotherID == c.ID)
-                    Debug.LogWarning($"[CharacterFactory] {c.FullName} is their own parent!");
+                {
+                    Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is listed as their own parent.");
+                }
 
                 if (c.SpouseID == c.ID)
-                    Debug.LogWarning($"[CharacterFactory] {c.FullName} is married to themselves!");
+                {
+                    Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is married to themselves.");
+                }
             }
         }
 
         private static void UpdateNextID(List<Character> chars)
         {
             foreach (var c in chars)
-                if (c.ID >= nextID)
+            {
+                if (c != null && c.ID >= nextID)
                     nextID = c.ID + 1;
+            }
         }
 
-        // ----------------------------------------------------------------------
-        // 🔹 Runtime Creation
-        // ----------------------------------------------------------------------
+        // ------------------------------------------------------------------
+        // Runtime creation helpers
+        // ------------------------------------------------------------------
 
-        /// <summary>
-        /// Creates a new child with inherited family and social class.
-        /// </summary>
         public static Character CreateChild(Character father, Character mother, int year, int month, int day)
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
-            var gens = father?.Family ?? mother?.Family ?? RomanNamingRules.GetNomen(SocialClass.Plebeian);
             var socialClass = father?.Class ?? mother?.Class ?? SocialClass.Plebeian;
+            var familySeed = father?.Family ?? mother?.Family;
+            var canonicalFamily = RomanNamingRules.ResolveFamilyName(familySeed, null);
 
-            var romanName = RomanNamingRules.GenerateRomanName(gender, gens, socialClass);
+            var romanName = RomanNamingRules.NormalizeOrGenerateName(gender, socialClass, canonicalFamily, null);
+            var resolvedFamily = RomanNamingRules.ResolveFamilyName(canonicalFamily, romanName) ?? canonicalFamily ?? romanName?.Nomen;
 
             var child = new Character
             {
@@ -103,22 +133,27 @@ namespace Game.Data.Characters
                 IsAlive = true,
                 FatherID = father?.ID,
                 MotherID = mother?.ID,
-                Family = gens,
+                Family = resolvedFamily,
                 Class = socialClass,
                 Wealth = 0,
                 Influence = 0
             };
 
+            if (child.RomanName != null)
+                child.RomanName.Gender = child.Gender;
+
             return child;
         }
 
-        /// <summary>
-        /// Generates a random adult for initialization or testing.
-        /// </summary>
         public static Character GenerateRandomCharacter(string family, SocialClass socialClass)
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
-            var romanName = RomanNamingRules.GenerateRomanName(gender, family, socialClass);
+            var canonicalFamily = RomanNamingRules.ResolveFamilyName(family, null);
+            var romanName = RomanNamingRules.NormalizeOrGenerateName(gender, socialClass, canonicalFamily, null);
+            var resolvedFamily = RomanNamingRules.ResolveFamilyName(canonicalFamily, romanName) ?? canonicalFamily ?? romanName?.Nomen;
+
+            if (romanName != null)
+                romanName.Gender = gender;
 
             return new Character
             {
@@ -130,26 +165,31 @@ namespace Game.Data.Characters
                 BirthDay = 1,
                 Age = rng.Next(16, 45),
                 IsAlive = true,
-                Family = romanName.Nomen,
+                Family = resolvedFamily,
                 Class = socialClass,
                 Wealth = rng.Next(500, 5000),
                 Influence = rng.Next(1, 10)
             };
         }
 
-        /// <summary>
-        /// Creates a deep copy of an existing character as a new instance.
-        /// </summary>
         public static Character CreateFromTemplate(Character template)
         {
+            if (template == null)
+                throw new ArgumentNullException(nameof(template));
+
             var clone = template.Clone();
             clone.ID = GetNextID();
+
+            if (clone.RomanName != null)
+                clone.RomanName.Gender = clone.Gender;
+
+            var normalizedFamily = RomanNamingRules.ResolveFamilyName(clone.Family, clone.RomanName);
+            if (!string.IsNullOrEmpty(normalizedFamily))
+                clone.Family = normalizedFamily;
+
             return clone;
         }
 
-        // ----------------------------------------------------------------------
-        // 🔹 Utility
-        // ----------------------------------------------------------------------
         public static int GetNextID() => nextID++;
     }
 }

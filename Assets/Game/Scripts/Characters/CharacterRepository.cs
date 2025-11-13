@@ -7,7 +7,9 @@ namespace Game.Systems.CharacterSystem
 {
     internal sealed class CharacterRepository
     {
-        private readonly Dictionary<int, Character> characters = new();
+        private readonly Dictionary<int, Character> byId = new();
+        private readonly Dictionary<string, List<int>> byName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<int, string> nameKeyById = new();
         private readonly HashSet<int> alive = new();
         private readonly HashSet<int> dead = new();
         private readonly Dictionary<(int Month, int Day), List<int>> birthdays = new();
@@ -17,15 +19,19 @@ namespace Game.Systems.CharacterSystem
         public int AliveCount => alive.Count;
         public int FamilyCount => byFamily.Count;
 
-        public IEnumerable<Character> AllCharacters => characters.Values;
+        public IEnumerable<Character> AllCharacters => byId.Values;
+
+        public IReadOnlyDictionary<int, Character> ById => byId;
+        public IReadOnlyDictionary<string, List<int>> ByName => byName;
 
         public IEnumerable<int> AliveIdSnapshot() => alive.OrderBy(id => id).ToList();
-
         public IEnumerable<int> DeadIdSnapshot() => dead.OrderBy(id => id).ToList();
 
         public void Reset()
         {
-            characters.Clear();
+            byId.Clear();
+            byName.Clear();
+            nameKeyById.Clear();
             alive.Clear();
             dead.Clear();
             birthdays.Clear();
@@ -35,56 +41,60 @@ namespace Game.Systems.CharacterSystem
 
         public void Add(Character character, bool keepDead)
         {
-            if (character == null) throw new ArgumentNullException(nameof(character));
+            if (character == null)
+                throw new ArgumentNullException(nameof(character));
 
-            characters[character.ID] = character;
-
-            if (character.IsAlive) alive.Add(character.ID);
-            else if (keepDead) dead.Add(character.ID);
-
-            var birthdayKey = (character.BirthMonth, character.BirthDay);
-            if (!birthdays.TryGetValue(birthdayKey, out var birthdayList))
+            if (byId.TryGetValue(character.ID, out var existing))
             {
-                birthdayList = new List<int>();
-                birthdays[birthdayKey] = birthdayList;
-            }
-            birthdayList.Add(character.ID);
-
-            if (!string.IsNullOrEmpty(character.Family))
-            {
-                if (!byFamily.TryGetValue(character.Family, out var familySet))
-                {
-                    familySet = new HashSet<int>();
-                    byFamily[character.Family] = familySet;
-                }
-                familySet.Add(character.ID);
+                RemoveFromIndexes(existing.ID, existing, removeBirthdays: true);
             }
 
-            if (!byClass.TryGetValue(character.Class, out var classSet))
+            byId[character.ID] = character;
+
+            if (character.IsAlive)
             {
-                classSet = new HashSet<int>();
-                byClass[character.Class] = classSet;
+                alive.Add(character.ID);
+                AddToNameIndex(character);
             }
-            classSet.Add(character.ID);
+            else if (keepDead)
+            {
+                dead.Add(character.ID);
+            }
+
+            AddToBirthdayIndex(character);
+            AddToFamilyIndex(character);
+            AddToClassIndex(character);
         }
 
-        public Character Get(int id) => characters.TryGetValue(id, out var c) ? c : null;
+        public Character Get(int id) => byId.TryGetValue(id, out var c) ? c : null;
 
         public IReadOnlyList<Character> GetAllLiving() =>
-            alive.OrderBy(id => id).Select(id => characters[id]).ToList();
+            alive.OrderBy(id => id).Select(id => byId[id]).ToList();
 
         public IReadOnlyList<Character> GetByFamily(string gens)
         {
-            if (gens == null) return Array.Empty<Character>();
+            if (gens == null)
+                return Array.Empty<Character>();
+
             return byFamily.TryGetValue(gens, out var set)
-                ? set.OrderBy(id => id).Select(id => characters[id]).ToList()
+                ? set.OrderBy(id => id).Select(id => byId[id]).ToList()
                 : Array.Empty<Character>();
         }
 
         public IReadOnlyList<Character> GetByClass(SocialClass socialClass) =>
             byClass.TryGetValue(socialClass, out var set)
-                ? set.OrderBy(id => id).Select(id => characters[id]).ToList()
+                ? set.OrderBy(id => id).Select(id => byId[id]).ToList()
                 : Array.Empty<Character>();
+
+        public IReadOnlyList<Character> GetByName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Array.Empty<Character>();
+
+            return byName.TryGetValue(name, out var ids)
+                ? ids.OrderBy(id => id).Select(id => byId[id]).ToList()
+                : Array.Empty<Character>();
+        }
 
         public IEnumerable<int> EnumerateLivingIds() => alive.OrderBy(id => id).ToList();
 
@@ -95,7 +105,7 @@ namespace Game.Systems.CharacterSystem
 
             foreach (var id in todaysIds.OrderBy(x => x))
             {
-                if (alive.Contains(id) && characters.TryGetValue(id, out var character))
+                if (alive.Contains(id) && byId.TryGetValue(id, out var character))
                 {
                     character.AgeUp();
                 }
@@ -104,13 +114,14 @@ namespace Game.Systems.CharacterSystem
 
         public Character MarkDead(int id, bool keepDead)
         {
-            if (!characters.TryGetValue(id, out var character))
+            if (!byId.TryGetValue(id, out var character))
                 return null;
 
             if (!alive.Remove(id))
                 return null;
 
             character.IsAlive = false;
+            RemoveFromNameIndex(id);
 
             if (keepDead)
                 dead.Add(id);
@@ -127,7 +138,7 @@ namespace Game.Systems.CharacterSystem
             {
                 foreach (var id in aliveIds)
                 {
-                    if (characters.ContainsKey(id))
+                    if (byId.ContainsKey(id))
                         alive.Add(id);
                 }
             }
@@ -137,14 +148,145 @@ namespace Game.Systems.CharacterSystem
             {
                 foreach (var id in deadIds)
                 {
-                    if (characters.ContainsKey(id))
+                    if (byId.ContainsKey(id))
                         dead.Add(id);
                 }
             }
 
-            foreach (var pair in characters)
+            foreach (var pair in byId)
             {
                 pair.Value.IsAlive = alive.Contains(pair.Key);
+            }
+
+            RebuildNameIndex();
+        }
+
+        private void AddToBirthdayIndex(Character character)
+        {
+            var key = (character.BirthMonth, character.BirthDay);
+            if (!birthdays.TryGetValue(key, out var list))
+            {
+                list = new List<int>();
+                birthdays[key] = list;
+            }
+
+            if (!list.Contains(character.ID))
+                list.Add(character.ID);
+        }
+
+        private void AddToFamilyIndex(Character character)
+        {
+            if (string.IsNullOrEmpty(character.Family))
+                return;
+
+            if (!byFamily.TryGetValue(character.Family, out var set))
+            {
+                set = new HashSet<int>();
+                byFamily[character.Family] = set;
+            }
+
+            set.Add(character.ID);
+        }
+
+        private void AddToClassIndex(Character character)
+        {
+            if (!byClass.TryGetValue(character.Class, out var set))
+            {
+                set = new HashSet<int>();
+                byClass[character.Class] = set;
+            }
+
+            set.Add(character.ID);
+        }
+
+        private void AddToNameIndex(Character character)
+        {
+            var key = character.RomanName?.GetFullName();
+            if (string.IsNullOrWhiteSpace(key))
+                return;
+
+            if (!byName.TryGetValue(key, out var list))
+            {
+                list = new List<int>();
+                byName[key] = list;
+            }
+
+            if (!list.Contains(character.ID))
+                list.Add(character.ID);
+
+            nameKeyById[character.ID] = key;
+        }
+
+        private void RemoveFromIndexes(int id, Character character, bool removeBirthdays)
+        {
+            RemoveFromNameIndex(id);
+            RemoveFromFamilyIndex(id, character);
+            RemoveFromClassIndex(id, character);
+
+            if (removeBirthdays)
+                RemoveFromBirthdayIndex(id, character);
+
+            alive.Remove(id);
+            dead.Remove(id);
+        }
+
+        private void RemoveFromBirthdayIndex(int id, Character character)
+        {
+            var key = (character.BirthMonth, character.BirthDay);
+            if (!birthdays.TryGetValue(key, out var list))
+                return;
+
+            list.Remove(id);
+            if (list.Count == 0)
+                birthdays.Remove(key);
+        }
+
+        private void RemoveFromFamilyIndex(int id, Character character)
+        {
+            if (string.IsNullOrEmpty(character.Family))
+                return;
+
+            if (!byFamily.TryGetValue(character.Family, out var set))
+                return;
+
+            set.Remove(id);
+            if (set.Count == 0)
+                byFamily.Remove(character.Family);
+        }
+
+        private void RemoveFromClassIndex(int id, Character character)
+        {
+            if (!byClass.TryGetValue(character.Class, out var set))
+                return;
+
+            set.Remove(id);
+            if (set.Count == 0)
+                byClass.Remove(character.Class);
+        }
+
+        private void RemoveFromNameIndex(int id)
+        {
+            if (!nameKeyById.TryGetValue(id, out var key))
+                return;
+
+            if (byName.TryGetValue(key, out var list))
+            {
+                list.Remove(id);
+                if (list.Count == 0)
+                    byName.Remove(key);
+            }
+
+            nameKeyById.Remove(id);
+        }
+
+        private void RebuildNameIndex()
+        {
+            byName.Clear();
+            nameKeyById.Clear();
+            foreach (var id in alive)
+            {
+                if (byId.TryGetValue(id, out var character))
+                    AddToNameIndex(character);
             }
         }
     }

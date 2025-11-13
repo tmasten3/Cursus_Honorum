@@ -46,7 +46,7 @@ namespace Game.Data.Characters
         // ----------------------------------------------------------------------
         // Helper Methods
         // ----------------------------------------------------------------------
-        public string FullName => RomanName?.GetFullName() ?? "Unknown";
+        public string FullName => RomanName?.GetFullName() ?? string.Empty;
         public bool IsMale => Gender == Gender.Male;
         public bool IsFemale => Gender == Gender.Female;
         public bool IsAdult => Age >= 15;
