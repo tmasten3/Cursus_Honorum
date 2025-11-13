@@ -29,7 +29,17 @@ public class CharacterLedgerSimple : MonoBehaviour
     private void OnEnable()
     {
         if (!initializationAttempted)
+        {
             StartCoroutine(InitializeWhenReady());
+        }
+        else if (characterSystem != null)
+        {
+            Refresh();
+        }
+        else
+        {
+            StartCoroutine(InitializeWhenReady());
+        }
     }
 
     private IEnumerator InitializeWhenReady()
