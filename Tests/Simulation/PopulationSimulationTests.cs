@@ -1,4 +1,5 @@
 using System.IO;
+using Game.Core;
 using NUnit.Framework;
 using Game.Core;
 using Game.Systems.EventBus;
@@ -72,32 +73,12 @@ namespace CursusHonorum.Tests.Simulation
 
         private readonly record struct SimulationDate(int Year, int Month, int Day)
         {
-            private static readonly int[] DaysInMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-
             public SimulationDate NextDay(out bool rolledMonth, out bool rolledYear)
             {
-                int year = Year;
-                int month = Month;
-                int day = Day + 1;
+                var (year, month, day) = CalendarUtility.AddDays(Year, Month, Day, 1);
 
-                rolledMonth = false;
-                rolledYear = false;
-
-                if (day > DaysInMonth[month - 1])
-                {
-                    day = 1;
-                    month++;
-                    rolledMonth = true;
-
-                    if (month > 12)
-                    {
-                        month = 1;
-                        year++;
-                        if (year == 0)
-                            year = 1;
-                        rolledYear = true;
-                    }
-                }
+                rolledMonth = month != Month;
+                rolledYear = year != Year;
 
                 return new SimulationDate(year, month, day);
             }
