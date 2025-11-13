@@ -32,12 +32,8 @@ namespace Game.Core
                     return defaults;
                 }
 
-                var loaded = JsonUtility.FromJson<SimulationConfig>(json);
-                if (loaded == null)
-                {
-                    Logger.Warn("Config", $"Simulation config at '{path}' could not be parsed. Using defaults.");
-                    return defaults;
-                }
+                var loaded = new SimulationConfig();
+                JsonUtility.FromJsonOverwrite(json, loaded);
 
                 return Normalize(loaded, defaults);
             }
