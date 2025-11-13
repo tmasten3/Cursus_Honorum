@@ -59,6 +59,7 @@ namespace Game.Systems.Politics
                 eventBus.Subscribe<OfficeAssignedEvent>(OnOfficeAssigned);
                 eventBus.Subscribe<OnCharacterBorn>(OnCharacterBorn);
                 eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
+                eventBus.Subscribe<OnPopulationTick>(OnPopulationTick);
                 subscriptionsActive = true;
             }
 
@@ -85,6 +86,7 @@ namespace Game.Systems.Politics
                 eventBus.Unsubscribe<OfficeAssignedEvent>(OnOfficeAssigned);
                 eventBus.Unsubscribe<OnCharacterBorn>(OnCharacterBorn);
                 eventBus.Unsubscribe<OnCharacterDied>(OnCharacterDied);
+                eventBus.Unsubscribe<OnPopulationTick>(OnPopulationTick);
                 subscriptionsActive = false;
             }
 
@@ -123,6 +125,14 @@ namespace Game.Systems.Politics
         }
 
         private void OnNewDay(OnNewDayEvent e)
+        {
+            if (e == null)
+                return;
+
+            currentYear = e.Year;
+        }
+
+        private void OnPopulationTick(OnPopulationTick e)
         {
             if (e == null)
                 return;
@@ -269,10 +279,19 @@ namespace Game.Systems.Politics
                     continue;
 
                 var history = officeSystem.GetCareerHistory(character.ID);
-                if (history == null || history.Count == 0)
+                if (history != null && history.Count > 0)
+                {
+                    termTracker.SeedFromHistory(character.ID, history, ResolveOfficeName);
+                }
+
+                var holdings = officeSystem.GetCurrentHoldings(character.ID);
+                if (holdings == null)
                     continue;
 
-                termTracker.SeedFromHistory(character.ID, history, ResolveOfficeName);
+                foreach (var descriptor in holdings)
+                {
+                    termTracker.SeedActiveAssignment(character.ID, descriptor, ResolveOfficeName);
+                }
             }
         }
 

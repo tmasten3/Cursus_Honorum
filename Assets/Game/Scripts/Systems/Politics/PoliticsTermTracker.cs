@@ -59,6 +59,23 @@ namespace Game.Systems.Politics
             }
         }
 
+        public void SeedActiveAssignment(int characterId, OfficeSeatDescriptor descriptor,
+            Func<string, string> officeNameResolver)
+        {
+            if (descriptor == null || !descriptor.HolderId.HasValue || descriptor.HolderId.Value != characterId)
+                return;
+
+            var officeId = Normalize(descriptor.OfficeId);
+            var key = (characterId, officeId, descriptor.StartYear, descriptor.EndYear);
+            if (!seenRecords.Add(key))
+                return;
+
+            string officeName = officeNameResolver?.Invoke(officeId) ?? officeId;
+            var termRecord = new OfficeTermRecord(officeId, officeName, descriptor.SeatIndex,
+                descriptor.StartYear, descriptor.EndYear);
+            InsertSorted(historyByCharacter, characterId, termRecord);
+        }
+
         public IReadOnlyList<OfficeTermRecord> GetHistory(int characterId)
         {
             if (!historyByCharacter.TryGetValue(characterId, out var list) || list.Count == 0)
