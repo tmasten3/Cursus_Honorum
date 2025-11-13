@@ -7,6 +7,7 @@ using Game.Systems.CharacterSystem;
 using Game.Systems.MarriageSystem;
 using Game.Systems.BirthSystem;
 using UnityEngine;
+using Game.Systems.Population;
 
 namespace CursusHonorum.Tests.Simulation
 {
@@ -21,6 +22,31 @@ namespace CursusHonorum.Tests.Simulation
             Directory.CreateDirectory(tempDataPath);
             Application.persistentDataPath = tempDataPath;
 
+            var configPath = Path.Combine(tempDataPath, "population_simulation.json");
+            var testConfig = new PopulationSimulationConfig
+            {
+                Birth = new BirthSettings
+                {
+                    RngSeed = 7331,
+                    FemaleMinAge = 14,
+                    FemaleMaxAge = 35,
+                    DailyBirthChanceIfMarried = 0.0015f,
+                    GestationDays = 270,
+                    MultipleBirthChance = 0.02f
+                },
+                Marriage = new MarriageSettings
+                {
+                    RngSeed = 8221,
+                    MinAgeMale = 14,
+                    MinAgeFemale = 12,
+                    DailyMatchmakingCap = 10,
+                    DailyMarriageChanceWhenEligible = 0.002f,
+                    PreferSameClassWeight = 1.5f,
+                    CrossClassAllowed = true
+                }
+            };
+            File.WriteAllText(configPath, JsonUtility.ToJson(testConfig));
+
             var eventBus = new EventBus();
             eventBus.Initialize(null);
 
@@ -30,10 +56,16 @@ namespace CursusHonorum.Tests.Simulation
             var characterSystem = new CharacterSystem(eventBus, timeSystem);
             characterSystem.Initialize(null);
 
-            var marriageSystem = new MarriageSystem(eventBus, characterSystem);
+            var marriageSystem = new MarriageSystem(eventBus, characterSystem)
+            {
+                ConfigPath = configPath
+            };
             marriageSystem.Initialize(null);
 
-            var birthSystem = new BirthSystem(eventBus, characterSystem);
+            var birthSystem = new BirthSystem(eventBus, characterSystem)
+            {
+                ConfigPath = configPath
+            };
             birthSystem.Initialize(null);
 
             int marriageEvents = 0;
