@@ -18,15 +18,38 @@ public class GameController : MonoBehaviour
     [SerializeField]
     private bool paused = false;
 
+    [Header("Persistence")]
+    [Tooltip("Name of the save file written under persistentDataPath.")]
+    [SerializeField]
+    private string saveFileName = SaveService.DefaultFileName;
+
+    [Tooltip("Attempt to load the save file automatically when the simulation starts.")]
+    [SerializeField]
+    private bool autoLoadOnStart = false;
+
+    [Tooltip("Hotkey used for saving the current game state.")]
+    [SerializeField]
+    private KeyCode quickSaveKey = KeyCode.F5;
+
+    [Tooltip("Hotkey used for loading the saved game state.")]
+    [SerializeField]
+    private KeyCode quickLoadKey = KeyCode.F9;
+
     private GameState gameState;
     private TimeSystem timeSystem;
     private bool isInitialized;
+    private SaveService saveService;
 
     public GameState GameState => gameState;
     public bool IsInitialized => isInitialized;
 
     public event Action<GameState> GameStateInitialized;
     public event Action GameStateShuttingDown;
+
+    void Awake()
+    {
+        saveService = new SaveService();
+    }
 
     void Start()
     {
@@ -46,6 +69,14 @@ public class GameController : MonoBehaviour
             timeSystem.SetGameSpeed(speedMultiplier);
             timeSystem.SetSecondsPerDay(secondsPerDay);
             if (paused) timeSystem.Pause();
+
+            if (autoLoadOnStart && saveService != null && saveService.HasSave(saveFileName))
+            {
+                if (!saveService.LoadInto(gameState, saveFileName))
+                {
+                    Game.Core.Logger.Warn("GameController", "Auto-load failed; continuing with freshly initialized state.");
+                }
+            }
 
             isInitialized = true;
 
@@ -72,6 +103,12 @@ public class GameController : MonoBehaviour
     {
         if (!isInitialized || gameState == null)
             return;
+
+        if (quickSaveKey != KeyCode.None && Input.GetKeyDown(quickSaveKey))
+            SaveGameToDisk();
+
+        if (quickLoadKey != KeyCode.None && Input.GetKeyDown(quickLoadKey))
+            LoadGameFromDisk();
 
         gameState.Update();
 
@@ -107,6 +144,47 @@ public class GameController : MonoBehaviour
             gameState = null;
             timeSystem = null;
             isInitialized = false;
+        }
+    }
+
+    public void SaveGameToDisk()
+    {
+        if (!isInitialized || gameState == null)
+        {
+            Game.Core.Logger.Warn("GameController", "Cannot save before the game state is initialized.");
+            return;
+        }
+
+        if (saveService == null)
+        {
+            Game.Core.Logger.Error("GameController", "SaveService is not available.");
+            return;
+        }
+
+        var path = saveService.Save(gameState, saveFileName);
+        if (string.IsNullOrEmpty(path))
+        {
+            Game.Core.Logger.Error("GameController", "Save operation failed.");
+        }
+    }
+
+    public void LoadGameFromDisk()
+    {
+        if (!isInitialized || gameState == null)
+        {
+            Game.Core.Logger.Warn("GameController", "Cannot load before the game state is initialized.");
+            return;
+        }
+
+        if (saveService == null)
+        {
+            Game.Core.Logger.Error("GameController", "SaveService is not available.");
+            return;
+        }
+
+        if (!saveService.LoadInto(gameState, saveFileName))
+        {
+            Game.Core.Logger.Warn("GameController", "Load operation failed.");
         }
     }
 

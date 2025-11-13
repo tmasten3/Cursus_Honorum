@@ -19,6 +19,7 @@ namespace Game.Systems.BirthSystem
         private readonly EventBus.EventBus bus;
         private readonly CharacterSystem.CharacterSystem characterSystem;
         private System.Random rng;
+        private int rngSampleCount;
         private bool subscriptionsActive;
 
         [Serializable]
@@ -79,6 +80,57 @@ namespace Game.Systems.BirthSystem
             base.Shutdown();
         }
 
+        public override Dictionary<string, object> Save()
+        {
+            try
+            {
+                var blob = new SaveBlob
+                {
+                    Seed = config.RngSeed,
+                    SampleCount = rngSampleCount,
+                    Pregnancies = new List<Pregnancy>(pregnancies)
+                };
+
+                string json = JsonUtility.ToJson(blob);
+                return new Dictionary<string, object> { ["json"] = json };
+            }
+            catch (Exception ex)
+            {
+                LogError($"Save failed: {ex.Message}");
+                return new Dictionary<string, object> { ["error"] = ex.Message };
+            }
+        }
+
+        public override void Load(Dictionary<string, object> data)
+        {
+            if (data == null)
+                return;
+
+            try
+            {
+                if (!data.TryGetValue("json", out var raw) || raw is not string json || string.IsNullOrEmpty(json))
+                {
+                    LogWarn("No valid save data found for BirthSystem.");
+                    return;
+                }
+
+                var blob = JsonUtility.FromJson<SaveBlob>(json);
+                pregnancies = blob?.Pregnancies != null
+                    ? new List<Pregnancy>(blob.Pregnancies)
+                    : new List<Pregnancy>();
+
+                int seed = blob?.Seed ?? config.RngSeed;
+                int sampleCount = blob?.SampleCount ?? 0;
+                config.RngSeed = seed;
+                RestoreRngState(seed, sampleCount);
+                LogInfo($"Loaded {pregnancies.Count} pending pregnancies.");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Load failed: {ex.Message}");
+            }
+        }
+
         private void OnNewDay(OnNewDayEvent e)
         {
             TrySchedulePregnancies(e.Year, e.Month, e.Day);
@@ -96,7 +148,7 @@ namespace Game.Systems.BirthSystem
                 if (pregnancies.Any(p => p.MotherID == mother.ID))
                     continue;
 
-                if (rng.NextDouble() < config.DailyBirthChanceIfMarried)
+                if (NextRandomDouble() < config.DailyBirthChanceIfMarried)
                 {
                     var father = characterSystem.Get(mother.SpouseID.Value);
                     var due = CalendarUtility.AddDays(year, month, day, config.GestationDays);
@@ -127,7 +179,7 @@ namespace Game.Systems.BirthSystem
                 characterSystem.AddCharacter(child);
                 bus.Publish(new OnCharacterBorn(year, month, day, child.ID, father?.ID, mother.ID));
 
-                if (rng.NextDouble() < config.MultipleBirthChance)
+                if (NextRandomDouble() < config.MultipleBirthChance)
                 {
                     var twin = CharacterFactory.CreateChild(father, mother, year, month, day);
                     characterSystem.AddCharacter(twin);
@@ -138,5 +190,32 @@ namespace Game.Systems.BirthSystem
             pregnancies.RemoveAll(p => p.DueYear == year && p.DueMonth == month && p.DueDay == day);
         }
 
+        private double NextRandomDouble()
+        {
+            rngSampleCount++;
+            return rng.NextDouble();
+        }
+
+        private void RestoreRngState(int seed, int sampleCount)
+        {
+            rng = new System.Random(seed);
+            if (sampleCount > 0)
+            {
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    _ = rng.Next();
+                }
+            }
+            rngSampleCount = sampleCount;
+        }
+
+        [Serializable]
+        private class SaveBlob
+        {
+            public int Version = 1;
+            public int Seed;
+            public int SampleCount;
+            public List<Pregnancy> Pregnancies = new();
+        }
     }
 }
