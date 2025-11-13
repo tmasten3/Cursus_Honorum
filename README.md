@@ -83,3 +83,39 @@ flowchart TD
     D --> G[BirthSystem Resolves Pregnancies]
     E & F & G --> H[EventBus Publishes PopulationTick]
     H --> I[UI Ledger Refreshes]
+
+---
+
+## 🛠 Simulation Configuration
+
+All deterministic simulation knobs now live in `Assets/Game/Data/simulation_config.json`. Update this JSON to tweak seeds, mortality bands, fertility rates, and matchmaking behaviour without recompiling scripts.
+
+### Character settings
+| Field | Description |
+|-------|-------------|
+| `Character.RngSeed` | Seed used by the character lifecycle RNG (aging, mortality). |
+| `Character.KeepDeadInMemory` | When `true`, deceased citizens remain cached for history lookups. |
+| `Character.BaseDataPath` | Path to the starting population JSON. |
+| `Character.Mortality.UseAgeBandHazards` | Enables age-band driven mortality. |
+| `Character.Mortality.AgeBands[]` | Inclusive age ranges with yearly hazard rates. Values are converted to daily odds at runtime. |
+
+### Birth settings
+| Field | Description |
+|-------|-------------|
+| `Birth.RngSeed` | RNG seed for pregnancy checks and multiple births. |
+| `Birth.FemaleMinAge` / `Birth.FemaleMaxAge` | Eligible age window for mothers. |
+| `Birth.DailyBirthChanceIfMarried` | Daily probability that an eligible married couple conceives. |
+| `Birth.GestationDays` | Pregnancy length used when scheduling due dates. |
+| `Birth.MultipleBirthChance` | Chance for twins after the first child is born. |
+
+### Marriage settings
+| Field | Description |
+|-------|-------------|
+| `Marriage.RngSeed` | RNG seed for matchmaking and weighting rolls. |
+| `Marriage.MinAgeMale` / `Marriage.MinAgeFemale` | Minimum ages for bachelors and bachelorettes. |
+| `Marriage.DailyMatchmakingCap` | Maximum pair attempts processed each day. |
+| `Marriage.DailyMarriageChanceWhenEligible` | Probability that a proposed pair actually marries. |
+| `Marriage.PreferSameClassWeight` | Multiplier applied when partners share the same social class. |
+| `Marriage.CrossClassAllowed` | When `false`, disallows marriages across social classes. |
+
+> 💡 Tip: Keep `simulation_config.json` under version control so design tweaks stay reproducible across runs.
