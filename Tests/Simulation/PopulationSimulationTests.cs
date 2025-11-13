@@ -1,6 +1,7 @@
 using System.IO;
 using Game.Core;
 using NUnit.Framework;
+using Game.Core;
 using Game.Systems.EventBus;
 using Game.Systems.Time;
 using Game.Systems.CharacterSystem;
@@ -53,16 +54,18 @@ namespace CursusHonorum.Tests.Simulation
             var timeSystem = new TimeSystem(eventBus);
             timeSystem.Initialize(null);
 
-            var characterSystem = new CharacterSystem(eventBus, timeSystem);
+            var simulationConfig = SimulationConfigLoader.LoadOrDefault();
+
+            var characterSystem = new CharacterSystem(eventBus, timeSystem, simulationConfig);
             characterSystem.Initialize(null);
 
-            var marriageSystem = new MarriageSystem(eventBus, characterSystem)
+            var marriageSystem = new MarriageSystem(eventBus, characterSystem, simulationConfig)
             {
                 ConfigPath = configPath
             };
             marriageSystem.Initialize(null);
 
-            var birthSystem = new BirthSystem(eventBus, characterSystem)
+            var birthSystem = new BirthSystem(eventBus, characterSystem, simulationConfig)
             {
                 ConfigPath = configPath
             };

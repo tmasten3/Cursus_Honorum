@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using Game.Core;
 using Game.Systems.EventBus;
 using Game.Systems.Time;
 using Game.Systems.CharacterSystem;
@@ -144,7 +145,9 @@ namespace CursusHonorum.Tests.Simulation
                 TimeSystem = new TimeSystem(EventBus);
                 TimeSystem.Initialize(null);
 
-                CharacterSystem = new CharacterSystem(EventBus, TimeSystem);
+                var simulationConfig = SimulationConfigLoader.LoadOrDefault();
+
+                CharacterSystem = new CharacterSystem(EventBus, TimeSystem, simulationConfig);
                 CharacterSystem.Initialize(null);
 
                 OfficeSystem = new OfficeSystem(EventBus, CharacterSystem);
