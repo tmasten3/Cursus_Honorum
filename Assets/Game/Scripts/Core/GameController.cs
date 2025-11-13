@@ -57,13 +57,13 @@ public class GameController : MonoBehaviour
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("GameController", $"GameStateInitialized listener failed: {ex.Message}");
+                    Game.Core.Logger.Error("GameController", $"GameStateInitialized listener failed: {ex.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.Error("GameController", $"Failed to initialize GameState: {ex.Message}");
+            Game.Core.Logger.Error("GameController", $"Failed to initialize GameState: {ex.Message}");
             enabled = false;
         }
     }
@@ -100,7 +100,7 @@ public class GameController : MonoBehaviour
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("GameController", $"GameStateShuttingDown listener failed: {ex.Message}");
+                    Game.Core.Logger.Error("GameController", $"GameStateShuttingDown listener failed: {ex.Message}");
                 }
             }
             gameState.Shutdown();
