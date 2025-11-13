@@ -40,6 +40,8 @@ namespace Game.Systems.Politics.Offices
 
         public bool DebugMode { get; set; }
 
+        public int TotalOfficesCount => definitions.Count;
+
         public OfficeSystem(EventBus.EventBus eventBus, Game.Systems.CharacterSystem.CharacterSystem characterSystem,
             string customDataPath = null)
         {
