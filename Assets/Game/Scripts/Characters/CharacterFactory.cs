@@ -107,6 +107,18 @@ namespace Game.Data.Characters
             if (!string.IsNullOrEmpty(resolvedFamily))
                 character.Family = resolvedFamily;
 
+            EnsureLifecycleState(character, character.BirthYear + character.Age);
+
+            if (character.TraitRecords == null || character.TraitRecords.Count == 0)
+            {
+                SeedTraitRecordsFromLegacyTraits(character);
+            }
+
+            if (character.Ambition == null)
+                character.Ambition = AmbitionProfile.CreateDefault(character);
+            else if (string.IsNullOrWhiteSpace(character.Ambition.CurrentGoal))
+                character.Ambition.CurrentGoal = AmbitionProfile.InferDefaultGoal(character);
+
             if (corrections.Count > 0)
             {
                 var infoCorrections = new List<string>();
@@ -196,11 +208,15 @@ namespace Game.Data.Characters
                 Family = resolvedFamily,
                 Class = socialClass,
                 Wealth = 0,
-                Influence = 0
+                Influence = 0,
+                Ambition = AmbitionProfile.CreateDefault(),
+                TraitRecords = new List<TraitRecord>()
             };
 
             if (child.RomanName != null)
                 child.RomanName.Gender = child.Gender;
+
+            EnsureLifecycleState(child, year);
 
             return child;
         }
@@ -215,7 +231,7 @@ namespace Game.Data.Characters
             if (romanName != null)
                 romanName.Gender = gender;
 
-            return new Character
+            var character = new Character
             {
                 ID = GetNextID(),
                 RomanName = romanName,
@@ -228,8 +244,13 @@ namespace Game.Data.Characters
                 Family = resolvedFamily,
                 Class = socialClass,
                 Wealth = rng.Next(500, 5000),
-                Influence = rng.Next(1, 10)
+                Influence = rng.Next(1, 10),
+                Ambition = AmbitionProfile.CreateDefault()
             };
+
+            EnsureLifecycleState(character, character.BirthYear + character.Age);
+
+            return character;
         }
 
         public static Character CreateFromTemplate(Character template)
@@ -247,10 +268,74 @@ namespace Game.Data.Characters
             if (!string.IsNullOrEmpty(normalizedFamily))
                 clone.Family = normalizedFamily;
 
+            EnsureLifecycleState(clone, clone.BirthYear + clone.Age);
+
             return clone;
         }
 
         public static int GetNextID() => nextID++;
+
+        public static void EnsureLifecycleState(Character character, int? evaluationYear = null)
+        {
+            if (character == null)
+                return;
+
+            character.TraitRecords ??= new List<TraitRecord>();
+            character.CareerMilestones ??= new List<CareerMilestone>();
+
+            if (character.TraitRecords.Count == 0 && character.Traits != null)
+            {
+                SeedTraitRecordsFromLegacyTraits(character);
+            }
+            else
+            {
+                foreach (var record in character.TraitRecords)
+                {
+                    if (record == null)
+                        continue;
+
+                    record.Id = string.IsNullOrWhiteSpace(record.Id) ? null : record.Id.Trim();
+                    if (record.Level < 1)
+                        record.Level = 1;
+                    if (record.AcquiredYear == 0)
+                        record.AcquiredYear = character.BirthYear + Math.Max(12, character.Age - 3);
+                }
+            }
+
+            character.Ambition ??= AmbitionProfile.CreateDefault(character);
+            if (string.IsNullOrWhiteSpace(character.Ambition.CurrentGoal))
+                character.Ambition.CurrentGoal = AmbitionProfile.InferDefaultGoal(character);
+
+            if (evaluationYear.HasValue)
+                character.Ambition.LastEvaluatedYear = evaluationYear.Value;
+            else if (character.Ambition.LastEvaluatedYear == 0)
+                character.Ambition.LastEvaluatedYear = character.BirthYear + character.Age;
+
+            if (character.Ambition.History == null)
+                character.Ambition.History = new List<AmbitionHistoryRecord>();
+        }
+
+        private static void SeedTraitRecordsFromLegacyTraits(Character character)
+        {
+            if (character?.Traits == null)
+                return;
+
+            character.TraitRecords = new List<TraitRecord>();
+            int acquiredYear = character.BirthYear + Math.Max(12, character.Age - 3);
+            foreach (var trait in character.Traits)
+            {
+                if (string.IsNullOrWhiteSpace(trait))
+                    continue;
+
+                character.TraitRecords.Add(new TraitRecord
+                {
+                    Id = trait.Trim(),
+                    Level = 1,
+                    Experience = 0f,
+                    AcquiredYear = acquiredYear
+                });
+            }
+        }
 
         private static bool IsRoutineNormalization(string correction)
         {
