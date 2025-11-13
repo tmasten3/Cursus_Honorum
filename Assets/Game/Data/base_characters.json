@@ -4784,7 +4784,7 @@
       "FatherID": null,
       "MotherID": null,
       "SiblingID": null,
-      "Family": "Fabia",
+      "Family": "Fabius",
       "Class": 0,
       "Traits": [
         "Cultured",
@@ -4863,7 +4863,7 @@
       "FatherID": 181,
       "MotherID": 182,
       "SiblingID": null,
-      "Family": "Fabia",
+      "Family": "Fabius",
       "Class": 0,
       "Traits": [
         "Artistic"
@@ -4889,7 +4889,7 @@
       "FatherID": 181,
       "MotherID": 182,
       "SiblingID": null,
-      "Family": "Fabia",
+      "Family": "Fabius",
       "Class": 0,
       "Traits": [
         "Gentle"
@@ -4942,7 +4942,7 @@
       "FatherID": null,
       "MotherID": null,
       "SiblingID": null,
-      "Family": "Claudia",
+      "Family": "Claudius",
       "Class": 0,
       "Traits": [
         "Proud",
@@ -5021,7 +5021,7 @@
       "FatherID": 187,
       "MotherID": 188,
       "SiblingID": null,
-      "Family": "Claudia",
+      "Family": "Claudius",
       "Class": 0,
       "Traits": [
         "Elegant"
@@ -5047,7 +5047,7 @@
       "FatherID": 187,
       "MotherID": 188,
       "SiblingID": null,
-      "Family": "Claudia",
+      "Family": "Claudius",
       "Class": 0,
       "Traits": [
         "Gentle"
@@ -5574,7 +5574,7 @@
       "FatherID": null,
       "MotherID": null,
       "SiblingID": null,
-      "Family": "Plautia",
+      "Family": "Plautius",
       "Class": 1,
       "Traits": [
         "Devout",
@@ -5653,7 +5653,7 @@
       "FatherID": 211,
       "MotherID": 212,
       "SiblingID": null,
-      "Family": "Plautia",
+      "Family": "Plautius",
       "Class": 1,
       "Traits": [
         "Kind"
@@ -5679,7 +5679,7 @@
       "FatherID": 211,
       "MotherID": 212,
       "SiblingID": null,
-      "Family": "Plautia",
+      "Family": "Plautius",
       "Class": 1,
       "Traits": [
         "Cheerful"
