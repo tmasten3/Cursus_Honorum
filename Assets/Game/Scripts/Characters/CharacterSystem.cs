@@ -185,7 +185,7 @@ namespace Game.Systems.CharacterSystem
 
         public int GetFamilyCount() => repository.FamilyCount;
 
-        public bool TryGetRepository(out CharacterRepository repo)
+        internal bool TryGetRepository(out CharacterRepository repo)
         {
             repo = repository;
             return repo != null;
