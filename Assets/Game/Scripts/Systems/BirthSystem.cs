@@ -4,6 +4,7 @@ using System.Linq;
 using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
+using Game.Systems.Population;
 
 namespace Game.Systems.BirthSystem
 {
@@ -30,17 +31,9 @@ namespace Game.Systems.BirthSystem
 
         private List<Pregnancy> pregnancies = new();
 
-        [Serializable]
-        private class Config
-        {
-            public int RngSeed = 1338;
-            public int FemaleMinAge = 14;
-            public int FemaleMaxAge = 35;
-            public float DailyBirthChanceIfMarried = 0.0015f;
-            public int GestationDays = 270;
-            public float MultipleBirthChance = 0.02f;
-        }
-        private Config config = new();
+        private BirthSettings config = new();
+
+        public string ConfigPath { get; set; } = PopulationSimulationConfigLoader.DefaultConfigPath;
 
         public override IEnumerable<Type> Dependencies =>
             new[] { typeof(EventBus.EventBus), typeof(CharacterSystem.CharacterSystem) };
@@ -54,6 +47,15 @@ namespace Game.Systems.BirthSystem
         public override void Initialize(GameState state)
         {
             base.Initialize(state);
+
+            var loadedConfig = PopulationSimulationConfigLoader.Load(
+                ConfigPath,
+                LogInfo,
+                LogWarn,
+                LogError);
+
+            config = (loadedConfig ?? new PopulationSimulationConfig()).Birth ?? new BirthSettings();
+
             rng = new System.Random(config.RngSeed);
             if (!subscriptionsActive)
             {

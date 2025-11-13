@@ -73,4 +73,93 @@ namespace Game.Systems.EventBus
             Marriages = marriages;
         }
     }
+
+    /// <summary>
+    /// Fired when a character's ambition focus or intensity changes.
+    /// Published by CharacterSystem during annual lifecycle updates.
+    /// </summary>
+    public class OnCharacterAmbitionChanged : GameEvent
+    {
+        public int CharacterID { get; }
+        public string PreviousGoal { get; }
+        public string CurrentGoal { get; }
+        public int PreviousIntensity { get; }
+        public int CurrentIntensity { get; }
+        public int? PreviousTargetYear { get; }
+        public int? CurrentTargetYear { get; }
+        public bool IsRetired { get; }
+
+        public OnCharacterAmbitionChanged(int year, int month, int day, int characterId, string previousGoal, string currentGoal,
+            int previousIntensity, int currentIntensity, int? previousTargetYear, int? currentTargetYear, bool isRetired)
+            : base(nameof(OnCharacterAmbitionChanged), year, month, day)
+        {
+            CharacterID = characterId;
+            PreviousGoal = previousGoal;
+            CurrentGoal = currentGoal;
+            PreviousIntensity = previousIntensity;
+            CurrentIntensity = currentIntensity;
+            PreviousTargetYear = previousTargetYear;
+            CurrentTargetYear = currentTargetYear;
+            IsRetired = isRetired;
+        }
+    }
+
+    /// <summary>
+    /// Fired when a character retires from active ambition.
+    /// Published by CharacterSystem.
+    /// </summary>
+    public class OnCharacterRetired : GameEvent
+    {
+        public int CharacterID { get; }
+        public string PreviousGoal { get; }
+        public string Notes { get; }
+
+        public OnCharacterRetired(int year, int month, int day, int characterId, string previousGoal, string notes)
+            : base(nameof(OnCharacterRetired), year, month, day)
+        {
+            CharacterID = characterId;
+            PreviousGoal = previousGoal;
+            Notes = notes;
+        }
+    }
+
+    /// <summary>
+    /// Fired when a character levels up a trait.
+    /// Published by CharacterSystem when trait progress thresholds are met.
+    /// </summary>
+    public class OnCharacterTraitAdvanced : GameEvent
+    {
+        public int CharacterID { get; }
+        public string TraitId { get; }
+        public int PreviousLevel { get; }
+        public int NewLevel { get; }
+
+        public OnCharacterTraitAdvanced(int year, int month, int day, int characterId, string traitId, int previousLevel, int newLevel)
+            : base(nameof(OnCharacterTraitAdvanced), year, month, day)
+        {
+            CharacterID = characterId;
+            TraitId = traitId;
+            PreviousLevel = previousLevel;
+            NewLevel = newLevel;
+        }
+    }
+
+    /// <summary>
+    /// Fired whenever a notable career milestone is recorded for a character.
+    /// Published by CharacterSystem.
+    /// </summary>
+    public class OnCharacterCareerMilestoneRecorded : GameEvent
+    {
+        public int CharacterID { get; }
+        public string Title { get; }
+        public string Notes { get; }
+
+        public OnCharacterCareerMilestoneRecorded(int year, int month, int day, int characterId, string title, string notes)
+            : base(nameof(OnCharacterCareerMilestoneRecorded), year, month, day)
+        {
+            CharacterID = characterId;
+            Title = title;
+            Notes = notes;
+        }
+    }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -42,6 +43,10 @@ namespace Game.UI
         private TMP_Text dateText;
         private TMP_Text livingText;
         private TMP_Text familyText;
+        private TMP_Text officeHeaderText;
+        private TMP_Text officeListText;
+        private TMP_Text electionHeaderText;
+        private TMP_Text electionListText;
         private TMP_Text logText;
         private ScrollRect logScroll;
         private GameObject logContainer;
@@ -71,6 +76,21 @@ namespace Game.UI
         private readonly StringBuilder builder = new();
         private int lastLogCount;
         private DateTime lastLogTimestamp;
+        [SerializeField, Min(1)]
+        private int maxOfficeEntries = 8;
+        [SerializeField, Min(1)]
+        private int maxElectionEntries = 6;
+        [SerializeField, Min(1)]
+        private int maxWinnersPerElection = 3;
+        [SerializeField, Min(1)]
+        private int electionLookbackYears = 5;
+        private int lastOfficeDisplayHash;
+        private int lastElectionDisplayHash;
+#if UNITY_EDITOR
+        private int lastSeasonValidationKey = int.MinValue;
+        private int lastSeasonOfficeHash;
+        private int lastSeasonElectionHash;
+#endif
 
         private void Awake()
         {
@@ -494,6 +514,8 @@ namespace Game.UI
 
             UpdateDate();
             UpdatePopulation();
+            UpdateOfficeAssignments();
+            UpdateElectionResults();
             UpdateLogs();
 
             if (populationPanel != null && showPopulationPanel)
@@ -552,6 +574,353 @@ namespace Game.UI
             Canvas.ForceUpdateCanvases();
             if (logScroll != null)
                 logScroll.verticalNormalizedPosition = 0f;
+        }
+
+        private void UpdateOfficeAssignments()
+        {
+            if (officeHeaderText == null || officeListText == null)
+                return;
+
+            if (officeSystem == null || characterSystem == null)
+            {
+                officeHeaderText.text = "Offices: unavailable";
+                officeListText.text = string.Empty;
+                lastOfficeDisplayHash = 0;
+                return;
+            }
+
+            var definitions = officeSystem.GetAllDefinitions();
+            var living = characterSystem.GetAllLiving();
+            if (definitions == null || definitions.Count == 0 || living == null || living.Count == 0)
+            {
+                officeHeaderText.text = "Offices: none";
+                officeListText.text = "No active office holders.";
+                lastOfficeDisplayHash = officeListText.text.GetHashCode();
+                return;
+            }
+
+            var definitionsById = definitions
+                .Where(d => d != null && !string.IsNullOrEmpty(d.Id))
+                .ToDictionary(d => d.Id, d => d, StringComparer.OrdinalIgnoreCase);
+
+            var rows = new List<OfficeDisplayRow>();
+            for (int i = 0; i < living.Count; i++)
+            {
+                var character = living[i];
+                if (character == null)
+                    continue;
+
+                var holdings = officeSystem.GetCurrentHoldings(character.ID);
+                if (holdings == null || holdings.Count == 0)
+                    continue;
+
+                for (int j = 0; j < holdings.Count; j++)
+                {
+                    var seat = holdings[j];
+                    if (seat == null || !seat.HolderId.HasValue)
+                        continue;
+
+                    var holderName = !string.IsNullOrEmpty(character.FullName) ? character.FullName : $"#{seat.HolderId.Value}";
+                    definitionsById.TryGetValue(seat.OfficeId ?? string.Empty, out var definition);
+
+                    string pendingName = null;
+                    if (seat.PendingHolderId.HasValue)
+                    {
+                        var pending = characterSystem.Get(seat.PendingHolderId.Value);
+                        pendingName = !string.IsNullOrEmpty(pending?.FullName)
+                            ? pending.FullName
+                            : $"#{seat.PendingHolderId.Value}";
+                    }
+
+                    rows.Add(new OfficeDisplayRow
+                    {
+                        OfficeId = seat.OfficeId,
+                        OfficeName = definition?.Name ?? seat.OfficeId ?? "Office",
+                        Rank = definition?.Rank ?? int.MinValue,
+                        SeatIndex = seat.SeatIndex,
+                        HolderName = holderName,
+                        StartYear = seat.StartYear,
+                        EndYear = seat.EndYear,
+                        PendingName = pendingName,
+                        PendingStartYear = seat.PendingStartYear
+                    });
+                }
+            }
+
+            if (rows.Count == 0)
+            {
+                officeHeaderText.text = "Offices: none";
+                officeListText.text = "No active office holders.";
+                lastOfficeDisplayHash = officeListText.text.GetHashCode();
+                return;
+            }
+
+            rows.Sort((a, b) =>
+            {
+                int rankCompare = b.Rank.CompareTo(a.Rank);
+                if (rankCompare != 0)
+                    return rankCompare;
+
+                int nameCompare = string.Compare(a.OfficeName, b.OfficeName, StringComparison.OrdinalIgnoreCase);
+                if (nameCompare != 0)
+                    return nameCompare;
+
+                int seatCompare = a.SeatIndex.CompareTo(b.SeatIndex);
+                if (seatCompare != 0)
+                    return seatCompare;
+
+                return string.Compare(a.HolderName, b.HolderName, StringComparison.OrdinalIgnoreCase);
+            });
+
+            int total = rows.Count;
+            int displayCount = Mathf.Clamp(maxOfficeEntries, 1, total);
+
+            builder.Clear();
+            for (int i = 0; i < displayCount; i++)
+            {
+                var row = rows[i];
+                builder.Append(row.OfficeName);
+                if (row.SeatIndex >= 0)
+                {
+                    builder.Append(" #").Append(row.SeatIndex + 1);
+                }
+
+                builder.Append(':').Append(' ').Append(row.HolderName);
+
+                if (row.StartYear != 0 || row.EndYear != 0)
+                {
+                    builder.Append(" (");
+                    if (row.StartYear == row.EndYear)
+                        builder.Append(row.StartYear);
+                    else
+                        builder.Append(row.StartYear).Append('-').Append(row.EndYear);
+                    builder.Append(')');
+                }
+
+                if (!string.IsNullOrEmpty(row.PendingName))
+                {
+                    builder.Append(" → ").Append(row.PendingName);
+                    if (row.PendingStartYear > 0)
+                        builder.Append(" (from ").Append(row.PendingStartYear).Append(')');
+                }
+
+                if (i < displayCount - 1)
+                    builder.Append('\n');
+            }
+
+            if (total > displayCount)
+            {
+                builder.Append('\n').Append('+').Append(total - displayCount).Append(" more…");
+            }
+
+            string text = builder.ToString();
+            officeListText.text = text;
+            officeHeaderText.text = total > displayCount
+                ? $"Offices ({displayCount}/{total})"
+                : $"Offices ({total})";
+            lastOfficeDisplayHash = text.GetHashCode();
+            builder.Clear();
+        }
+
+        private void UpdateElectionResults()
+        {
+            if (electionHeaderText == null || electionListText == null)
+                return;
+
+            if (electionSystem == null || timeSystem == null)
+            {
+                electionHeaderText.text = "Recent Elections: unavailable";
+                electionListText.text = string.Empty;
+                lastElectionDisplayHash = 0;
+                return;
+            }
+
+            var currentDate = timeSystem.GetCurrentDate();
+            int year = currentDate.year;
+            if (year == 0)
+            {
+                electionHeaderText.text = "Recent Elections";
+                electionListText.text = "No election timeline available.";
+                lastElectionDisplayHash = electionListText.text.GetHashCode();
+                return;
+            }
+
+            var entries = GatherRecentElectionRows(year);
+            if (entries.Count == 0)
+            {
+                electionHeaderText.text = "Recent Elections";
+                electionListText.text = "No election results recorded.";
+                lastElectionDisplayHash = electionListText.text.GetHashCode();
+                return;
+            }
+
+            int total = entries.Count;
+            int displayCount = Mathf.Clamp(maxElectionEntries, 1, total);
+
+            builder.Clear();
+            for (int i = 0; i < displayCount; i++)
+            {
+                var entry = entries[i];
+                builder.Append(entry.Year).Append(':').Append(' ').Append(entry.OfficeName).Append(" — ");
+
+                if (entry.Winners == null || entry.Winners.Count == 0)
+                {
+                    builder.Append("No winners recorded");
+                }
+                else
+                {
+                    int winnerCount = Mathf.Clamp(maxWinnersPerElection, 1, entry.Winners.Count);
+                    for (int j = 0; j < winnerCount; j++)
+                    {
+                        var winner = entry.Winners[j];
+                        string name = !string.IsNullOrEmpty(winner.CharacterName)
+                            ? winner.CharacterName
+                            : $"#{winner.CharacterId}";
+                        int seatIndex = winner.SeatIndex >= 0 ? winner.SeatIndex + 1 : winner.SeatIndex;
+                        builder.Append(name);
+                        if (seatIndex > 0)
+                        {
+                            builder.Append(" (seat ").Append(seatIndex).Append(')');
+                        }
+
+                        if (!string.IsNullOrEmpty(winner.Notes))
+                        {
+                            builder.Append(" [").Append(winner.Notes).Append(']');
+                        }
+
+                        if (j < winnerCount - 1)
+                            builder.Append(", ");
+                    }
+
+                    if (entry.Winners.Count > winnerCount)
+                    {
+                        builder.Append(", +").Append(entry.Winners.Count - winnerCount).Append(" more");
+                    }
+                }
+
+                if (i < displayCount - 1)
+                    builder.Append('\n');
+            }
+
+            if (total > displayCount)
+            {
+                builder.Append('\n').Append('+').Append(total - displayCount).Append(" more…");
+            }
+
+            string text = builder.ToString();
+            electionListText.text = text;
+            electionHeaderText.text = total > displayCount
+                ? $"Recent Elections ({displayCount}/{total})"
+                : $"Recent Elections ({total})";
+            lastElectionDisplayHash = text.GetHashCode();
+            builder.Clear();
+        }
+
+        private List<ElectionDisplayRow> GatherRecentElectionRows(int startYear)
+        {
+            var rows = new List<ElectionDisplayRow>();
+            if (electionSystem == null)
+                return rows;
+
+            int yearsToCheck = Mathf.Max(1, electionLookbackYears);
+            for (int year = startYear; year >= startYear - yearsToCheck; year--)
+            {
+                var records = electionSystem.GetResultsForYear(year);
+                if (records == null || records.Count == 0)
+                    continue;
+
+                for (int i = records.Count - 1; i >= 0; i--)
+                {
+                    var record = records[i];
+                    if (record == null)
+                        continue;
+
+                    rows.Add(new ElectionDisplayRow
+                    {
+                        Year = record.Year,
+                        OfficeName = record.Office?.Name ?? record.Office?.Id ?? "Office",
+                        Rank = record.Office?.Rank ?? int.MinValue,
+                        Winners = record.Winners ?? new List<ElectionWinnerSummary>()
+                    });
+                }
+            }
+
+            rows.Sort((a, b) =>
+            {
+                int yearCompare = b.Year.CompareTo(a.Year);
+                if (yearCompare != 0)
+                    return yearCompare;
+
+                int rankCompare = b.Rank.CompareTo(a.Rank);
+                if (rankCompare != 0)
+                    return rankCompare;
+
+                return string.Compare(a.OfficeName, b.OfficeName, StringComparison.OrdinalIgnoreCase);
+            });
+
+            return rows;
+        }
+
+        private void ValidateSeasonalSections()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying || timeSystem == null)
+                return;
+
+            var current = timeSystem.GetCurrentDate();
+            int seasonKey = (current.year * 100) + current.month;
+            if (seasonKey == lastSeasonValidationKey)
+                return;
+
+            if (officeSystem != null && officeListText != null)
+            {
+                if (lastSeasonValidationKey != int.MinValue && current.month == 1 && lastSeasonOfficeHash == lastOfficeDisplayHash)
+                {
+                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Office section did not update at the new year. Verify bindings.");
+                }
+
+                lastSeasonOfficeHash = lastOfficeDisplayHash;
+            }
+
+            if (electionSystem != null && electionListText != null)
+            {
+                bool inElectionSeason = current.month >= 6 && current.month <= 7;
+                if (inElectionSeason && string.IsNullOrEmpty(electionListText.text))
+                {
+                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Election section empty during election season.");
+                }
+
+                if (lastSeasonValidationKey != int.MinValue && current.month == 7 && lastSeasonElectionHash == lastElectionDisplayHash)
+                {
+                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Election results section did not refresh after elections.");
+                }
+
+                lastSeasonElectionHash = lastElectionDisplayHash;
+            }
+
+            lastSeasonValidationKey = seasonKey;
+#endif
+        }
+
+        private struct OfficeDisplayRow
+        {
+            public string OfficeId;
+            public string OfficeName;
+            public int Rank;
+            public int SeatIndex;
+            public string HolderName;
+            public int StartYear;
+            public int EndYear;
+            public string PendingName;
+            public int PendingStartYear;
+        }
+
+        private struct ElectionDisplayRow
+        {
+            public int Year;
+            public string OfficeName;
+            public int Rank;
+            public List<ElectionWinnerSummary> Winners;
         }
     }
 }
