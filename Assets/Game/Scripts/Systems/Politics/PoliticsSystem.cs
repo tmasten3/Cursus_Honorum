@@ -269,10 +269,19 @@ namespace Game.Systems.Politics
                     continue;
 
                 var history = officeSystem.GetCareerHistory(character.ID);
-                if (history == null || history.Count == 0)
+                if (history != null && history.Count > 0)
+                {
+                    termTracker.SeedFromHistory(character.ID, history, ResolveOfficeName);
+                }
+
+                var holdings = officeSystem.GetCurrentHoldings(character.ID);
+                if (holdings == null)
                     continue;
 
-                termTracker.SeedFromHistory(character.ID, history, ResolveOfficeName);
+                foreach (var seat in holdings)
+                {
+                    termTracker.SeedActiveAssignment(character.ID, seat, ResolveOfficeName);
+                }
             }
         }
 
