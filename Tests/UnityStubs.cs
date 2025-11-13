@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -9,6 +10,17 @@ namespace UnityEngine
         public static void Log(object message) => Console.WriteLine(message);
         public static void LogWarning(object message) => Console.WriteLine(message);
         public static void LogError(object message) => Console.Error.WriteLine(message);
+    }
+
+    public static class Application
+    {
+        private static string _persistentDataPath = Path.GetTempPath();
+
+        public static string persistentDataPath
+        {
+            get => _persistentDataPath;
+            set => _persistentDataPath = string.IsNullOrWhiteSpace(value) ? Path.GetTempPath() : value;
+        }
     }
 
     public static class Mathf

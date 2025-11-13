@@ -5,6 +5,7 @@ using Game.Systems.TimeSystem;
 using Game.Systems.CharacterSystem;
 using Game.Systems.MarriageSystem;
 using Game.Systems.BirthSystem;
+using UnityEngine;
 
 namespace CursusHonorum.Tests.Simulation
 {
@@ -14,6 +15,10 @@ namespace CursusHonorum.Tests.Simulation
         public void CharactersMarryAndChildrenAreBornOverExtendedTimeline()
         {
             Directory.SetCurrentDirectory(GetProjectRoot());
+
+            var tempDataPath = Path.Combine(Path.GetTempPath(), "CursusHonorumTests", Path.GetRandomFileName());
+            Directory.CreateDirectory(tempDataPath);
+            Application.persistentDataPath = tempDataPath;
 
             var eventBus = new EventBus();
             eventBus.Initialize(null);
