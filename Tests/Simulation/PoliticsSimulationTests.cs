@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using Game.Core;
 using Game.Systems.EventBus;
 using Game.Systems.Time;
 using Game.Systems.CharacterSystem;
+using Game.Systems.Politics;
 using Game.Systems.Politics.Offices;
 using Game.Systems.Politics.Elections;
 using UnityEngine;
@@ -116,6 +118,34 @@ namespace CursusHonorum.Tests.Simulation
             return winnersByOffice;
         }
 
+        [Test]
+        public void PoliticsSystemTracksElectionCycleProgression()
+        {
+            Directory.SetCurrentDirectory(GetProjectRoot());
+
+            using var harness = new SimulationHarness(includeElectionSystem: true);
+
+            var startingCycle = harness.PoliticsSystem!.GetCurrentElectionCycle();
+            Assert.That(startingCycle.Phase, Is.EqualTo(ElectionCyclePhase.QuietPeriod),
+                "Politics system should begin the year in the quiet period phase.");
+
+            harness.AdvanceDays(170);
+
+            var openedCycle = harness.PoliticsSystem!.GetCurrentElectionCycle();
+            Assert.That(openedCycle.Phase, Is.EqualTo(ElectionCyclePhase.ElectionSeasonOpen),
+                "Election season did not open after advancing into June.");
+            Assert.That(openedCycle.Offices, Is.Not.Empty,
+                "Election cycle snapshot did not include offices when the season opened.");
+
+            harness.AdvanceDays(40);
+
+            var completedCycle = harness.PoliticsSystem!.GetCurrentElectionCycle();
+            Assert.That(completedCycle.Phase, Is.EqualTo(ElectionCyclePhase.ResultsPublished),
+                "Politics system did not transition to results after the July elections.");
+            Assert.That(completedCycle.Results, Is.Not.Empty,
+                "Election results were not captured by the politics system after elections concluded.");
+        }
+
         private static string GetProjectRoot()
         {
             var testDir = TestContext.CurrentContext.TestDirectory;
@@ -129,6 +159,7 @@ namespace CursusHonorum.Tests.Simulation
             public CharacterSystem CharacterSystem { get; }
             public OfficeSystem OfficeSystem { get; }
             public ElectionSystem? ElectionSystem { get; }
+            public PoliticsSystem? PoliticsSystem { get; }
 
             private readonly string dataPath;
 
@@ -154,6 +185,9 @@ namespace CursusHonorum.Tests.Simulation
                 {
                     ElectionSystem = new ElectionSystem(EventBus, TimeSystem, CharacterSystem, OfficeSystem);
                     ElectionSystem.Initialize(null);
+
+                    PoliticsSystem = new PoliticsSystem(EventBus, TimeSystem, CharacterSystem, OfficeSystem, ElectionSystem);
+                    PoliticsSystem.Initialize(null);
                 }
             }
 
@@ -172,6 +206,7 @@ namespace CursusHonorum.Tests.Simulation
 
             public void Dispose()
             {
+                PoliticsSystem?.Shutdown();
                 ElectionSystem?.Shutdown();
                 OfficeSystem.Shutdown();
                 CharacterSystem.Shutdown();

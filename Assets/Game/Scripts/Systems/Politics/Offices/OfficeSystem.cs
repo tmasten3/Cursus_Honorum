@@ -4,7 +4,6 @@ using System.Linq;
 using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
-using Game.Systems.Politics.Elections;
 
 namespace Game.Systems.Politics.Offices
 {
@@ -20,10 +19,10 @@ namespace Game.Systems.Politics.Offices
         private readonly EventBus.EventBus eventBus;
         private readonly Game.Systems.CharacterSystem.CharacterSystem characterSystem;
 
-        private readonly string dataPath;
         private readonly OfficeDefinitions definitions;
         private readonly OfficeState state;
         private readonly OfficeEligibilityService eligibility;
+        private readonly IMagistrateOfficeRepository repository;
 
         private int currentYear;
         private int currentMonth;
@@ -37,15 +36,14 @@ namespace Game.Systems.Politics.Offices
         public int TotalOfficesCount => definitions.Count;
 
         public OfficeSystem(EventBus.EventBus eventBus, Game.Systems.CharacterSystem.CharacterSystem characterSystem,
-            string customDataPath = null)
+            IMagistrateOfficeRepository repository = null)
         {
             this.eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             this.characterSystem = characterSystem ?? throw new ArgumentNullException(nameof(characterSystem));
-            dataPath = string.IsNullOrWhiteSpace(customDataPath)
-                ? System.IO.Path.Combine("Assets", "Game", "Data", "BaseOffices.json")
-                : customDataPath;
+            string defaultPath = System.IO.Path.Combine("Assets", "Game", "Data", "MagistrateOffices.json");
+            this.repository = repository ?? new JsonMagistrateOfficeRepository(defaultPath, LogWarn, LogError);
 
-            definitions = new OfficeDefinitions(dataPath, LogInfo, LogWarn, LogError);
+            definitions = new OfficeDefinitions(LogInfo, LogWarn, LogError);
             state = new OfficeState(LogWarn);
             eligibility = new OfficeEligibilityService(state);
         }
@@ -53,7 +51,8 @@ namespace Game.Systems.Politics.Offices
         public override void Initialize(GameState state)
         {
             base.Initialize(state);
-            definitions.LoadDefinitions();
+            var collection = repository.Load();
+            definitions.LoadDefinitions(collection);
             this.state.EnsureSeatStructures(definitions.GetAllDefinitions());
 
             if (!subscriptionsActive)

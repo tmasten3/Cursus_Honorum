@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Game.Systems.EventBus;
 using Game.Systems.Politics.Offices;
 
-namespace Game.Systems.Politics.Elections
+namespace Game.Core
 {
-    public class ElectionSeasonOpenedEvent : GameEvent
+    public sealed class ElectionSeasonOpenedEvent : GameEvent
     {
         public int ElectionYear { get; }
         public IReadOnlyList<ElectionOfficeSummary> Offices { get; }
@@ -18,7 +18,7 @@ namespace Game.Systems.Politics.Elections
         }
     }
 
-    public class ElectionSeasonCompletedEvent : GameEvent
+    public sealed class ElectionSeasonCompletedEvent : GameEvent
     {
         public int ElectionYear { get; }
         public IReadOnlyList<ElectionResultSummary> Results { get; }
@@ -31,7 +31,7 @@ namespace Game.Systems.Politics.Elections
         }
     }
 
-    public class OfficeAssignedEvent : GameEvent
+    public sealed class OfficeAssignedEvent : GameEvent
     {
         public string OfficeId { get; }
         public string OfficeName { get; }
@@ -55,7 +55,7 @@ namespace Game.Systems.Politics.Elections
         }
     }
 
-    public class ElectionOfficeSummary
+    public sealed class ElectionOfficeSummary
     {
         public string OfficeId;
         public string OfficeName;
@@ -63,7 +63,7 @@ namespace Game.Systems.Politics.Elections
         public int SeatsAvailable;
     }
 
-    public class ElectionResultSummary
+    public sealed class ElectionResultSummary
     {
         public string OfficeId;
         public string OfficeName;
@@ -71,7 +71,7 @@ namespace Game.Systems.Politics.Elections
         public List<ElectionWinnerSummary> Winners = new();
     }
 
-    public class ElectionWinnerSummary
+    public sealed class ElectionWinnerSummary
     {
         public int CharacterId;
         public string CharacterName;
