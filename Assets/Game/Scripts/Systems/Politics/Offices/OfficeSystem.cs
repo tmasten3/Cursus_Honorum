@@ -1032,7 +1032,14 @@ namespace Game.Systems.Politics.Offices
                 {
                     foreach (var entry in blob.LastHeld)
                     {
-                        lastHeldYear[(entry.CharacterId, entry.OfficeId)] = entry.Year;
+                        var normalizedId = NormalizeOfficeId(entry.OfficeId);
+                        if (normalizedId == null)
+                        {
+                            LogWarn($"Last-held entry for character {entry.CharacterId} had an invalid office id '{entry.OfficeId}'.");
+                            continue;
+                        }
+
+                        lastHeldYear[(entry.CharacterId, normalizedId)] = entry.Year;
                     }
                 }
 
