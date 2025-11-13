@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
+using Game.Systems.Population;
 
 namespace Game.Systems.MarriageSystem
 {
@@ -21,6 +22,10 @@ namespace Game.Systems.MarriageSystem
         private int rngSeed;
         private bool subscriptionsActive;
 
+        private MarriageSettings config = new();
+
+        public string ConfigPath { get; set; } = PopulationSimulationConfigLoader.DefaultConfigPath;
+
         public override IEnumerable<Type> Dependencies =>
             new[] { typeof(EventBus.EventBus), typeof(CharacterSystem.CharacterSystem) };
 
@@ -38,7 +43,15 @@ namespace Game.Systems.MarriageSystem
         {
             base.Initialize(state);
 
-            rng = new System.Random(rngSeed);
+            var loadedConfig = PopulationSimulationConfigLoader.Load(
+                ConfigPath,
+                LogInfo,
+                LogWarn,
+                LogError);
+
+            config = (loadedConfig ?? new PopulationSimulationConfig()).Marriage ?? new MarriageSettings();
+
+            rng = new System.Random(config.RngSeed);
             if (!subscriptionsActive)
             {
                 bus.Subscribe<OnNewDayEvent>(OnNewDay);

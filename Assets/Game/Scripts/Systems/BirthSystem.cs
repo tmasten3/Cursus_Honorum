@@ -4,6 +4,7 @@ using System.Linq;
 using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
+using Game.Systems.Population;
 
 namespace Game.Systems.BirthSystem
 {
@@ -30,7 +31,11 @@ namespace Game.Systems.BirthSystem
             public int DueYear, DueMonth, DueDay;
         }
 
-        private readonly List<Pregnancy> pregnancies = new();
+        private List<Pregnancy> pregnancies = new();
+
+        private BirthSettings config = new();
+
+        public string ConfigPath { get; set; } = PopulationSimulationConfigLoader.DefaultConfigPath;
 
         public override IEnumerable<Type> Dependencies =>
             new[] { typeof(EventBus.EventBus), typeof(CharacterSystem.CharacterSystem) };
@@ -48,7 +53,16 @@ namespace Game.Systems.BirthSystem
         public override void Initialize(GameState state)
         {
             base.Initialize(state);
-            rng = new System.Random(rngSeed);
+
+            var loadedConfig = PopulationSimulationConfigLoader.Load(
+                ConfigPath,
+                LogInfo,
+                LogWarn,
+                LogError);
+
+            config = (loadedConfig ?? new PopulationSimulationConfig()).Birth ?? new BirthSettings();
+
+            rng = new System.Random(config.RngSeed);
             if (!subscriptionsActive)
             {
                 bus.Subscribe<OnNewDayEvent>(OnNewDay);
