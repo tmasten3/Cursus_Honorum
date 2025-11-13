@@ -51,7 +51,9 @@ namespace Game.Systems.MarriageSystem
 
             config = (loadedConfig ?? new PopulationSimulationConfig()).Marriage ?? new MarriageSettings();
 
-            rng = new System.Random(config.RngSeed);
+            rngSeed = settings.RngSeed;
+            config.RngSeed = rngSeed;
+            RestoreRngState(rngSeed, 0);
             if (!subscriptionsActive)
             {
                 bus.Subscribe<OnNewDayEvent>(OnNewDay);
@@ -77,9 +79,11 @@ namespace Game.Systems.MarriageSystem
         {
             try
             {
+                config.RngSeed = rngSeed;
+
                 var blob = new SaveBlob
                 {
-                    Seed = config.RngSeed,
+                    Seed = rngSeed,
                     SampleCount = rngSampleCount
                 };
 
@@ -110,6 +114,7 @@ namespace Game.Systems.MarriageSystem
                 int seed = blob?.Seed ?? config.RngSeed;
                 int sampleCount = blob?.SampleCount ?? 0;
                 config.RngSeed = seed;
+                rngSeed = seed;
                 RestoreRngState(seed, sampleCount);
             }
             catch (Exception ex)
