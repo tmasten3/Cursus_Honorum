@@ -13,68 +13,76 @@ namespace Game.Core
 
         public IReadOnlyList<SystemDescriptor> Descriptors => descriptors;
 
+        public SystemBootstrapProfile() : this(Array.Empty<SystemDescriptor>())
+        {
+        }
+
         public SystemBootstrapProfile(IEnumerable<SystemDescriptor> descriptors)
         {
             if (descriptors == null) throw new ArgumentNullException(nameof(descriptors));
             this.descriptors = descriptors.ToList();
         }
 
-        public static SystemBootstrapProfile Default { get; } = new SystemBootstrapProfile(new[]
+        public static SystemBootstrapProfile Default => CreateDefaultProfile();
+
+        public static SystemBootstrapProfile CreateDefaultProfile()
         {
-            SystemDescriptor.For<Game.Systems.EventBus.EventBus>(_ => new Game.Systems.EventBus.EventBus()),
-            SystemDescriptor.For<Game.Systems.TimeSystem.TimeSystem>(
-                resolver => new Game.Systems.TimeSystem.TimeSystem(resolver.Resolve<Game.Systems.EventBus.EventBus>()),
-                new[] { typeof(Game.Systems.EventBus.EventBus) }),
-            SystemDescriptor.For<Game.Systems.CharacterSystem.CharacterSystem>(
+            var profile = new SystemBootstrapProfile();
+            profile.LoadDefaultSystems();
+            return profile;
+        }
+
+        public void LoadDefaultSystems()
+        {
+            descriptors.Clear();
+
+            AddSystem(_ => new Game.Systems.EventBus.EventBus());
+            AddSystem(
+                resolver => new Game.Systems.TimeSystem.TimeSystem(
+                    resolver.Resolve<Game.Systems.EventBus.EventBus>()),
+                typeof(Game.Systems.EventBus.EventBus));
+            AddSystem(
                 resolver => new Game.Systems.CharacterSystem.CharacterSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
                     resolver.Resolve<Game.Systems.TimeSystem.TimeSystem>()),
-                new[]
-                {
-                    typeof(Game.Systems.EventBus.EventBus),
-                    typeof(Game.Systems.TimeSystem.TimeSystem)
-                }),
-            SystemDescriptor.For<Game.Systems.BirthSystem.BirthSystem>(
+                typeof(Game.Systems.EventBus.EventBus),
+                typeof(Game.Systems.TimeSystem.TimeSystem));
+            AddSystem(
                 resolver => new Game.Systems.BirthSystem.BirthSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
                     resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
-                new[]
-                {
-                    typeof(Game.Systems.EventBus.EventBus),
-                    typeof(Game.Systems.CharacterSystem.CharacterSystem)
-                }),
-            SystemDescriptor.For<Game.Systems.Politics.Offices.OfficeSystem>(
+                typeof(Game.Systems.EventBus.EventBus),
+                typeof(Game.Systems.CharacterSystem.CharacterSystem));
+            AddSystem(
                 resolver => new Game.Systems.Politics.Offices.OfficeSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
                     resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
-                new[]
-                {
-                    typeof(Game.Systems.EventBus.EventBus),
-                    typeof(Game.Systems.CharacterSystem.CharacterSystem)
-                }),
-            SystemDescriptor.For<Game.Systems.MarriageSystem.MarriageSystem>(
+                typeof(Game.Systems.EventBus.EventBus),
+                typeof(Game.Systems.CharacterSystem.CharacterSystem));
+            AddSystem(
                 resolver => new Game.Systems.MarriageSystem.MarriageSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
                     resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
-                new[]
-                {
-                    typeof(Game.Systems.EventBus.EventBus),
-                    typeof(Game.Systems.CharacterSystem.CharacterSystem)
-                }),
-            SystemDescriptor.For<Game.Systems.Politics.Elections.ElectionSystem>(
+                typeof(Game.Systems.EventBus.EventBus),
+                typeof(Game.Systems.CharacterSystem.CharacterSystem));
+            AddSystem(
                 resolver => new Game.Systems.Politics.Elections.ElectionSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
                     resolver.Resolve<Game.Systems.TimeSystem.TimeSystem>(),
                     resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>(),
                     resolver.Resolve<Game.Systems.Politics.Offices.OfficeSystem>()),
-                new[]
-                {
-                    typeof(Game.Systems.EventBus.EventBus),
-                    typeof(Game.Systems.TimeSystem.TimeSystem),
-                    typeof(Game.Systems.CharacterSystem.CharacterSystem),
-                    typeof(Game.Systems.Politics.Offices.OfficeSystem)
-                })
-        });
+                typeof(Game.Systems.EventBus.EventBus),
+                typeof(Game.Systems.TimeSystem.TimeSystem),
+                typeof(Game.Systems.CharacterSystem.CharacterSystem),
+                typeof(Game.Systems.Politics.Offices.OfficeSystem));
+        }
+
+        public void AddSystem<TSystem>(Func<SystemResolver, TSystem> factory, params Type[] dependencies)
+            where TSystem : class, IGameSystem
+        {
+            if (factory == null) throw new ArgumentNullException(nameof(factory));
+            descriptors.Add(SystemDescriptor.For(factory, dependencies));
+        }
     }
 
     /// <summary>

@@ -195,6 +195,8 @@ namespace Game.Systems.CharacterSystem
 
         public int CountAlive() => repository.AliveCount;
 
+        public int GetLiveCharacterCount() => repository.AliveCount;
+
         public int GetFamilyCount() => repository.FamilyCount;
 
         internal bool TryGetRepository(out CharacterRepository repo)

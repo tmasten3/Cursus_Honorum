@@ -71,6 +71,17 @@ namespace Game.Systems.TimeSystem
         public void SetSecondsPerDay(float seconds) =>
             secondsPerDay = Mathf.Max(0.1f, seconds);
 
+        public (int Year, int Month, int Day) CurrentDate => (year, month, day);
+
+        public void StepDays(int days)
+        {
+            if (days < 0)
+                throw new ArgumentOutOfRangeException(nameof(days), "Days must be non-negative.");
+
+            for (int i = 0; i < days; i++)
+                AdvanceDay();
+        }
+
         private void AdvanceDay()
         {
             day++;
