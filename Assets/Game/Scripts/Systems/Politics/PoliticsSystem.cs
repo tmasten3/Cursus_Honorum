@@ -288,9 +288,9 @@ namespace Game.Systems.Politics
                 if (holdings == null)
                     continue;
 
-                foreach (var descriptor in holdings)
+                foreach (var seat in holdings)
                 {
-                    termTracker.SeedActiveAssignment(character.ID, descriptor, ResolveOfficeName);
+                    termTracker.SeedActiveAssignment(character.ID, seat, ResolveOfficeName);
                 }
             }
         }
