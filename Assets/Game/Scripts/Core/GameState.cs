@@ -64,11 +64,14 @@ namespace Game.Core
 
         public void Shutdown()
         {
-            if (!IsInitialized)
-                return;
-
-            registry.ShutdownAll();
-            IsInitialized = false;
+            try
+            {
+                registry.ShutdownAll();
+            }
+            finally
+            {
+                IsInitialized = false;
+            }
         }
 
     }
