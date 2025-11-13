@@ -20,6 +20,7 @@ namespace Game.Systems.MarriageSystem
         private readonly SimulationConfig.MarriageSettings settings;
         private System.Random rng;
         private int rngSeed;
+        private int rngSampleCount;
         private bool subscriptionsActive;
 
         private MarriageSettings config = new();
@@ -148,7 +149,7 @@ namespace Game.Systems.MarriageSystem
                 int fIndex = WeightedPickFemale(singlesFemale, male.Class);
                 var female = singlesFemale[fIndex];
 
-                if (rng.NextDouble() < settings.DailyMarriageChanceWhenEligible)
+                if (NextRandomDouble() < settings.DailyMarriageChanceWhenEligible)
                 {
                     if (characterSystem.Marry(male.ID, female.ID))
                     {

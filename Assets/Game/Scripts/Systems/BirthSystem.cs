@@ -21,6 +21,7 @@ namespace Game.Systems.BirthSystem
         private readonly SimulationConfig.BirthSettings settings;
         private System.Random rng;
         private int rngSeed;
+        private int rngSampleCount;
         private bool subscriptionsActive;
 
         [Serializable]
@@ -62,7 +63,8 @@ namespace Game.Systems.BirthSystem
 
             config = (loadedConfig ?? new PopulationSimulationConfig()).Birth ?? new BirthSettings();
 
-            rng = new System.Random(config.RngSeed);
+            rngSeed = config.RngSeed;
+            RestoreRngState(rngSeed, 0);
             if (!subscriptionsActive)
             {
                 bus.Subscribe<OnNewDayEvent>(OnNewDay);
@@ -153,7 +155,7 @@ namespace Game.Systems.BirthSystem
                 if (pregnancies.Any(p => p.MotherID == mother.ID))
                     continue;
 
-                if (rng.NextDouble() < settings.DailyBirthChanceIfMarried)
+                if (NextRandomDouble() < settings.DailyBirthChanceIfMarried)
                 {
                     var father = characterSystem.Get(mother.SpouseID.Value);
                     var due = CalendarUtility.AddDays(year, month, day, settings.GestationDays);
@@ -184,7 +186,7 @@ namespace Game.Systems.BirthSystem
                 characterSystem.AddCharacter(child);
                 bus.Publish(new OnCharacterBorn(year, month, day, child.ID, father?.ID, mother.ID));
 
-                if (rng.NextDouble() < settings.MultipleBirthChance)
+                if (NextRandomDouble() < settings.MultipleBirthChance)
                 {
                     var twin = CharacterFactory.CreateChild(father, mother, year, month, day);
                     characterSystem.AddCharacter(twin);
