@@ -227,6 +227,8 @@ namespace Game.UI
 
             overlayBound = false;
 
+            UnsubscribeFromController();
+            gameController = null;
             gameState = null;
             timeSystem = null;
             characterSystem = null;
@@ -246,21 +248,33 @@ namespace Game.UI
         {
             try
             {
-                GameController controller = null;
-
-                while (controller == null)
+                while (true)
                 {
-                    controller = FindObjectOfType<GameController>();
+                    GameController controller = FindObjectOfType<GameController>();
+
+                    while (controller == null)
+                    {
+                        yield return null;
+                        controller = FindObjectOfType<GameController>();
+                    }
+
+                    while (true)
+                    {
+                        if (controller == null)
+                            break;
+
+                        var state = controller.GameState;
+                        if (state != null)
+                        {
+                            BindSystems(controller);
+                            yield break;
+                        }
+
+                        yield return null;
+                    }
+
                     yield return null;
                 }
-
-                while (controller != null && controller.GameState == null)
-                    yield return null;
-
-                if (controller == null)
-                    yield break;
-
-                BindSystems(controller);
             }
             finally
             {
