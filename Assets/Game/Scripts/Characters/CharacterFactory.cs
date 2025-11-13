@@ -24,7 +24,7 @@ namespace Game.Data.Characters
         {
             if (!File.Exists(path))
             {
-                Logger.Warn(LogCategory, $"Base character file not found at '{path}'.");
+                Game.Core.Logger.Warn(LogCategory, $"Base character file not found at '{path}'.");
                 return new List<Character>();
             }
 
@@ -32,7 +32,7 @@ namespace Game.Data.Characters
             var wrapper = JsonUtility.FromJson<CharacterDataWrapper>(json);
             if (wrapper == null || wrapper.Characters == null)
             {
-                Logger.Error(LogCategory, $"Failed to parse base character JSON from '{path}'.");
+                Game.Core.Logger.Error(LogCategory, $"Failed to parse base character JSON from '{path}'.");
                 return new List<Character>();
             }
 
@@ -73,7 +73,7 @@ namespace Game.Data.Characters
 
             if (corrections.Count > 0)
             {
-                Logger.Warn(LogCategory, $"{sourcePath}: Character #{character.ID} - {string.Join("; ", corrections)}");
+                Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{character.ID} - {string.Join("; ", corrections)}");
             }
         }
 
@@ -88,12 +88,12 @@ namespace Game.Data.Characters
 
                 if (c.FatherID == c.ID || c.MotherID == c.ID)
                 {
-                    Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is listed as their own parent.");
+                    Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is listed as their own parent.");
                 }
 
                 if (c.SpouseID == c.ID)
                 {
-                    Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is married to themselves.");
+                    Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is married to themselves.");
                 }
             }
         }
