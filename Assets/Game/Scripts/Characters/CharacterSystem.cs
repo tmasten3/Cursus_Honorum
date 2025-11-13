@@ -68,7 +68,8 @@ namespace Game.Systems.CharacterSystem
 
                 try
                 {
-                    familyService.AddCharacter(character, settings.KeepDeadInMemory);
+                    CharacterFactory.EnsureLifecycleState(character, character.BirthYear + character.Age);
+                    familyService.AddCharacter(character, config.KeepDeadInMemory);
                 }
                 catch (Exception ex)
                 {
@@ -120,6 +121,8 @@ namespace Game.Systems.CharacterSystem
 
         private void OnNewYear(OnNewYearEvent e)
         {
+            curYear = e.Year; curMonth = e.Month; curDay = e.Day;
+            ProcessAnnualLifecycle(e.Year, e.Month, e.Day);
             LogInfo($"Year {e.Year} begins. Alive: {repository.AliveCount}, Families: {repository.FamilyCount}");
         }
 
@@ -134,8 +137,14 @@ namespace Game.Systems.CharacterSystem
 
         public void AddCharacter(Character character)
         {
-            familyService.AddCharacter(character, settings.KeepDeadInMemory);
-            metrics.RecordBirth();
+            int? evaluationYear = null;
+            if (curYear != 0)
+                evaluationYear = curYear;
+            else if (character != null)
+                evaluationYear = character.BirthYear + character.Age;
+
+            CharacterFactory.EnsureLifecycleState(character, evaluationYear);
+            familyService.AddCharacter(character, config.KeepDeadInMemory); metrics.RecordBirth();
         }
 
         public bool Kill(int id, string cause = "Natural causes")
@@ -204,12 +213,13 @@ namespace Game.Systems.CharacterSystem
                 var blob = JsonUtility.FromJson<SaveBlob>(json);
                 repository.Reset();
                 foreach (var character in blob.Characters)
-                    repository.Add(character, settings.KeepDeadInMemory);
-
-                repository.ApplyLifeState(blob.AliveIDs, blob.DeadIDs, settings.KeepDeadInMemory);
-
-                rngSeed = blob.Seed;
-                rng = new System.Random(rngSeed);
+                {
+                    CharacterFactory.EnsureLifecycleState(character, character.BirthYear + character.Age);
+                    repository.Add(character, config.KeepDeadInMemory);
+                }
+                repository.ApplyLifeState(blob.AliveIDs, blob.DeadIDs, config.KeepDeadInMemory);
+                config.RngSeed = blob.Seed;
+                rng = new System.Random(config.RngSeed);
                 mortality = new CharacterMortalityService(repository, rng, GetDailyHazard);
                 metrics.Reset();
 
@@ -240,5 +250,261 @@ namespace Game.Systems.CharacterSystem
             yearly = Mathf.Clamp01(yearly);
             return 1f - Mathf.Pow(1f - yearly, 1f / 365f);
         }
+
+        private void ProcessAnnualLifecycle(int year, int month, int day)
+        {
+            var living = familyService.GetAllLiving();
+            foreach (var character in living)
+            {
+                CharacterFactory.EnsureLifecycleState(character, year);
+                UpdateAmbitionProfile(character, year, month, day);
+                ProcessTraitDevelopment(character, year, month, day);
+                ApplyRetirementIfNeeded(character, year, month, day);
+            }
+        }
+
+        private void UpdateAmbitionProfile(Character character, int year, int month, int day)
+        {
+            var ambition = character.Ambition ?? AmbitionProfile.CreateDefault(character);
+            character.Ambition = ambition;
+
+            var previousGoal = ambition.CurrentGoal ?? AmbitionProfile.InferDefaultGoal(character);
+            var desiredGoal = DetermineCurrentAmbitionGoal(character);
+            bool goalChanged = !string.Equals(previousGoal, desiredGoal, StringComparison.Ordinal);
+
+            int previousIntensity = ambition.Intensity;
+            int desiredIntensity = GetDesiredAmbitionIntensity(character);
+            int delta = Mathf.Clamp(desiredIntensity - ambition.Intensity, -3, 3);
+            bool intensityChanged = delta != 0;
+
+            int? previousTarget = ambition.TargetYear;
+
+            if (goalChanged)
+            {
+                ambition.CurrentGoal = desiredGoal;
+                ambition.History ??= new List<AmbitionHistoryRecord>();
+                ambition.History.Add(new AmbitionHistoryRecord
+                {
+                    Year = year,
+                    Description = $"Shifted focus to {desiredGoal}",
+                    Outcome = null
+                });
+            }
+
+            if (intensityChanged)
+            {
+                ambition.Intensity = Mathf.Clamp(ambition.Intensity + delta, 0, 100);
+                ambition.LastEvaluatedYear = year;
+                MaybeRecordAmbitionHistory(ambition, year, previousIntensity, ambition.Intensity);
+            }
+            else if (ambition.LastEvaluatedYear < year)
+            {
+                ambition.LastEvaluatedYear = year;
+            }
+
+            if (!ambition.IsRetired)
+            {
+                if (ambition.Intensity >= 50 && (!ambition.TargetYear.HasValue || ambition.TargetYear < year))
+                {
+                    ambition.TargetYear = year + 5;
+                    ambition.History ??= new List<AmbitionHistoryRecord>();
+                    ambition.History.Add(new AmbitionHistoryRecord
+                    {
+                        Year = year,
+                        Description = $"Set target year to {ambition.TargetYear}",
+                        Outcome = null
+                    });
+                }
+                else if (ambition.Intensity <= 10 && ambition.TargetYear.HasValue && ambition.TargetYear > year + 1)
+                {
+                    ambition.TargetYear = year + 1;
+                }
+            }
+
+            bool targetChanged = previousTarget != ambition.TargetYear;
+
+            if (goalChanged || intensityChanged || targetChanged)
+            {
+                bus.Publish(new OnCharacterAmbitionChanged(year, month, day, character.ID, previousGoal, ambition.CurrentGoal,
+                    previousIntensity, ambition.Intensity, previousTarget, ambition.TargetYear, ambition.IsRetired));
+            }
+        }
+
+        private void ProcessTraitDevelopment(Character character, int year, int month, int day)
+        {
+            if (character.TraitRecords == null || character.TraitRecords.Count == 0)
+                return;
+
+            foreach (var record in character.TraitRecords.OrderBy(r => r?.Id, StringComparer.OrdinalIgnoreCase))
+            {
+                if (record == null || string.IsNullOrWhiteSpace(record.Id))
+                    continue;
+
+                float gain = GetAnnualTraitExperienceGain(character, record);
+                if (gain <= 0f)
+                    continue;
+
+                int previousLevel = record.Level;
+                record.Experience += gain;
+
+                float threshold = GetTraitLevelThreshold(record.Level);
+                if (record.Experience >= threshold)
+                {
+                    record.Experience -= threshold;
+                    record.Level += 1;
+
+                    bus.Publish(new OnCharacterTraitAdvanced(year, month, day, character.ID, record.Id, previousLevel, record.Level));
+
+                    RecordCareerMilestone(character, year, month, day, $"Trait mastery: {record.Id}",
+                        $"Advanced to level {record.Level}");
+                }
+            }
+        }
+
+        private void ApplyRetirementIfNeeded(Character character, int year, int month, int day)
+        {
+            var ambition = character.Ambition;
+            if (ambition == null || ambition.IsRetired)
+                return;
+
+            bool shouldRetire = character.Age >= 65 || (character.Age >= 55 && ambition.Intensity <= 15);
+            if (!shouldRetire)
+                return;
+
+            var previousGoal = ambition.CurrentGoal;
+            var previousTarget = ambition.TargetYear;
+            var previousIntensity = ambition.Intensity;
+
+            ambition.IsRetired = true;
+            ambition.CurrentGoal = "Retired";
+            ambition.TargetYear = null;
+            ambition.Intensity = 0;
+            ambition.LastEvaluatedYear = year;
+            ambition.History ??= new List<AmbitionHistoryRecord>();
+            ambition.History.Add(new AmbitionHistoryRecord
+            {
+                Year = year,
+                Description = "Retired from public life",
+                Outcome = "Retired"
+            });
+
+            var notes = $"Retired at age {character.Age}";
+            bus.Publish(new OnCharacterRetired(year, month, day, character.ID, previousGoal, notes));
+
+            RecordCareerMilestone(character, year, month, day, "Retired from public life", notes);
+
+            bus.Publish(new OnCharacterAmbitionChanged(year, month, day, character.ID, previousGoal, ambition.CurrentGoal,
+                previousIntensity, ambition.Intensity, previousTarget, ambition.TargetYear, true));
+        }
+
+        private int GetDesiredAmbitionIntensity(Character character)
+        {
+            int baseValue = character.Class switch
+            {
+                SocialClass.Patrician => 65,
+                SocialClass.Equestrian => 55,
+                _ => 45
+            };
+
+            if (character.Age < 25)
+                baseValue += 10;
+            else if (character.Age < 35)
+                baseValue += 5;
+            else if (character.Age < 45)
+                baseValue += 0;
+            else if (character.Age < 55)
+                baseValue -= 10;
+            else if (character.Age < 65)
+                baseValue -= 20;
+            else
+                baseValue = 0;
+
+            return Mathf.Clamp(baseValue, 0, 90);
+        }
+
+        private string DetermineCurrentAmbitionGoal(Character character)
+        {
+            if (character.Ambition != null && character.Ambition.IsRetired)
+                return "Retired";
+
+            return character.Class switch
+            {
+                SocialClass.Patrician when character.Age < 25 => "Secure patronage",
+                SocialClass.Patrician when character.Age < 35 => "Quaestorship",
+                SocialClass.Patrician when character.Age < 45 => "Praetorship",
+                SocialClass.Patrician when character.Age < 55 => "Consulship",
+                SocialClass.Patrician => "Mentor clients",
+                SocialClass.Equestrian when character.Age < 30 => "Cavalry command",
+                SocialClass.Equestrian when character.Age < 45 => "Praetorian duties",
+                SocialClass.Equestrian => "Advise magistrates",
+                _ when character.Age < 30 => "Tribunate",
+                _ when character.Age < 45 => "Aedileship",
+                _ => "Support faction"
+            };
+        }
+
+        private void MaybeRecordAmbitionHistory(AmbitionProfile ambition, int year, int previousIntensity, int newIntensity)
+        {
+            if (ambition == null)
+                return;
+
+            ambition.History ??= new List<AmbitionHistoryRecord>();
+            foreach (var threshold in ambitionMilestoneThresholds)
+            {
+                if (previousIntensity < threshold && newIntensity >= threshold)
+                {
+                    ambition.History.Add(new AmbitionHistoryRecord
+                    {
+                        Year = year,
+                        Description = $"Ambition intensity reached {threshold}",
+                        Outcome = null
+                    });
+                }
+            }
+        }
+
+        private float GetAnnualTraitExperienceGain(Character character, TraitRecord record)
+        {
+            float baseGain = 2f;
+            if (character.Ambition != null && !character.Ambition.IsRetired)
+                baseGain += character.Ambition.Intensity / 25f;
+
+            if (record.Level <= 1)
+                baseGain += 0.5f;
+
+            if (character.Age < 30)
+                baseGain += 0.5f;
+
+            return baseGain;
+        }
+
+        private float GetTraitLevelThreshold(int level)
+        {
+            return 10f + (level * 5f);
+        }
+
+        private void RecordCareerMilestone(Character character, int year, int month, int day, string title, string notes)
+        {
+            character.CareerMilestones ??= new List<CareerMilestone>();
+
+            bool alreadyRecorded = character.CareerMilestones.Any(m =>
+                m != null && string.Equals(m.Title, title, StringComparison.OrdinalIgnoreCase) && m.Year == year);
+
+            if (alreadyRecorded)
+                return;
+
+            var milestone = new CareerMilestone
+            {
+                Title = title,
+                Year = year,
+                Notes = notes
+            };
+
+            character.CareerMilestones.Add(milestone);
+
+            bus.Publish(new OnCharacterCareerMilestoneRecorded(year, month, day, character.ID, title, notes));
+        }
+
+        private static readonly int[] ambitionMilestoneThresholds = { 25, 50, 75 };
     }
 }
