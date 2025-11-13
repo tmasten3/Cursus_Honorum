@@ -716,33 +716,36 @@ namespace Game.Systems.Politics.Offices
                 var descriptors = new List<OfficeSeatDescriptor>();
                 foreach (var seat in kvp.Value)
                 {
+                    if (seat == null)
+                        continue;
+
                     bool hasPending = seat.PendingHolderId.HasValue;
                     bool isVacant = !seat.HolderId.HasValue && !hasPending;
                     bool expiring = seat.HolderId.HasValue && seat.EndYear <= year && !hasPending;
-                    if (isVacant || expiring)
-                    {
-                        descriptors.Add(new OfficeSeatDescriptor
-                        {
-                            OfficeId = kvp.Key,
-                            SeatIndex = seat.SeatIndex,
-                            HolderId = seat.HolderId,
-                            StartYear = seat.StartYear,
-                            EndYear = seat.EndYear,
-                            PendingHolderId = seat.PendingHolderId,
-                            PendingStartYear = seat.PendingStartYear
-                        });
-                    }
-                }
+                    if (!isVacant && !expiring)
+                        continue;
 
-                if (descriptors.Count > 0)
-                {
-                    elections.Add(new OfficeElectionInfo
+                    descriptors.Add(new OfficeSeatDescriptor
                     {
-                        Definition = def,
-                        SeatsAvailable = descriptors.Count,
-                        Seats = descriptors
+                        OfficeId = kvp.Key,
+                        SeatIndex = seat.SeatIndex,
+                        HolderId = seat.HolderId,
+                        StartYear = seat.StartYear,
+                        EndYear = seat.EndYear,
+                        PendingHolderId = seat.PendingHolderId,
+                        PendingStartYear = seat.PendingStartYear
                     });
                 }
+
+                if (descriptors.Count == 0)
+                    continue;
+
+                elections.Add(new OfficeElectionInfo
+                {
+                    Definition = def,
+                    SeatsAvailable = descriptors.Count,
+                    Seats = descriptors
+                });
             }
 
             return elections
