@@ -729,6 +729,28 @@ namespace Game.Systems.Politics.Offices
                             StartYear = seat.StartYear,
                             EndYear = seat.EndYear,
                             PendingHolderId = seat.PendingHolderId,
+                            PendingStartYear = seat.PendingStartYear
+                        });
+                    }
+                }
+
+                if (descriptors.Count > 0)
+                {
+                    elections.Add(new OfficeElectionInfo
+                    {
+                        Definition = def,
+                        SeatsAvailable = descriptors.Count,
+                        Seats = descriptors
+                    });
+                }
+            }
+
+            return elections
+                .OrderByDescending(e => e.Definition.Rank)
+                .ThenBy(e => e.Definition.MinAge)
+                .ToList();
+        }
+
         public OfficeSeatDescriptor AssignOffice(string officeId, int characterId, int year, bool deferToNextYear = true)
         {
             var normalizedId = NormalizeOfficeId(officeId);
@@ -853,6 +875,11 @@ namespace Game.Systems.Politics.Offices
                 PendingStartYear = seat.PendingStartYear
             };
         }
+
+        private string ResolveCharacterName(int characterId)
+        {
+            var character = characterSystem?.Get(characterId);
+            return character?.FullName ?? $"Character {characterId}";
         }
 
         private string ResolveOfficeName(string officeId)
