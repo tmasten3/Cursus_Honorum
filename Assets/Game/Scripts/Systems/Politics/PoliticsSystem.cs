@@ -59,6 +59,7 @@ namespace Game.Systems.Politics
                 eventBus.Subscribe<OfficeAssignedEvent>(OnOfficeAssigned);
                 eventBus.Subscribe<OnCharacterBorn>(OnCharacterBorn);
                 eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
+                eventBus.Subscribe<OnPopulationTick>(OnPopulationTick);
                 subscriptionsActive = true;
             }
 
@@ -85,6 +86,7 @@ namespace Game.Systems.Politics
                 eventBus.Unsubscribe<OfficeAssignedEvent>(OnOfficeAssigned);
                 eventBus.Unsubscribe<OnCharacterBorn>(OnCharacterBorn);
                 eventBus.Unsubscribe<OnCharacterDied>(OnCharacterDied);
+                eventBus.Unsubscribe<OnPopulationTick>(OnPopulationTick);
                 subscriptionsActive = false;
             }
 
@@ -123,6 +125,14 @@ namespace Game.Systems.Politics
         }
 
         private void OnNewDay(OnNewDayEvent e)
+        {
+            if (e == null)
+                return;
+
+            currentYear = e.Year;
+        }
+
+        private void OnPopulationTick(OnPopulationTick e)
         {
             if (e == null)
                 return;
