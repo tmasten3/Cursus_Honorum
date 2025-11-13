@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using Game.Core;
-using Game.Systems.TimeSystem;
+using Game.Systems.Time;
 
 public class GameController : MonoBehaviour
 {

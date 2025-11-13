@@ -1,6 +1,6 @@
 using NUnit.Framework;
 using Game.Core;
-using Game.Systems.TimeSystem;
+using Game.Systems.Time;
 
 public class TimeSystemTests
 {

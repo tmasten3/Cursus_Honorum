@@ -1,7 +1,7 @@
 using System.IO;
 using NUnit.Framework;
 using Game.Systems.EventBus;
-using Game.Systems.TimeSystem;
+using Game.Systems.Time;
 using Game.Systems.CharacterSystem;
 using Game.Systems.MarriageSystem;
 using Game.Systems.BirthSystem;
