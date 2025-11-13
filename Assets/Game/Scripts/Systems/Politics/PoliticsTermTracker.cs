@@ -75,6 +75,23 @@ namespace Game.Systems.Politics
             InsertSorted(historyByCharacter, characterId, termRecord);
         }
 
+        public void RebuildCharacterHistory(int characterId, IReadOnlyList<OfficeCareerRecord> history,
+            IReadOnlyList<OfficeSeatDescriptor> activeSeats, Func<string, string> officeNameResolver)
+        {
+            historyByCharacter.Remove(characterId);
+            seenRecords.RemoveWhere(k => k.characterId == characterId);
+
+            SeedFromHistory(characterId, history, officeNameResolver);
+
+            if (activeSeats == null)
+                return;
+
+            foreach (var seat in activeSeats)
+            {
+                SeedActiveAssignment(characterId, seat, officeNameResolver);
+            }
+        }
+
         public IReadOnlyList<OfficeTermRecord> GetHistory(int characterId)
         {
             if (!historyByCharacter.TryGetValue(characterId, out var list) || list.Count == 0)
