@@ -94,6 +94,7 @@ namespace Game.UI
             this.officeSystem = officeSystem;
             this.characterSystem = characterSystem;
 
+            ResetState();
             LoadInitialState();
             Subscribe();
             RefreshImmediate();
@@ -102,6 +103,7 @@ namespace Game.UI
         public void Dispose()
         {
             Unsubscribe();
+            ResetState();
             eventBus = null;
             electionSystem = null;
             officeSystem = null;
@@ -161,6 +163,15 @@ namespace Game.UI
             eventBus.Unsubscribe<OfficeAssignedEvent>(OnOfficeAssigned);
 
             subscribed = false;
+        }
+
+        private void ResetState()
+        {
+            openOffices.Clear();
+            latestResults.Clear();
+            recentAppointments.Clear();
+            currentYear = -1;
+            lastElectionYear = -1;
         }
 
         private void OnNewYear(OnNewYearEvent e)

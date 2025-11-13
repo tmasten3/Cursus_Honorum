@@ -54,6 +54,7 @@ namespace Game.UI
             eventBus = bus;
             this.characterSystem = characterSystem;
 
+            ResetLog();
             Subscribe();
             RefreshImmediate();
         }
@@ -61,6 +62,7 @@ namespace Game.UI
         public void Dispose()
         {
             Unsubscribe();
+            ResetLog();
             eventBus = null;
             characterSystem = null;
         }
@@ -130,6 +132,15 @@ namespace Game.UI
             eventBus.Unsubscribe<OfficeAssignedEvent>(OnOfficeAssigned);
 
             subscribed = false;
+        }
+
+        private void ResetLog()
+        {
+            entries.Clear();
+            builder.Clear();
+
+            if (logText != null)
+                logText.text = "Daily events will appear here.";
         }
 
         private void OnNewDay(OnNewDayEvent e)

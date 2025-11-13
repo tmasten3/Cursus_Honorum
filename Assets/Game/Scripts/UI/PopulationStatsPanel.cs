@@ -60,6 +60,7 @@ namespace Game.UI
             this.characterSystem = characterSystem;
             this.repository = repository;
 
+            ResetDailyState();
             Subscribe();
             RefreshTotals();
             UpdateDailyText();
@@ -68,6 +69,7 @@ namespace Game.UI
         public void Dispose()
         {
             Unsubscribe();
+            ResetDailyState();
             eventBus = null;
             characterSystem = null;
             repository = null;
@@ -135,6 +137,16 @@ namespace Game.UI
             eventBus.Unsubscribe<OnCharacterMarried>(OnCharacterMarried);
 
             subscribed = false;
+        }
+
+        private void ResetDailyState()
+        {
+            dailyBirths = 0;
+            dailyDeaths = 0;
+            dailyMarriages = 0;
+            lastYear = -1;
+            lastMonth = -1;
+            lastDay = -1;
         }
 
         private void OnNewDay(OnNewDayEvent e)
