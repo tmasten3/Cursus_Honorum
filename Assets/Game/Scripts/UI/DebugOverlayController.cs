@@ -35,6 +35,7 @@ namespace Game.UI
         private float refreshTimer;
         private readonly StringBuilder builder = new();
         private int lastLogCount;
+        private DateTime lastLogTimestamp;
 
         private void Awake()
         {
@@ -213,6 +214,7 @@ namespace Game.UI
         {
             refreshTimer = 0f;
             lastLogCount = -1;
+            lastLogTimestamp = DateTime.MinValue;
             RefreshOverlay();
         }
 
@@ -241,10 +243,21 @@ namespace Game.UI
         private void UpdateLogs()
         {
             IReadOnlyList<Logger.LogEntry> entries = Logger.GetRecentEntries();
-            if (entries == null || entries.Count == lastLogCount)
+            if (entries == null || entries.Count == 0)
+            {
+                lastLogCount = 0;
+                lastLogTimestamp = DateTime.MinValue;
+                if (logText != null && logText.text.Length > 0)
+                    logText.text = string.Empty;
+                return;
+            }
+
+            var newestEntry = entries[entries.Count - 1];
+            if (entries.Count == lastLogCount && newestEntry.Timestamp == lastLogTimestamp)
                 return;
 
             lastLogCount = entries.Count;
+            lastLogTimestamp = newestEntry.Timestamp;
 
             builder.Clear();
             foreach (var entry in entries)
