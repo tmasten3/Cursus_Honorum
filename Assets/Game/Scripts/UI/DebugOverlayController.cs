@@ -39,6 +39,8 @@ namespace Game.UI
         private ElectionSystem electionSystem;
         private bool overlayBound;
         private Coroutine bindingRoutine;
+        private bool loggedMissingTimeSystem;
+        private bool loggedMissingCharacterSystem;
 
         private float refreshTimer;
         private readonly StringBuilder builder = new();
@@ -109,6 +111,8 @@ namespace Game.UI
             characterRepository = null;
             officeSystem = null;
             electionSystem = null;
+            loggedMissingTimeSystem = false;
+            loggedMissingCharacterSystem = false;
         }
 
         private void UnsubscribeFromController()
@@ -239,6 +243,8 @@ namespace Game.UI
             refreshTimer = 0f;
             lastLogCount = -1;
             lastLogTimestamp = DateTime.MinValue;
+            loggedMissingTimeSystem = false;
+            loggedMissingCharacterSystem = false;
 
             if (bindingRoutine == null && isActiveAndEnabled)
                 bindingRoutine = StartCoroutine(WaitForGameState());
@@ -258,17 +264,13 @@ namespace Game.UI
                         controller = FindObjectOfType<GameController>();
                     }
 
-                    while (true)
+                    while (controller != null)
                     {
+                        if (TryBindSystems(controller))
+                            yield break;
+
                         if (controller == null)
                             break;
-
-                        var state = controller.GameState;
-                        if (state != null)
-                        {
-                            BindSystems(controller);
-                            yield break;
-                        }
 
                         yield return null;
                     }
@@ -282,40 +284,61 @@ namespace Game.UI
             }
         }
 
-        private void BindSystems(GameController controller)
+        private bool TryBindSystems(GameController controller)
         {
+            var state = controller.GameState;
+            if (state == null)
+                return false;
+
+            var resolvedTimeSystem = state.GetSystem<TimeSystem>();
+            if (resolvedTimeSystem == null)
+            {
+                if (!loggedMissingTimeSystem)
+                {
+                    loggedMissingTimeSystem = true;
+                    Game.Core.Logger.Error("Safety", "[DebugOverlay] TimeSystem unavailable during binding.");
+                }
+
+                return false;
+            }
+
+            loggedMissingTimeSystem = false;
+
+            var resolvedCharacterSystem = state.GetSystem<CharacterSystem>();
+            if (resolvedCharacterSystem == null)
+            {
+                if (!loggedMissingCharacterSystem)
+                {
+                    loggedMissingCharacterSystem = true;
+                    Game.Core.Logger.Error("Safety", "[DebugOverlay] CharacterSystem unavailable during binding.");
+                }
+
+                return false;
+            }
+
+            loggedMissingCharacterSystem = false;
+
+            CharacterRepository repository = null;
+            if (resolvedCharacterSystem.TryGetRepository(out var resolvedRepository))
+                repository = resolvedRepository;
+            else
+            {
+                Game.Core.Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
+            }
+
+            var resolvedOfficeSystem = state.GetSystem<OfficeSystem>();
+            var resolvedElectionSystem = state.GetSystem<ElectionSystem>();
+
             gameController = controller;
             gameController.GameStateShuttingDown -= OnGameStateShuttingDown;
             gameController.GameStateShuttingDown += OnGameStateShuttingDown;
 
-            gameState = controller.GameState;
-            if (gameState == null)
-                return;
-
-            timeSystem = gameState.GetSystem<TimeSystem>();
-            characterSystem = gameState.GetSystem<CharacterSystem>();
-            officeSystem = gameState.GetSystem<OfficeSystem>();
-            electionSystem = gameState.GetSystem<ElectionSystem>();
-
-            if (timeSystem == null)
-            {
-                Game.Core.Logger.Error("Safety", "[DebugOverlay] TimeSystem unavailable during binding.");
-                return;
-            }
-
-            if (characterSystem == null)
-            {
-                Game.Core.Logger.Error("Safety", "[DebugOverlay] CharacterSystem unavailable during binding.");
-                return;
-            }
-
-            if (characterSystem.TryGetRepository(out var repository))
-                characterRepository = repository;
-            else
-            {
-                characterRepository = null;
-                Game.Core.Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
-            }
+            gameState = state;
+            timeSystem = resolvedTimeSystem;
+            characterSystem = resolvedCharacterSystem;
+            characterRepository = repository;
+            officeSystem = resolvedOfficeSystem;
+            electionSystem = resolvedElectionSystem;
 
             overlayBound = true;
             refreshTimer = 0f;
@@ -323,6 +346,7 @@ namespace Game.UI
             lastLogTimestamp = DateTime.MinValue;
 
             RefreshOverlay();
+            return true;
         }
 
         private void ForceRefresh()
