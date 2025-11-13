@@ -7,9 +7,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using Game.Core;
 using Game.Systems.CharacterSystem;
+using Game.Systems.EventBus;
 using Game.Systems.Politics.Elections;
 using Game.Systems.Politics.Offices;
 using Game.Systems.Time;
+using EventBusSystem = Game.Systems.EventBus.EventBus;
 
 namespace Game.UI
 {
@@ -22,6 +24,19 @@ namespace Game.UI
         [SerializeField, Min(0.1f)]
         private float refreshInterval = 1f;
 
+        [Header("Section Visibility")]
+        [SerializeField]
+        private bool showSystemLogPanel = true;
+
+        [SerializeField]
+        private bool showPopulationPanel = true;
+
+        [SerializeField]
+        private bool showDailyEventPanel = true;
+
+        [SerializeField]
+        private bool showPoliticalPanel = true;
+
         private Canvas overlayCanvas;
         private CanvasScaler scaler;
         private TMP_Text dateText;
@@ -29,6 +44,10 @@ namespace Game.UI
         private TMP_Text familyText;
         private TMP_Text logText;
         private ScrollRect logScroll;
+        private GameObject logContainer;
+        private PopulationStatsPanel populationPanel;
+        private DailyEventLogPanel dailyEventPanel;
+        private PoliticalSummaryPanel politicalPanel;
 
         private GameController gameController;
         private GameState gameState;
@@ -37,10 +56,16 @@ namespace Game.UI
         private CharacterRepository characterRepository;
         private OfficeSystem officeSystem;
         private ElectionSystem electionSystem;
+        private EventBusSystem eventBus;
         private bool overlayBound;
         private Coroutine bindingRoutine;
         private bool loggedMissingTimeSystem;
         private bool loggedMissingCharacterSystem;
+
+        private bool previousShowSystemLogPanel;
+        private bool previousShowPopulationPanel;
+        private bool previousShowDailyEventPanel;
+        private bool previousShowPoliticalPanel;
 
         private float refreshTimer;
         private readonly StringBuilder builder = new();
@@ -62,6 +87,12 @@ namespace Game.UI
 
             ConfigureCanvas();
             BuildUI();
+
+            previousShowSystemLogPanel = showSystemLogPanel;
+            previousShowPopulationPanel = showPopulationPanel;
+            previousShowDailyEventPanel = showDailyEventPanel;
+            previousShowPoliticalPanel = showPoliticalPanel;
+            ApplySectionVisibility(forceRefresh: true);
         }
 
         private void OnEnable()
@@ -72,6 +103,9 @@ namespace Game.UI
 
         private void Update()
         {
+            if (CheckVisibilityChanges())
+                ApplySectionVisibility();
+
             if (!overlayBound)
                 return;
 
@@ -102,6 +136,7 @@ namespace Game.UI
             }
 
             UnsubscribeFromController();
+            DisposeSections();
 
             overlayBound = false;
             gameController = null;
@@ -111,6 +146,7 @@ namespace Game.UI
             characterRepository = null;
             officeSystem = null;
             electionSystem = null;
+            eventBus = null;
             loggedMissingTimeSystem = false;
             loggedMissingCharacterSystem = false;
         }
@@ -139,7 +175,7 @@ namespace Game.UI
             panelRect.anchorMax = new Vector2(0f, 1f);
             panelRect.pivot = new Vector2(0f, 1f);
             panelRect.anchoredPosition = new Vector2(16f, -16f);
-            panelRect.sizeDelta = new Vector2(420f, 360f);
+            panelRect.sizeDelta = new Vector2(480f, 720f);
 
             var panelImage = panel.GetComponent<Image>();
             panelImage.color = new Color(0f, 0f, 0f, 0.65f);
@@ -153,7 +189,10 @@ namespace Game.UI
             livingText = CreateLabel(panel.transform, "LivingText", "Living: 0");
             familyText = CreateLabel(panel.transform, "FamilyText", "Families: 0");
 
-            logText = CreateLogArea(panel.transform, out logScroll);
+            logText = CreateLogArea(panel.transform, out logContainer, out logScroll);
+            populationPanel = new PopulationStatsPanel(panel.transform);
+            dailyEventPanel = new DailyEventLogPanel(panel.transform);
+            politicalPanel = new PoliticalSummaryPanel(panel.transform);
         }
 
         private TMP_Text CreateLabel(Transform parent, string name, string initialText)
@@ -173,9 +212,9 @@ namespace Game.UI
             return text;
         }
 
-        private TMP_Text CreateLogArea(Transform parent, out ScrollRect scrollRect)
+        private TMP_Text CreateLogArea(Transform parent, out GameObject container, out ScrollRect scrollRect)
         {
-            var container = new GameObject("LogArea", typeof(RectTransform), typeof(Image), typeof(LayoutElement), typeof(ScrollRect));
+            container = new GameObject("LogArea", typeof(RectTransform), typeof(Image), typeof(LayoutElement), typeof(ScrollRect));
             container.transform.SetParent(parent, false);
 
             var rect = (RectTransform)container.transform;
@@ -239,12 +278,15 @@ namespace Game.UI
             characterRepository = null;
             officeSystem = null;
             electionSystem = null;
+            eventBus = null;
 
             refreshTimer = 0f;
             lastLogCount = -1;
             lastLogTimestamp = DateTime.MinValue;
             loggedMissingTimeSystem = false;
             loggedMissingCharacterSystem = false;
+
+            DisposeSections();
 
             if (bindingRoutine == null && isActiveAndEnabled)
                 bindingRoutine = StartCoroutine(WaitForGameState());
@@ -328,6 +370,12 @@ namespace Game.UI
 
             var resolvedOfficeSystem = state.GetSystem<OfficeSystem>();
             var resolvedElectionSystem = state.GetSystem<ElectionSystem>();
+            var resolvedEventBus = state.GetSystem<EventBusSystem>();
+            if (resolvedEventBus == null)
+            {
+                Game.Core.Logger.Error("Safety", "[DebugOverlay] EventBus unavailable during binding.");
+                return false;
+            }
 
             gameController = controller;
             gameController.GameStateShuttingDown -= OnGameStateShuttingDown;
@@ -339,14 +387,93 @@ namespace Game.UI
             characterRepository = repository;
             officeSystem = resolvedOfficeSystem;
             electionSystem = resolvedElectionSystem;
+            eventBus = resolvedEventBus;
 
             overlayBound = true;
             refreshTimer = 0f;
             lastLogCount = -1;
             lastLogTimestamp = DateTime.MinValue;
 
+            BindSections();
             RefreshOverlay();
             return true;
+        }
+
+        private void BindSections()
+        {
+            if (eventBus == null)
+                return;
+
+            populationPanel?.Bind(eventBus, characterSystem, characterRepository);
+            dailyEventPanel?.Bind(eventBus, characterSystem);
+            politicalPanel?.Bind(eventBus, electionSystem, officeSystem, characterSystem);
+
+            ApplySectionVisibility(forceRefresh: true);
+        }
+
+        private void DisposeSections()
+        {
+            populationPanel?.Dispose();
+            dailyEventPanel?.Dispose();
+            politicalPanel?.Dispose();
+        }
+
+        private bool CheckVisibilityChanges()
+        {
+            bool changed = false;
+
+            if (previousShowSystemLogPanel != showSystemLogPanel)
+            {
+                previousShowSystemLogPanel = showSystemLogPanel;
+                changed = true;
+            }
+
+            if (previousShowPopulationPanel != showPopulationPanel)
+            {
+                previousShowPopulationPanel = showPopulationPanel;
+                changed = true;
+            }
+
+            if (previousShowDailyEventPanel != showDailyEventPanel)
+            {
+                previousShowDailyEventPanel = showDailyEventPanel;
+                changed = true;
+            }
+
+            if (previousShowPoliticalPanel != showPoliticalPanel)
+            {
+                previousShowPoliticalPanel = showPoliticalPanel;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private void ApplySectionVisibility(bool forceRefresh = false)
+        {
+            if (logContainer != null)
+                logContainer.SetActive(showSystemLogPanel);
+
+            if (populationPanel != null)
+            {
+                populationPanel.SetVisible(showPopulationPanel);
+                if ((forceRefresh || showPopulationPanel) && overlayBound)
+                    populationPanel.RefreshImmediate();
+            }
+
+            if (dailyEventPanel != null)
+            {
+                dailyEventPanel.SetVisible(showDailyEventPanel);
+                if (forceRefresh || showDailyEventPanel)
+                    dailyEventPanel.RefreshImmediate();
+            }
+
+            if (politicalPanel != null)
+            {
+                politicalPanel.SetVisible(showPoliticalPanel);
+                if ((forceRefresh || showPoliticalPanel) && overlayBound)
+                    politicalPanel.RefreshImmediate();
+            }
         }
 
         private void ForceRefresh()
@@ -368,6 +495,15 @@ namespace Game.UI
             UpdateDate();
             UpdatePopulation();
             UpdateLogs();
+
+            if (populationPanel != null && showPopulationPanel)
+                populationPanel.RefreshImmediate();
+
+            if (dailyEventPanel != null && showDailyEventPanel)
+                dailyEventPanel.RefreshImmediate();
+
+            if (politicalPanel != null && showPoliticalPanel)
+                politicalPanel.RefreshImmediate();
         }
 
         private void UpdateDate()
