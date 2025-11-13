@@ -123,7 +123,11 @@ namespace Game.Systems.EventBus
 
                 if (subscribers.TryGetValue(eventType, out var handlers))
                 {
-                    var handlerSnapshot = handlers.Count > 0 ? handlers.ToArray() : Array.Empty<Action<GameEvent>>();
+                    if (handlers.Count == 0)
+                        continue;
+
+                    var handlerSnapshot = new Action<GameEvent>[handlers.Count];
+                    handlers.CopyTo(handlerSnapshot);
 
                     foreach (var handler in handlerSnapshot)
                     {
