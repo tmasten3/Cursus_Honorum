@@ -165,8 +165,16 @@ namespace Game.Core
         {
             try
             {
-                string path = Path.Combine(Application.persistentDataPath, "Game/Logs", fileName);
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                var root = Application.persistentDataPath;
+                if (string.IsNullOrEmpty(root))
+                {
+                    Debug.LogWarning($"[Logger] persistentDataPath unavailable; skipping log file '{fileName}'.");
+                    return;
+                }
+
+                string directory = Path.Combine(root, "Game", "Logs");
+                Directory.CreateDirectory(directory);
+                string path = Path.Combine(directory, fileName);
                 File.WriteAllLines(path, lines);
             }
             catch (Exception ex)

@@ -122,8 +122,11 @@ namespace Game.Data.Characters
 
                 if (warningCorrections.Count > 0)
                 {
-                    _normalizationBatch.Add(
-                        $"Character #{character.ID}: normalized nomen to '{normalizedNomen}'.");
+                    var warningDetails = string.Join("; ", warningCorrections);
+                    var record = $"{sourcePath}: Character #{character.ID} - {warningDetails}";
+                    if (!string.IsNullOrEmpty(normalizedNomen))
+                        record += $" (nomen '{normalizedNomen}')";
+                    _normalizationBatch.Add(record);
                 }
 
                 if (infoCorrections.Count > 0)
