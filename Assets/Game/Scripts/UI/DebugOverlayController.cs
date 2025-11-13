@@ -256,12 +256,12 @@ namespace Game.UI
             {
                 while (true)
                 {
-                    GameController controller = FindObjectOfType<GameController>();
+                    GameController controller = FindFirstObjectByType<GameController>();
 
                     while (controller == null)
                     {
                         yield return null;
-                        controller = FindObjectOfType<GameController>();
+                        controller = FindFirstObjectByType<GameController>();
                     }
 
                     while (controller != null)
