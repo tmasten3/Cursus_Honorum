@@ -62,7 +62,7 @@ namespace Game.Systems.CharacterSystem
             {
                 if (character == null)
                 {
-                    Game.Core.Logger.Warn("Safety", $"{settings.BaseDataPath}: Encountered null character entry during load. Skipping.");
+                    Logger.Warn("Safety", $"{settings.BaseDataPath}: Encountered null character entry during load. Skipping.");
                     continue;
                 }
 
@@ -72,7 +72,7 @@ namespace Game.Systems.CharacterSystem
                 }
                 catch (Exception ex)
                 {
-                    Game.Core.Logger.Error("Safety", $"{settings.BaseDataPath}: Failed to add character #{character.ID} to repository: {ex.Message}");
+                    Logger.Error("Safety", $"{settings.BaseDataPath}: Failed to add character #{character.ID} to repository: {ex.Message}");
                 }
             }
 
