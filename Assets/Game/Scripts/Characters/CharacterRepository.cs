@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game.Core;
 using Game.Data.Characters;
 
 namespace Game.Systems.CharacterSystem
@@ -68,32 +69,82 @@ namespace Game.Systems.CharacterSystem
 
         public Character Get(int id) => byId.TryGetValue(id, out var c) ? c : null;
 
-        public IReadOnlyList<Character> GetAllLiving() =>
-            alive.OrderBy(id => id).Select(id => byId[id]).ToList();
+        public IReadOnlyList<Character> GetAllLiving()
+        {
+            var result = new List<Character>();
+            foreach (var id in alive.OrderBy(id => id))
+            {
+                if (byId.TryGetValue(id, out var character))
+                {
+                    result.Add(character);
+                }
+                else
+                {
+                    Logger.Warn("Safety", $"[CharacterRepository] Alive character id {id} missing from index.");
+                }
+            }
+
+            return result;
+        }
 
         public IReadOnlyList<Character> GetByFamily(string gens)
         {
             if (gens == null)
                 return Array.Empty<Character>();
 
-            return byFamily.TryGetValue(gens, out var set)
-                ? set.OrderBy(id => id).Select(id => byId[id]).ToList()
-                : Array.Empty<Character>();
+            if (!byFamily.TryGetValue(gens, out var set))
+                return Array.Empty<Character>();
+
+            var result = new List<Character>();
+            foreach (var id in set.OrderBy(id => id))
+            {
+                if (byId.TryGetValue(id, out var character))
+                    result.Add(character);
+                else
+                    Logger.Warn("Safety", $"[CharacterRepository] Family index stale for id {id} in gens '{gens}'.");
+            }
+
+            return result;
         }
 
         public IReadOnlyList<Character> GetByClass(SocialClass socialClass) =>
-            byClass.TryGetValue(socialClass, out var set)
-                ? set.OrderBy(id => id).Select(id => byId[id]).ToList()
-                : Array.Empty<Character>();
+            BuildListFromIndex(byClass, socialClass);
 
         public IReadOnlyList<Character> GetByName(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 return Array.Empty<Character>();
 
-            return byName.TryGetValue(name, out var ids)
-                ? ids.OrderBy(id => id).Select(id => byId[id]).ToList()
-                : Array.Empty<Character>();
+            if (!byName.TryGetValue(name, out var ids))
+                return Array.Empty<Character>();
+
+            var result = new List<Character>();
+            foreach (var id in ids.OrderBy(id => id))
+            {
+                if (byId.TryGetValue(id, out var character))
+                    result.Add(character);
+                else
+                    Logger.Warn("Safety", $"[CharacterRepository] Name index stale for '{name}' id {id}.");
+            }
+
+            return result;
+        }
+
+        private IReadOnlyList<Character> BuildListFromIndex(Dictionary<SocialClass, HashSet<int>> index, SocialClass key)
+        {
+            if (!index.TryGetValue(key, out var set))
+                return Array.Empty<Character>();
+
+            var result = new List<Character>();
+            foreach (var id in set.OrderBy(id => id))
+            {
+                if (byId.TryGetValue(id, out var character))
+                    result.Add(character);
+                else
+                    Logger.Warn("Safety", $"[CharacterRepository] Class index stale for {key} id {id}.");
+            }
+
+            return result;
         }
 
         public IEnumerable<int> EnumerateLivingIds() => alive.OrderBy(id => id).ToList();

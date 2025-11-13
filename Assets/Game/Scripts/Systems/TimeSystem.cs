@@ -128,5 +128,9 @@ namespace Game.Systems.TimeSystem
             string monthName = MonthNames[month - 1];
             return $"{monthName} {day}, {absYear} {suffix}";
         }
+
+        public string GetCurrentDateString() => GetDateString();
+
+        public (int year, int month, int day) GetCurrentDate() => (year, month, day);
     }
 }

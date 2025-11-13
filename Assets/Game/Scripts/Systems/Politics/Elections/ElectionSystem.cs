@@ -28,6 +28,7 @@ namespace Game.Systems.Politics.Elections
         private readonly Dictionary<string, List<CandidateDeclaration>> declarationsByOffice = new();
         private readonly Dictionary<int, List<CandidateDeclaration>> declarationsByYear = new();
         private readonly Dictionary<int, List<ElectionResultRecord>> resultsByYear = new();
+        private readonly Dictionary<int, CandidateDeclaration> declarationByCharacter = new();
 
         private readonly System.Random rng = new(15821);
 
@@ -63,6 +64,7 @@ namespace Game.Systems.Politics.Elections
             currentDay = e.Day;
 
             declarationsByOffice.Clear();
+            declarationByCharacter.Clear();
             if (!declarationsByYear.ContainsKey(currentYear))
                 declarationsByYear[currentYear] = new List<CandidateDeclaration>();
             if (!resultsByYear.ContainsKey(currentYear))
@@ -92,10 +94,11 @@ namespace Game.Systems.Politics.Elections
             }
 
             declarationsByOffice.Clear();
+            declarationByCharacter.Clear();
             var allSummaries = new List<ElectionOfficeSummary>();
             foreach (var info in infos)
             {
-                declarationsByOffice[info.Definition.Id] = new List<CandidateDeclaration>();
+                GetOrCreateOfficeDeclarations(info.Definition.Id)?.Clear();
                 allSummaries.Add(new ElectionOfficeSummary
                 {
                     OfficeId = info.Definition.Id,
@@ -132,6 +135,13 @@ namespace Game.Systems.Politics.Elections
                 if (choice.def == null)
                     continue;
 
+                if (declarationByCharacter.TryGetValue(character.ID, out var existingDeclaration))
+                {
+                    string targetName = existingDeclaration.Office?.Name ?? existingDeclaration.OfficeId;
+                    LogWarn($"{character.FullName} already declared for {targetName} in {currentYear}. Skipping duplicate.");
+                    continue;
+                }
+
                 var declaration = new CandidateDeclaration
                 {
                     CharacterId = character.ID,
@@ -142,8 +152,17 @@ namespace Game.Systems.Politics.Elections
                     Factors = choice.breakdown
                 };
 
-                declarationsByOffice[choice.def.Id].Add(declaration);
+                var officeDeclarations = GetOrCreateOfficeDeclarations(choice.def.Id);
+                if (officeDeclarations == null)
+                {
+                    LogWarn($"Unable to register declaration for office '{choice.def?.Name ?? choice.def?.Id}'.");
+                }
+                else
+                {
+                    officeDeclarations.Add(declaration);
+                }
                 declarationsByYear[currentYear].Add(declaration);
+                declarationByCharacter[character.ID] = declaration;
 
                 if (DebugMode)
                 {
@@ -259,14 +278,23 @@ namespace Game.Systems.Politics.Elections
 
             foreach (var info in infos)
             {
-                if (!declarationsByOffice.TryGetValue(info.Definition.Id, out var declarations))
+                var declarations = GetOrCreateOfficeDeclarations(info.Definition.Id);
+                if (declarations == null)
+                {
+                    LogWarn($"No declaration bucket available for office '{info.Definition.Id}'.");
                     declarations = new List<CandidateDeclaration>();
+                }
 
                 var candidates = new List<ElectionCandidate>();
                 foreach (var declaration in declarations)
                 {
                     var character = characterSystem.Get(declaration.CharacterId);
-                    if (character == null || !character.IsAlive)
+                    if (character == null)
+                    {
+                        LogWarn($"Declaration for office {info.Definition.Id} referenced missing character #{declaration.CharacterId}.");
+                        continue;
+                    }
+                    if (!character.IsAlive)
                         continue;
 
                     if (!officeSystem.IsEligible(character, info.Definition, currentYear, out _))
@@ -322,6 +350,11 @@ namespace Game.Systems.Politics.Elections
                 foreach (var winner in winners)
                 {
                     var seat = officeSystem.AssignOffice(info.Definition.Id, winner.Character.ID, currentYear);
+                    if (seat.SeatIndex < 0)
+                    {
+                        LogWarn($"{info.Definition.Name}: failed to assign seat for {winner.Character.FullName}.");
+                        continue;
+                    }
                     float share = Mathf.Max(0.1f, winner.FinalScore) / totalScore;
                     string notes = ComposeWinnerNotes(winner);
 
@@ -364,11 +397,27 @@ namespace Game.Systems.Politics.Elections
             }
 
             declarationsByOffice.Clear();
+            declarationByCharacter.Clear();
 
             if (summaries.Count > 0)
             {
                 eventBus.Publish(new ElectionSeasonCompletedEvent(currentYear, currentMonth, currentDay, summaries));
             }
+        }
+
+        private List<CandidateDeclaration> GetOrCreateOfficeDeclarations(string officeId)
+        {
+            if (string.IsNullOrWhiteSpace(officeId))
+                return null;
+
+            var key = officeId.Trim().ToLowerInvariant();
+            if (!declarationsByOffice.TryGetValue(key, out var list))
+            {
+                list = new List<CandidateDeclaration>();
+                declarationsByOffice[key] = list;
+            }
+
+            return list;
         }
 
         private List<ElectionCandidate> SelectWinners(List<ElectionCandidate> candidates, int seatCount)
