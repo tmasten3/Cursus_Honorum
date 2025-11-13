@@ -222,7 +222,24 @@ namespace Game.UI
 
         private void OnGameStateShuttingDown()
         {
-            // Do nothing. Ignore binding attempts during shutdown.
+            if (!overlayBound)
+                return;
+
+            overlayBound = false;
+
+            gameState = null;
+            timeSystem = null;
+            characterSystem = null;
+            characterRepository = null;
+            officeSystem = null;
+            electionSystem = null;
+
+            refreshTimer = 0f;
+            lastLogCount = -1;
+            lastLogTimestamp = DateTime.MinValue;
+
+            if (bindingRoutine == null && isActiveAndEnabled)
+                bindingRoutine = StartCoroutine(WaitForGameState());
         }
 
         private IEnumerator WaitForGameState()
