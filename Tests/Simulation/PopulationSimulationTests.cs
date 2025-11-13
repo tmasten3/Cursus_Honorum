@@ -59,13 +59,13 @@ namespace CursusHonorum.Tests.Simulation
             var characterSystem = new CharacterSystem(eventBus, timeSystem, simulationConfig);
             characterSystem.Initialize(null);
 
-            var marriageSystem = new MarriageSystem(eventBus, characterSystem)
+            var marriageSystem = new MarriageSystem(eventBus, characterSystem, simulationConfig)
             {
                 ConfigPath = configPath
             };
             marriageSystem.Initialize(null);
 
-            var birthSystem = new BirthSystem(eventBus, characterSystem)
+            var birthSystem = new BirthSystem(eventBus, characterSystem, simulationConfig)
             {
                 ConfigPath = configPath
             };
