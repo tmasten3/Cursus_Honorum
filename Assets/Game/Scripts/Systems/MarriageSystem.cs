@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
+using UnityEngine;
 
 namespace Game.Systems.MarriageSystem
 {
@@ -17,6 +18,7 @@ namespace Game.Systems.MarriageSystem
         private readonly EventBus.EventBus bus;
         private readonly CharacterSystem.CharacterSystem characterSystem;
         private System.Random rng;
+        private int rngSampleCount;
         private bool subscriptionsActive;
 
         [Serializable]
@@ -45,7 +47,7 @@ namespace Game.Systems.MarriageSystem
         {
             base.Initialize(state);
 
-            rng = new System.Random(config.RngSeed);
+            RestoreRngState(config.RngSeed, 0);
             if (!subscriptionsActive)
             {
                 bus.Subscribe<OnNewDayEvent>(OnNewDay);
@@ -65,6 +67,51 @@ namespace Game.Systems.MarriageSystem
             }
 
             base.Shutdown();
+        }
+
+        public override Dictionary<string, object> Save()
+        {
+            try
+            {
+                var blob = new SaveBlob
+                {
+                    Seed = config.RngSeed,
+                    SampleCount = rngSampleCount
+                };
+
+                string json = JsonUtility.ToJson(blob);
+                return new Dictionary<string, object> { ["json"] = json };
+            }
+            catch (Exception ex)
+            {
+                LogError($"Save failed: {ex.Message}");
+                return new Dictionary<string, object> { ["error"] = ex.Message };
+            }
+        }
+
+        public override void Load(Dictionary<string, object> data)
+        {
+            if (data == null)
+                return;
+
+            try
+            {
+                if (!data.TryGetValue("json", out var raw) || raw is not string json || string.IsNullOrEmpty(json))
+                {
+                    LogWarn("No valid save data found for MarriageSystem.");
+                    return;
+                }
+
+                var blob = JsonUtility.FromJson<SaveBlob>(json);
+                int seed = blob?.Seed ?? config.RngSeed;
+                int sampleCount = blob?.SampleCount ?? 0;
+                config.RngSeed = seed;
+                RestoreRngState(seed, sampleCount);
+            }
+            catch (Exception ex)
+            {
+                LogError($"Load failed: {ex.Message}");
+            }
         }
 
         private void OnNewDay(OnNewDayEvent e)
@@ -87,13 +134,13 @@ namespace Game.Systems.MarriageSystem
             int attempts = 0;
             while (attempts < config.DailyMatchmakingCap && singlesMale.Count > 0 && singlesFemale.Count > 0)
             {
-                int mIndex = rng.Next(singlesMale.Count);
+                int mIndex = NextRandomInt(singlesMale.Count);
                 var male = singlesMale[mIndex];
 
                 int fIndex = WeightedPickFemale(singlesFemale, male.Class);
                 var female = singlesFemale[fIndex];
 
-                if (rng.NextDouble() < config.DailyMarriageChanceWhenEligible)
+                if (NextRandomDouble() < config.DailyMarriageChanceWhenEligible)
                 {
                     if (characterSystem.Marry(male.ID, female.ID))
                     {
@@ -108,7 +155,6 @@ namespace Game.Systems.MarriageSystem
 
                 attempts++;
             }
-
         }
 
         private int WeightedPickFemale(List<Character> females, SocialClass maleClass)
@@ -129,9 +175,9 @@ namespace Game.Systems.MarriageSystem
                 total += w;
             }
 
-            if (total <= 0) return rng.Next(females.Count);
+            if (total <= 0) return NextRandomInt(females.Count);
 
-            double roll = rng.NextDouble() * total;
+            double roll = NextRandomDouble() * total;
             double acc = 0;
             for (int i = 0; i < females.Count; i++)
             {
@@ -139,6 +185,39 @@ namespace Game.Systems.MarriageSystem
                 if (roll <= acc) return i;
             }
             return females.Count - 1;
+        }
+
+        private double NextRandomDouble()
+        {
+            rngSampleCount++;
+            return rng.NextDouble();
+        }
+
+        private int NextRandomInt(int maxExclusive)
+        {
+            rngSampleCount++;
+            return rng.Next(maxExclusive);
+        }
+
+        private void RestoreRngState(int seed, int sampleCount)
+        {
+            rng = new System.Random(seed);
+            if (sampleCount > 0)
+            {
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    _ = rng.Next();
+                }
+            }
+            rngSampleCount = sampleCount;
+        }
+
+        [Serializable]
+        private class SaveBlob
+        {
+            public int Version = 1;
+            public int Seed;
+            public int SampleCount;
         }
     }
 }
