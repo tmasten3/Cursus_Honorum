@@ -14,6 +14,9 @@ namespace Game.Data.Characters
     {
         private const string LogCategory = "CharacterData";
 
+        private static LogBatch _normalizationBatch =
+            new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
+
         private static readonly System.Random rng = new();
         private static int nextID = 1000;
 
@@ -29,6 +32,9 @@ namespace Game.Data.Characters
         // ------------------------------------------------------------------
         public static List<Character> LoadBaseCharacters(string path)
         {
+            _normalizationBatch =
+                new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
+
             if (!File.Exists(path))
             {
                 Game.Core.Logger.Warn(LogCategory, $"Base character file not found at '{path}'.");
@@ -70,6 +76,7 @@ namespace Game.Data.Characters
 
             ValidateCharacters(wrapper.Characters, path);
             UpdateNextID(wrapper.Characters);
+            _normalizationBatch.Flush();
             return wrapper.Characters;
         }
 
@@ -90,6 +97,8 @@ namespace Game.Data.Characters
             character.RomanName = normalizedName;
             if (character.RomanName != null)
                 character.RomanName.Gender = character.Gender;
+
+            var normalizedNomen = character.RomanName?.Nomen ?? "(unknown)";
 
             string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, character.RomanName);
             if (!string.IsNullOrEmpty(resolvedFamily) && !string.Equals(character.Family, resolvedFamily, StringComparison.Ordinal))
@@ -113,8 +122,11 @@ namespace Game.Data.Characters
 
                 if (warningCorrections.Count > 0)
                 {
-                    Game.Core.Logger.Warn(LogCategory,
-                        $"{sourcePath}: Character #{character.ID} - {string.Join("; ", warningCorrections)}");
+                    var warningDetails = string.Join("; ", warningCorrections);
+                    var record = $"{sourcePath}: Character #{character.ID} - {warningDetails}";
+                    if (!string.IsNullOrEmpty(normalizedNomen))
+                        record += $" (nomen '{normalizedNomen}')";
+                    _normalizationBatch.Add(record);
                 }
 
                 if (infoCorrections.Count > 0)
