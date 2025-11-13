@@ -186,13 +186,13 @@ namespace Game.UI
             gameController = FindFirstObjectByType<GameController>();
             if (gameController == null)
             {
-                Logger.Warn("Safety", "[DebugOverlay] Unable to locate GameController in scene.");
+                Game.Core.Logger.Warn("Safety", "[DebugOverlay] Unable to locate GameController in scene.");
                 return;
             }
 
             if (gameController.GameState == null)
             {
-                Logger.Warn("Safety", "[DebugOverlay] GameController has no GameState reference.");
+                Game.Core.Logger.Warn("Safety", "[DebugOverlay] GameController has no GameState reference.");
                 return;
             }
 
@@ -200,14 +200,14 @@ namespace Game.UI
             characterSystem = gameController.GameState.GetSystem<CharacterSystem>();
 
             if (timeSystem == null)
-                Logger.Warn("Safety", "[DebugOverlay] TimeSystem unavailable.");
+                Game.Core.Logger.Warn("Safety", "[DebugOverlay] TimeSystem unavailable.");
             if (characterSystem == null)
-                Logger.Warn("Safety", "[DebugOverlay] CharacterSystem unavailable.");
+                Game.Core.Logger.Warn("Safety", "[DebugOverlay] CharacterSystem unavailable.");
 
             if (characterSystem != null && characterSystem.TryGetRepository(out var repository))
                 characterRepository = repository;
             else
-                Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
+                Game.Core.Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
         }
 
         private void ForceRefresh()
@@ -242,7 +242,7 @@ namespace Game.UI
 
         private void UpdateLogs()
         {
-            IReadOnlyList<Logger.LogEntry> entries = Logger.GetRecentEntries();
+            IReadOnlyList<Game.Core.Logger.LogEntry> entries = Game.Core.Logger.GetRecentEntries();
             if (entries == null || entries.Count == 0)
             {
                 lastLogCount = 0;

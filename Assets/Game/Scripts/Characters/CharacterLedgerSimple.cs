@@ -22,9 +22,9 @@ public class CharacterLedgerSimple : MonoBehaviour
     private void Awake()
     {
         if (listContainer == null)
-            Logger.Warn("Safety", "[CharacterLedger] List container reference missing.");
+            Game.Core.Logger.Warn("Safety", "[CharacterLedger] List container reference missing.");
         if (rowPrefab == null)
-            Logger.Warn("Safety", "[CharacterLedger] Row prefab reference missing.");
+            Game.Core.Logger.Warn("Safety", "[CharacterLedger] Row prefab reference missing.");
     }
 
     private void OnEnable()
@@ -53,13 +53,13 @@ public class CharacterLedgerSimple : MonoBehaviour
         var controller = FindFirstObjectByType<GameController>();
         if (controller == null)
         {
-            Logger.Warn("Safety", "[CharacterLedger] No GameController found in scene.");
+            Game.Core.Logger.Warn("Safety", "[CharacterLedger] No GameController found in scene.");
             yield break;
         }
 
         if (controller.GameState == null)
         {
-            Logger.Warn("Safety", "[CharacterLedger] GameState not initialized on GameController.");
+            Game.Core.Logger.Warn("Safety", "[CharacterLedger] GameState not initialized on GameController.");
             yield break;
         }
 
@@ -68,7 +68,7 @@ public class CharacterLedgerSimple : MonoBehaviour
 
         if (characterSystem == null || eventBus == null)
         {
-            Logger.Warn("Safety", "[CharacterLedger] Required systems not found.");
+            Game.Core.Logger.Warn("Safety", "[CharacterLedger] Required systems not found.");
             yield break;
         }
 
@@ -95,7 +95,7 @@ public class CharacterLedgerSimple : MonoBehaviour
 
         if (characterSystem == null)
         {
-            Logger.Warn("Safety", "[CharacterLedger] CharacterSystem unavailable during refresh.");
+            Game.Core.Logger.Warn("Safety", "[CharacterLedger] CharacterSystem unavailable during refresh.");
             return;
         }
 
@@ -106,7 +106,7 @@ public class CharacterLedgerSimple : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Logger.Warn("Safety", $"[CharacterLedger] Failed to clear existing rows: {ex.Message}");
+            Game.Core.Logger.Warn("Safety", $"[CharacterLedger] Failed to clear existing rows: {ex.Message}");
         }
 
         IReadOnlyList<Character> characters;
@@ -116,7 +116,7 @@ public class CharacterLedgerSimple : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Logger.Error("Safety", $"[CharacterLedger] Unable to fetch living characters: {ex.Message}");
+            Game.Core.Logger.Error("Safety", $"[CharacterLedger] Unable to fetch living characters: {ex.Message}");
             return;
         }
 
@@ -124,7 +124,7 @@ public class CharacterLedgerSimple : MonoBehaviour
         {
             if (character == null)
             {
-                Logger.Warn("Safety", "[CharacterLedger] Encountered null character while building list.");
+                Game.Core.Logger.Warn("Safety", "[CharacterLedger] Encountered null character while building list.");
                 continue;
             }
 
@@ -135,7 +135,7 @@ public class CharacterLedgerSimple : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Logger.Error("Safety", $"[CharacterLedger] Failed to instantiate row prefab: {ex.Message}");
+                Game.Core.Logger.Error("Safety", $"[CharacterLedger] Failed to instantiate row prefab: {ex.Message}");
                 continue;
             }
 
@@ -154,7 +154,7 @@ public class CharacterLedgerSimple : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Logger.Warn("Safety", $"[CharacterLedger] Failed to resolve name for character #{character.ID}: {ex.Message}");
+                Game.Core.Logger.Warn("Safety", $"[CharacterLedger] Failed to resolve name for character #{character.ID}: {ex.Message}");
                 fullName = $"Character #{character.ID}";
             }
 
@@ -164,10 +164,10 @@ public class CharacterLedgerSimple : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Logger.Warn("Safety", $"[CharacterLedger] Failed to assign row text for character #{character.ID}: {ex.Message}");
+                Game.Core.Logger.Warn("Safety", $"[CharacterLedger] Failed to assign row text for character #{character.ID}: {ex.Message}");
             }
         }
 
-        Logger.Info("Ledger", $"Auto-refreshed list with {characters.Count} characters.");
+        Game.Core.Logger.Info("Ledger", $"Auto-refreshed list with {characters.Count} characters.");
     }
 }

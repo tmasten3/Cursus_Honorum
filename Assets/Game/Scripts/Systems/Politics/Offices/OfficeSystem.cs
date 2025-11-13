@@ -62,7 +62,7 @@ namespace Game.Systems.Politics.Offices
             var normalized = NormalizeOfficeId(officeId);
             if (normalized == null)
             {
-                Logger.Warn("Safety", "[OfficeSystem] Requested seat list for null office id.");
+                Game.Core.Logger.Warn("Safety", "[OfficeSystem] Requested seat list for null office id.");
                 return null;
             }
 
@@ -126,14 +126,14 @@ namespace Game.Systems.Politics.Offices
                     var def = wrapper.Offices[i];
                     if (def == null)
                     {
-                        Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} was null. Skipping.");
+                        Game.Core.Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} was null. Skipping.");
                         continue;
                     }
 
                     var normalizedId = NormalizeOfficeId(def.Id);
                     if (normalizedId == null)
                     {
-                        Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} missing identifier.");
+                        Game.Core.Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} missing identifier.");
                         continue;
                     }
 
@@ -220,7 +220,7 @@ namespace Game.Systems.Politics.Offices
                     var seat = seats.Count > i ? seats[i] : null;
                     if (seat == null)
                     {
-                        Logger.Warn("Safety", $"[OfficeSystem] Missing seat index {i} for office '{officeId}'.");
+                        Game.Core.Logger.Warn("Safety", $"[OfficeSystem] Missing seat index {i} for office '{officeId}'.");
                         continue;
                     }
                     int termStart = initialYear - Math.Max(0, def.TermLengthYears - 1);
@@ -759,20 +759,20 @@ namespace Game.Systems.Politics.Offices
             var normalizedId = NormalizeOfficeId(officeId);
             if (normalizedId == null)
             {
-                Logger.Warn("Safety", "[OfficeSystem] AssignOffice called with null identifier.");
+                Game.Core.Logger.Warn("Safety", "[OfficeSystem] AssignOffice called with null identifier.");
                 return new OfficeSeatDescriptor { OfficeId = officeId ?? "unknown", SeatIndex = -1, StartYear = year, EndYear = year };
             }
 
             if (!definitions.TryGetValue(normalizedId, out var def))
             {
-                Logger.Warn("Safety", $"[OfficeSystem] AssignOffice called with unknown office '{normalizedId}'.");
+                Game.Core.Logger.Warn("Safety", $"[OfficeSystem] AssignOffice called with unknown office '{normalizedId}'.");
                 return new OfficeSeatDescriptor { OfficeId = normalizedId, SeatIndex = -1, StartYear = year, EndYear = year };
             }
 
             var seats = GetOrCreateSeatList(normalizedId, def.Seats);
             if (seats == null)
             {
-                Logger.Warn("Safety", $"[OfficeSystem] No seats collection available for '{normalizedId}'.");
+                Game.Core.Logger.Warn("Safety", $"[OfficeSystem] No seats collection available for '{normalizedId}'.");
                 return new OfficeSeatDescriptor { OfficeId = normalizedId, SeatIndex = -1, StartYear = year, EndYear = year };
             }
 
