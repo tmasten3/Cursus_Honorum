@@ -48,7 +48,18 @@ public class GameController : MonoBehaviour
             if (paused) timeSystem.Pause();
 
             isInitialized = true;
-            GameStateInitialized?.Invoke(gameState);
+
+            if (GameStateInitialized != null)
+            {
+                try
+                {
+                    GameStateInitialized.Invoke(gameState);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("GameController", $"GameStateInitialized listener failed: {ex.Message}");
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -81,7 +92,17 @@ public class GameController : MonoBehaviour
     {
         if (gameState != null)
         {
-            GameStateShuttingDown?.Invoke();
+            if (GameStateShuttingDown != null)
+            {
+                try
+                {
+                    GameStateShuttingDown.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("GameController", $"GameStateShuttingDown listener failed: {ex.Message}");
+                }
+            }
             gameState.Shutdown();
             gameState = null;
             timeSystem = null;
