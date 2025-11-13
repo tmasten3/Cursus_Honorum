@@ -125,7 +125,7 @@ namespace Game.UI
             text.text = initialText;
             text.fontSize = 22f;
             text.color = Color.white;
-            text.enableWordWrapping = false;
+            text.textWrappingMode = TextWrappingModes.NoWrapping;
 
             return text;
         }
@@ -173,7 +173,7 @@ namespace Game.UI
             text.fontSize = 18f;
             text.color = new Color(0.85f, 0.9f, 1f);
             text.alignment = TextAlignmentOptions.TopLeft;
-            text.enableWordWrapping = true;
+            text.textWrappingMode = TextWrappingModes.Normal;
 
             scrollRect.content = contentRect;
             scrollRect.viewport = viewportRect;
