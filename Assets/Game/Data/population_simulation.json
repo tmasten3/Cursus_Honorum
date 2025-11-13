@@ -1,0 +1,19 @@
+{
+  "Birth": {
+    "RngSeed": 1338,
+    "FemaleMinAge": 14,
+    "FemaleMaxAge": 35,
+    "DailyBirthChanceIfMarried": 0.0015,
+    "GestationDays": 270,
+    "MultipleBirthChance": 0.02
+  },
+  "Marriage": {
+    "RngSeed": 2025,
+    "MinAgeMale": 14,
+    "MinAgeFemale": 12,
+    "DailyMatchmakingCap": 10,
+    "DailyMarriageChanceWhenEligible": 0.002,
+    "PreferSameClassWeight": 1.5,
+    "CrossClassAllowed": true
+  }
+}
