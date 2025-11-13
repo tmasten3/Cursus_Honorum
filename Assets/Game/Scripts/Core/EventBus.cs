@@ -15,6 +15,7 @@ namespace Game.Systems.EventBus
         private readonly Queue<GameEvent> currentQueue = new();
         private readonly Queue<GameEvent> nextQueue = new();
         private readonly Dictionary<Type, List<Action<GameEvent>>> subscribers = new();
+        private readonly Dictionary<Type, Dictionary<Delegate, Action<GameEvent>>> subscriberLookup = new();
         private readonly List<GameEvent> history = new();
         private readonly HashSet<Type> unhandledTypesLogged = new();
         private static readonly HashSet<Type> optionalEventTypes = new()
@@ -52,12 +53,57 @@ namespace Game.Systems.EventBus
 
             var eventType = typeof(T);
 
-            if (!subscribers.ContainsKey(eventType))
-                subscribers[eventType] = new List<Action<GameEvent>>();
+            if (!subscriberLookup.TryGetValue(eventType, out var typedLookup))
+            {
+                typedLookup = new Dictionary<Delegate, Action<GameEvent>>();
+                subscriberLookup[eventType] = typedLookup;
+            }
 
-            subscribers[eventType].Add(e => handler((T)e));
+            if (typedLookup.ContainsKey(handler))
+            {
+                LogWarn($"Duplicate subscription to {eventType.Name} ignored.");
+                return;
+            }
+
+            if (!subscribers.TryGetValue(eventType, out var handlerList))
+            {
+                handlerList = new List<Action<GameEvent>>();
+                subscribers[eventType] = handlerList;
+            }
+
+            Action<GameEvent> wrapper = e => handler((T)e);
+            typedLookup[handler] = wrapper;
+            handlerList.Add(wrapper);
             unhandledTypesLogged.Remove(eventType);
             LogInfo($"Subscribed to {eventType.Name}");
+        }
+
+        public void Unsubscribe<T>(Action<T> handler) where T : GameEvent
+        {
+            if (handler == null)
+                return;
+
+            var eventType = typeof(T);
+
+            if (!subscriberLookup.TryGetValue(eventType, out var typedLookup))
+                return;
+
+            if (!typedLookup.TryGetValue(handler, out var wrapper))
+                return;
+
+            typedLookup.Remove(handler);
+
+            if (subscribers.TryGetValue(eventType, out var handlerList))
+            {
+                handlerList.Remove(wrapper);
+                if (handlerList.Count == 0)
+                    subscribers.Remove(eventType);
+            }
+
+            if (typedLookup.Count == 0)
+                subscriberLookup.Remove(eventType);
+
+            LogInfo($"Unsubscribed from {eventType.Name}");
         }
 
         private void FlushEvents()

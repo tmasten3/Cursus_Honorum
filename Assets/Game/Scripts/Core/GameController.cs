@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Game.Core;
 using Game.Systems.TimeSystem;
@@ -19,23 +20,48 @@ public class GameController : MonoBehaviour
 
     private GameState gameState;
     private TimeSystem timeSystem;
+    private bool isInitialized;
 
     public GameState GameState => gameState;
+    public bool IsInitialized => isInitialized;
+
+    public event Action<GameState> GameStateInitialized;
+    public event Action GameStateShuttingDown;
 
     void Start()
     {
-        gameState = new GameState();
-        gameState.Initialize();
-        timeSystem = gameState.GetSystem<TimeSystem>();
+        if (isInitialized)
+            return;
 
-        // Apply inspector defaults
-        timeSystem.SetGameSpeed(speedMultiplier);
-        timeSystem.SetSecondsPerDay(secondsPerDay);
-        if (paused) timeSystem.Pause();
+        try
+        {
+            gameState = new GameState();
+            gameState.Initialize();
+
+            timeSystem = gameState.GetSystem<TimeSystem>();
+            if (timeSystem == null)
+                throw new InvalidOperationException("TimeSystem failed to initialize.");
+
+            // Apply inspector defaults
+            timeSystem.SetGameSpeed(speedMultiplier);
+            timeSystem.SetSecondsPerDay(secondsPerDay);
+            if (paused) timeSystem.Pause();
+
+            isInitialized = true;
+            GameStateInitialized?.Invoke(gameState);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("GameController", $"Failed to initialize GameState: {ex.Message}");
+            enabled = false;
+        }
     }
 
     void Update()
     {
+        if (!isInitialized || gameState == null)
+            return;
+
         gameState.Update();
 
         // Live sync inspector changes
@@ -51,7 +77,17 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void OnDestroy() => gameState.Shutdown();
+    void OnDestroy()
+    {
+        if (gameState != null)
+        {
+            GameStateShuttingDown?.Invoke();
+            gameState.Shutdown();
+            gameState = null;
+            timeSystem = null;
+            isInitialized = false;
+        }
+    }
 
 }
 

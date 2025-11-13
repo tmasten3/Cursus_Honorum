@@ -37,6 +37,7 @@ namespace Game.Systems.Politics.Elections
         private int currentDay;
 
         public bool DebugMode { get; set; }
+        private bool subscriptionsActive;
 
         public ElectionSystem(EventBus.EventBus eventBus, TimeSystem.TimeSystem timeSystem,
             Game.Systems.CharacterSystem.CharacterSystem characterSystem, OfficeSystem officeSystem)
@@ -51,11 +52,27 @@ namespace Game.Systems.Politics.Elections
         {
             base.Initialize(state);
             LogInfo($"Election calendar synchronized with {timeSystem.Name}.");
-            eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
-            eventBus.Subscribe<OnNewYearEvent>(OnNewYear);
+            if (!subscriptionsActive)
+            {
+                eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
+                eventBus.Subscribe<OnNewYearEvent>(OnNewYear);
+                subscriptionsActive = true;
+            }
         }
 
         public override void Update(GameState state) { }
+
+        public override void Shutdown()
+        {
+            if (subscriptionsActive)
+            {
+                eventBus.Unsubscribe<OnNewDayEvent>(OnNewDay);
+                eventBus.Unsubscribe<OnNewYearEvent>(OnNewYear);
+                subscriptionsActive = false;
+            }
+
+            base.Shutdown();
+        }
 
         private void OnNewYear(OnNewYearEvent e)
         {

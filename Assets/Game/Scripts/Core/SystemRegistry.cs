@@ -8,7 +8,20 @@ namespace Game.Core
     {
         private readonly List<IGameSystem> systems = new();
         private readonly Dictionary<Type, IGameSystem> systemLookup = new();
+        private readonly Dictionary<Type, int> registrationOrder = new();
+        private int registrationSequence;
         private readonly List<SystemDescriptor> descriptors = new();
+
+        private static readonly Dictionary<Type, int> KnownInitializationOrder = new()
+        {
+            { typeof(Game.Systems.EventBus.EventBus), 0 },
+            { typeof(Game.Systems.TimeSystem.TimeSystem), 1 },
+            { typeof(Game.Systems.CharacterSystem.CharacterSystem), 2 },
+            { typeof(Game.Systems.BirthSystem.BirthSystem), 3 },
+            { typeof(Game.Systems.Politics.Offices.OfficeSystem), 4 },
+            { typeof(Game.Systems.MarriageSystem.MarriageSystem), 5 },
+            { typeof(Game.Systems.Politics.Elections.ElectionSystem), 6 }
+        };
 
         public void RegisterDescriptor(SystemDescriptor descriptor)
         {
@@ -40,11 +53,26 @@ namespace Game.Core
 
             systems.Add(system);
             systemLookup[type] = system;
+            registrationOrder[type] = registrationSequence++;
         }
 
         public void InitializeAll(GameState state)
         {
             MaterializeDescriptors();
+
+            if (state == null)
+                throw new ArgumentNullException(nameof(state));
+
+            if (systems.Count == 0)
+                return;
+
+            var orderedSystems = systems
+                .OrderBy(s => GetInitializationPriority(s.GetType()))
+                .ThenBy(s => registrationOrder.TryGetValue(s.GetType(), out var order) ? order : int.MaxValue)
+                .ToList();
+
+            systems.Clear();
+            systems.AddRange(orderedSystems);
 
             foreach (var system in systems)
             {
@@ -53,14 +81,34 @@ namespace Game.Core
                     bool exists = systems.Any(s => s.GetType() == dep);
                     if (!exists)
                     {
-                        Logger.Warn("SystemRegistry",
-                            $"{system.Name} missing dependency {dep.Name}. It may not initialize correctly.");
+                        string message = $"{system.Name} missing dependency {dep.Name}.";
+                        Logger.Error("SystemRegistry", message);
+                        throw new InvalidOperationException(message);
                     }
                 }
 
                 Logger.Info("SystemRegistry", $"Initializing {system.Name}...");
-                system.Initialize(state);
+                try
+                {
+                    system.Initialize(state);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("SystemRegistry", $"Initialization failed for {system.Name}: {ex.Message}");
+                    throw;
+                }
             }
+        }
+
+        private int GetInitializationPriority(Type type)
+        {
+            if (type == null)
+                return int.MaxValue;
+
+            if (KnownInitializationOrder.TryGetValue(type, out var priority))
+                return priority;
+
+            return KnownInitializationOrder.Count + (registrationOrder.TryGetValue(type, out var order) ? order : 0);
         }
 
         private void MaterializeDescriptors()
@@ -145,6 +193,8 @@ namespace Game.Core
 
             systems.Clear();
             systemLookup.Clear();
+            registrationOrder.Clear();
+            registrationSequence = 0;
             Logger.Info("SystemRegistry", "All systems shut down and registry cleared.");
         }
 

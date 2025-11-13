@@ -17,6 +17,13 @@ namespace Game.Data.Characters
         private static readonly System.Random rng = new();
         private static int nextID = 1000;
 
+        private static readonly string[] RoutineNormalizationPrefixes =
+        {
+            "removed cognomen for non-noble female",
+            "normalized gens",
+            "adjusted cognomen to"
+        };
+
         // ------------------------------------------------------------------
         // Loading
         // ------------------------------------------------------------------
@@ -28,8 +35,28 @@ namespace Game.Data.Characters
                 return new List<Character>();
             }
 
-            string json = File.ReadAllText(path);
-            var wrapper = JsonUtility.FromJson<CharacterDataWrapper>(json);
+            string json;
+            try
+            {
+                json = File.ReadAllText(path);
+            }
+            catch (Exception ex)
+            {
+                Game.Core.Logger.Error(LogCategory, $"Failed to read base character file '{path}': {ex.Message}");
+                return new List<Character>();
+            }
+
+            CharacterDataWrapper wrapper;
+            try
+            {
+                wrapper = JsonUtility.FromJson<CharacterDataWrapper>(json);
+            }
+            catch (Exception ex)
+            {
+                Game.Core.Logger.Error(LogCategory, $"Failed to parse base character JSON from '{path}': {ex.Message}");
+                return new List<Character>();
+            }
+
             if (wrapper == null || wrapper.Characters == null)
             {
                 Game.Core.Logger.Error(LogCategory, $"Failed to parse base character JSON from '{path}'.");
@@ -73,7 +100,28 @@ namespace Game.Data.Characters
 
             if (corrections.Count > 0)
             {
-                Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{character.ID} - {string.Join("; ", corrections)}");
+                var infoCorrections = new List<string>();
+                var warningCorrections = new List<string>();
+
+                foreach (var correction in corrections)
+                {
+                    if (IsRoutineNormalization(correction))
+                        infoCorrections.Add(correction);
+                    else
+                        warningCorrections.Add(correction);
+                }
+
+                if (warningCorrections.Count > 0)
+                {
+                    Game.Core.Logger.Warn(LogCategory,
+                        $"{sourcePath}: Character #{character.ID} - {string.Join("; ", warningCorrections)}");
+                }
+
+                if (infoCorrections.Count > 0)
+                {
+                    Game.Core.Logger.Info(LogCategory,
+                        $"{sourcePath}: Character #{character.ID} - {string.Join("; ", infoCorrections)}");
+                }
             }
         }
 
@@ -191,5 +239,19 @@ namespace Game.Data.Characters
         }
 
         public static int GetNextID() => nextID++;
+
+        private static bool IsRoutineNormalization(string correction)
+        {
+            if (string.IsNullOrWhiteSpace(correction))
+                return false;
+
+            foreach (var prefix in RoutineNormalizationPrefixes)
+            {
+                if (correction.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
     }
 }

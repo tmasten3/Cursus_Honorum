@@ -17,6 +17,7 @@ namespace Game.Systems.MarriageSystem
         private readonly EventBus.EventBus bus;
         private readonly CharacterSystem.CharacterSystem characterSystem;
         private System.Random rng;
+        private bool subscriptionsActive;
 
         [Serializable]
         private class Config
@@ -45,11 +46,26 @@ namespace Game.Systems.MarriageSystem
             base.Initialize(state);
 
             rng = new System.Random(config.RngSeed);
-            bus.Subscribe<OnNewDayEvent>(OnNewDay);
+            if (!subscriptionsActive)
+            {
+                bus.Subscribe<OnNewDayEvent>(OnNewDay);
+                subscriptionsActive = true;
+            }
             LogInfo("Initialized and subscribed to OnNewDayEvent.");
         }
 
         public override void Update(GameState state) { }
+
+        public override void Shutdown()
+        {
+            if (subscriptionsActive)
+            {
+                bus.Unsubscribe<OnNewDayEvent>(OnNewDay);
+                subscriptionsActive = false;
+            }
+
+            base.Shutdown();
+        }
 
         private void OnNewDay(OnNewDayEvent e)
         {

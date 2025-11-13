@@ -8,6 +8,8 @@ namespace Game.Core
         private readonly SystemRegistry registry = new();
         private readonly SystemBootstrapProfile profile;
 
+        public bool IsInitialized { get; private set; }
+
         public GameState(SystemBootstrapProfile profile = null)
         {
             this.profile = profile ?? SystemBootstrapProfile.Default;
@@ -15,6 +17,9 @@ namespace Game.Core
 
         public void Initialize()
         {
+            if (IsInitialized)
+                throw new InvalidOperationException("GameState.Initialize() called more than once.");
+
             foreach (var descriptor in profile.Descriptors)
                 registry.RegisterDescriptor(descriptor);
 
@@ -22,10 +27,15 @@ namespace Game.Core
 
             var names = registry.GetRegisteredSystemNames();
             Logger.Info("GameState", $"Initialized with {names.Count} systems: {string.Join(", ", names)}.");
+
+            IsInitialized = true;
         }
 
         public void Update()
         {
+            if (!IsInitialized)
+                return;
+
             registry.UpdateAll(this);
         }
 
@@ -52,7 +62,14 @@ namespace Game.Core
             }
         }
 
-        public void Shutdown() => registry.ShutdownAll();
+        public void Shutdown()
+        {
+            if (!IsInitialized)
+                return;
+
+            registry.ShutdownAll();
+            IsInitialized = false;
+        }
 
     }
 }
