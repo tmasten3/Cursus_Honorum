@@ -6,7 +6,7 @@ using Game.Systems.EventBus;
 using Game.Systems.MarriageSystem;
 using Game.Systems.Politics.Elections;
 using Game.Systems.Politics.Offices;
-using Game.Systems.TimeSystem;
+using Game.Systems.Time;
 
 public class InitializationTests
 {

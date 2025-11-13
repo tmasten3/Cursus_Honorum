@@ -9,7 +9,7 @@ using Game.Core;
 using Game.Systems.CharacterSystem;
 using Game.Systems.Politics.Elections;
 using Game.Systems.Politics.Offices;
-using Game.Systems.TimeSystem;
+using Game.Systems.Time;
 
 namespace Game.UI
 {

@@ -38,15 +38,15 @@ namespace Game.Core
 
             AddSystem(_ => new Game.Systems.EventBus.EventBus());
             AddSystem(
-                resolver => new Game.Systems.TimeSystem.TimeSystem(
+                resolver => new Game.Systems.Time.TimeSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>()),
                 typeof(Game.Systems.EventBus.EventBus));
             AddSystem(
                 resolver => new Game.Systems.CharacterSystem.CharacterSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
-                    resolver.Resolve<Game.Systems.TimeSystem.TimeSystem>()),
+                    resolver.Resolve<Game.Systems.Time.TimeSystem>()),
                 typeof(Game.Systems.EventBus.EventBus),
-                typeof(Game.Systems.TimeSystem.TimeSystem));
+                typeof(Game.Systems.Time.TimeSystem));
             AddSystem(
                 resolver => new Game.Systems.BirthSystem.BirthSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
@@ -68,11 +68,11 @@ namespace Game.Core
             AddSystem(
                 resolver => new Game.Systems.Politics.Elections.ElectionSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
-                    resolver.Resolve<Game.Systems.TimeSystem.TimeSystem>(),
+                    resolver.Resolve<Game.Systems.Time.TimeSystem>(),
                     resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>(),
                     resolver.Resolve<Game.Systems.Politics.Offices.OfficeSystem>()),
                 typeof(Game.Systems.EventBus.EventBus),
-                typeof(Game.Systems.TimeSystem.TimeSystem),
+                typeof(Game.Systems.Time.TimeSystem),
                 typeof(Game.Systems.CharacterSystem.CharacterSystem),
                 typeof(Game.Systems.Politics.Offices.OfficeSystem));
         }

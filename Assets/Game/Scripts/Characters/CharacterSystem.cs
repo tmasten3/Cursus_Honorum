@@ -6,13 +6,13 @@ using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.Characters;
 using Game.Systems.EventBus;
-using Game.Systems.TimeSystem;
+using Game.Systems.Time;
 namespace Game.Systems.CharacterSystem
 {
     public class CharacterSystem : GameSystemBase
     {
         public override string Name => "Character System";
-        public override IEnumerable<Type> Dependencies => new[] { typeof(EventBus.EventBus), typeof(TimeSystem.TimeSystem) };
+        public override IEnumerable<Type> Dependencies => new[] { typeof(EventBus.EventBus), typeof(TimeSystem) };
         [Serializable]
         private class MortalityBand { public int Min; public int Max; public float YearlyHazard; [NonSerialized] public float DailyHazard; }
         [Serializable]
@@ -34,7 +34,7 @@ namespace Game.Systems.CharacterSystem
             public MortalityCfg Mortality = new();
         }
         private readonly EventBus.EventBus bus;
-        private readonly TimeSystem.TimeSystem timeSystem;
+        private readonly TimeSystem timeSystem;
         private Config config = new();
         private System.Random rng;
         private readonly CharacterRepository repository = new();
@@ -46,7 +46,7 @@ namespace Game.Systems.CharacterSystem
         private CharacterMortalityService mortality;
         private int curYear, curMonth, curDay;
         private bool subscriptionsActive;
-        public CharacterSystem(EventBus.EventBus bus, TimeSystem.TimeSystem timeSystem)
+        public CharacterSystem(EventBus.EventBus bus, TimeSystem timeSystem)
         {
             this.bus = bus ?? throw new ArgumentNullException(nameof(bus));
             this.timeSystem = timeSystem ?? throw new ArgumentNullException(nameof(timeSystem));

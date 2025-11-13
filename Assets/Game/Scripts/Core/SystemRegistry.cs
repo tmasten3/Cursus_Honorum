@@ -15,7 +15,7 @@ namespace Game.Core
         private static readonly Dictionary<Type, int> KnownInitializationOrder = new()
         {
             { typeof(Game.Systems.EventBus.EventBus), 0 },
-            { typeof(Game.Systems.TimeSystem.TimeSystem), 1 },
+            { typeof(Game.Systems.Time.TimeSystem), 1 },
             { typeof(Game.Systems.CharacterSystem.CharacterSystem), 2 },
             { typeof(Game.Systems.BirthSystem.BirthSystem), 3 },
             { typeof(Game.Systems.Politics.Offices.OfficeSystem), 4 },

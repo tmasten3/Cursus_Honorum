@@ -5,6 +5,7 @@ using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
 using Game.Systems.Politics.Offices;
+using Game.Systems.Time;
 using UnityEngine;
 
 namespace Game.Systems.Politics.Elections
@@ -15,13 +16,13 @@ namespace Game.Systems.Politics.Elections
         public override IEnumerable<Type> Dependencies => new[]
         {
             typeof(EventBus.EventBus),
-            typeof(TimeSystem.TimeSystem),
+            typeof(TimeSystem),
             typeof(Game.Systems.CharacterSystem.CharacterSystem),
             typeof(OfficeSystem)
         };
 
         private readonly EventBus.EventBus eventBus;
-        private readonly TimeSystem.TimeSystem timeSystem;
+        private readonly TimeSystem timeSystem;
         private readonly Game.Systems.CharacterSystem.CharacterSystem characterSystem;
         private readonly OfficeSystem officeSystem;
 
@@ -39,7 +40,7 @@ namespace Game.Systems.Politics.Elections
         public bool DebugMode { get; set; }
         private bool subscriptionsActive;
 
-        public ElectionSystem(EventBus.EventBus eventBus, TimeSystem.TimeSystem timeSystem,
+        public ElectionSystem(EventBus.EventBus eventBus, TimeSystem timeSystem,
             Game.Systems.CharacterSystem.CharacterSystem characterSystem, OfficeSystem officeSystem)
         {
             this.eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));

@@ -14,8 +14,6 @@ namespace Game.Systems.EventBus
 
         private readonly Queue<GameEvent> currentQueue = new();
         private readonly Queue<GameEvent> nextQueue = new();
-        private readonly Dictionary<Type, List<Action<GameEvent>>> subscribers = new();
-        private readonly Dictionary<Type, Dictionary<Delegate, Action<GameEvent>>> subscriberLookup = new();
         private readonly List<GameEvent> history = new();
         private readonly HashSet<Type> unhandledTypesLogged = new();
         private static readonly HashSet<Type> optionalEventTypes = new()
@@ -26,6 +24,9 @@ namespace Game.Systems.EventBus
             typeof(ElectionSeasonOpenedEvent),
             typeof(ElectionSeasonCompletedEvent)
         };
+
+        private readonly EventRegistry registry = new();
+        private readonly EventInvoker invoker = new();
 
         public override void Initialize(GameState state)
         {
@@ -51,31 +52,15 @@ namespace Game.Systems.EventBus
         {
             if (handler == null) throw new ArgumentNullException(nameof(handler));
 
-            var eventType = typeof(T);
-
-            if (!subscriberLookup.TryGetValue(eventType, out var typedLookup))
+            if (!registry.TryAddSubscriber(handler, out bool isDuplicate))
             {
-                typedLookup = new Dictionary<Delegate, Action<GameEvent>>();
-                subscriberLookup[eventType] = typedLookup;
-            }
-
-            if (typedLookup.ContainsKey(handler))
-            {
-                LogWarn($"Duplicate subscription to {eventType.Name} ignored.");
+                if (isDuplicate)
+                    LogWarn($"Duplicate subscription to {typeof(T).Name} ignored.");
                 return;
             }
 
-            if (!subscribers.TryGetValue(eventType, out var handlerList))
-            {
-                handlerList = new List<Action<GameEvent>>();
-                subscribers[eventType] = handlerList;
-            }
-
-            Action<GameEvent> wrapper = e => handler((T)e);
-            typedLookup[handler] = wrapper;
-            handlerList.Add(wrapper);
-            unhandledTypesLogged.Remove(eventType);
-            LogInfo($"Subscribed to {eventType.Name}");
+            unhandledTypesLogged.Remove(typeof(T));
+            LogInfo($"Subscribed to {typeof(T).Name}");
         }
 
         public void Unsubscribe<T>(Action<T> handler) where T : GameEvent
@@ -83,27 +68,10 @@ namespace Game.Systems.EventBus
             if (handler == null)
                 return;
 
-            var eventType = typeof(T);
-
-            if (!subscriberLookup.TryGetValue(eventType, out var typedLookup))
+            if (!registry.TryRemoveSubscriber(handler))
                 return;
 
-            if (!typedLookup.TryGetValue(handler, out var wrapper))
-                return;
-
-            typedLookup.Remove(handler);
-
-            if (subscribers.TryGetValue(eventType, out var handlerList))
-            {
-                handlerList.Remove(wrapper);
-                if (handlerList.Count == 0)
-                    subscribers.Remove(eventType);
-            }
-
-            if (typedLookup.Count == 0)
-                subscriberLookup.Remove(eventType);
-
-            LogInfo($"Unsubscribed from {eventType.Name}");
+            LogInfo($"Unsubscribed from {typeof(T).Name}");
         }
 
         private void FlushEvents()
@@ -120,23 +88,11 @@ namespace Game.Systems.EventBus
                 history.Add(e);
 
                 var eventType = e.GetType();
+                var handlers = registry.GetHandlers(eventType);
 
-                if (subscribers.TryGetValue(eventType, out var handlers))
+                if (handlers.Count > 0)
                 {
-                    if (handlers.Count == 0)
-                        continue;
-
-                    var handlerSnapshot = new Action<GameEvent>[handlers.Count];
-                    handlers.CopyTo(handlerSnapshot);
-
-                    foreach (var handler in handlerSnapshot)
-                    {
-                        try { handler(e); }
-                        catch (Exception ex)
-                        {
-                            LogError($"Error handling event {e.Name}: {ex.Message}");
-                        }
-                    }
+                    invoker.Invoke(e, handlers, ex => LogError($"Error handling event {e.Name}: {ex.Message}"));
                 }
                 else if (unhandledTypesLogged.Add(eventType))
                 {
