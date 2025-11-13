@@ -12,17 +12,6 @@ namespace Game.Core
         private int registrationSequence;
         private readonly List<SystemDescriptor> descriptors = new();
 
-        private static readonly Dictionary<Type, int> KnownInitializationOrder = new()
-        {
-            { typeof(Game.Systems.EventBus.EventBus), 0 },
-            { typeof(Game.Systems.Time.TimeSystem), 1 },
-            { typeof(Game.Systems.CharacterSystem.CharacterSystem), 2 },
-            { typeof(Game.Systems.BirthSystem.BirthSystem), 3 },
-            { typeof(Game.Systems.Politics.Offices.OfficeSystem), 4 },
-            { typeof(Game.Systems.MarriageSystem.MarriageSystem), 5 },
-            { typeof(Game.Systems.Politics.Elections.ElectionSystem), 6 }
-        };
-
         public void RegisterDescriptor(SystemDescriptor descriptor)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
@@ -66,27 +55,13 @@ namespace Game.Core
             if (systems.Count == 0)
                 return;
 
-            var orderedSystems = systems
-                .OrderBy(s => GetInitializationPriority(s.GetType()))
-                .ThenBy(s => registrationOrder.TryGetValue(s.GetType(), out var order) ? order : int.MaxValue)
-                .ToList();
+            var orderedSystems = BuildInitializationOrder();
 
             systems.Clear();
             systems.AddRange(orderedSystems);
 
             foreach (var system in systems)
             {
-                foreach (var dep in system.Dependencies)
-                {
-                    bool exists = systems.Any(s => s.GetType() == dep);
-                    if (!exists)
-                    {
-                        string message = $"{system.Name} missing dependency {dep.Name}.";
-                        Logger.Error("SystemRegistry", message);
-                        throw new InvalidOperationException(message);
-                    }
-                }
-
                 Logger.Info("SystemRegistry", $"Initializing {system.Name}...");
                 try
                 {
@@ -100,15 +75,92 @@ namespace Game.Core
             }
         }
 
-        private int GetInitializationPriority(Type type)
+        private List<IGameSystem> BuildInitializationOrder()
         {
-            if (type == null)
-                return int.MaxValue;
+            var typeLookup = systems.ToDictionary(s => s.GetType());
+            var indegree = new Dictionary<Type, int>();
+            var adjacency = new Dictionary<Type, List<Type>>();
 
-            if (KnownInitializationOrder.TryGetValue(type, out var priority))
-                return priority;
+            foreach (var system in systems)
+            {
+                var type = system.GetType();
+                indegree[type] = 0;
+                adjacency[type] = new List<Type>();
+            }
 
-            return KnownInitializationOrder.Count + (registrationOrder.TryGetValue(type, out var order) ? order : 0);
+            foreach (var system in systems)
+            {
+                var type = system.GetType();
+                var dependencies = (system.Dependencies ?? Enumerable.Empty<Type>())
+                    .Where(dep => dep != null)
+                    .Distinct();
+
+                foreach (var dependency in dependencies)
+                {
+                    if (!typeLookup.ContainsKey(dependency))
+                    {
+                        string message = $"{system.Name} missing dependency {dependency.Name}.";
+                        Logger.Error("SystemRegistry", message);
+                        throw new InvalidOperationException(message);
+                    }
+
+                    adjacency[dependency].Add(type);
+                    indegree[type] = indegree[type] + 1;
+                }
+            }
+
+            var ordered = new List<IGameSystem>(systems.Count);
+            var available = indegree
+                .Where(kv => kv.Value == 0)
+                .Select(kv => kv.Key)
+                .OrderBy(GetRegistrationOrder)
+                .ThenBy(t => t.FullName, StringComparer.Ordinal)
+                .ToList();
+
+            Comparison<Type> comparison = (x, y) =>
+            {
+                int orderCompare = GetRegistrationOrder(x).CompareTo(GetRegistrationOrder(y));
+                if (orderCompare != 0)
+                    return orderCompare;
+                return string.Compare(x.FullName, y.FullName, StringComparison.Ordinal);
+            };
+
+            while (available.Count > 0)
+            {
+                var current = available[0];
+                available.RemoveAt(0);
+                ordered.Add(typeLookup[current]);
+
+                foreach (var dependent in adjacency[current])
+                {
+                    indegree[dependent]--;
+                    if (indegree[dependent] == 0)
+                    {
+                        available.Add(dependent);
+                        available.Sort(comparison);
+                    }
+                }
+            }
+
+            if (ordered.Count != systems.Count)
+            {
+                var cycleTypes = indegree
+                    .Where(kv => kv.Value > 0)
+                    .Select(kv => kv.Key.Name)
+                    .Distinct()
+                    .OrderBy(name => name);
+
+                string message = $"Cycle detected in system dependencies: {string.Join(", ", cycleTypes)}.";
+                Logger.Error("SystemRegistry", message);
+                throw new InvalidOperationException(message);
+            }
+
+            return ordered;
+        }
+
+        private int GetRegistrationOrder(Type type)
+        {
+            return type != null && registrationOrder.TryGetValue(type, out var order) ? order : int.MaxValue;
         }
 
         private void MaterializeDescriptors()
