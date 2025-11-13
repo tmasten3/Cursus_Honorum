@@ -83,17 +83,17 @@ namespace Game.Systems.CharacterSystem
                         continue;
 
                     if (character.RomanName == null)
-                        Logger.Warn("Safety", $"{path}: Character #{character.ID} missing RomanName definition.");
+                        Game.Core.Logger.Warn("Safety", $"{path}: Character #{character.ID} missing RomanName definition.");
 
                     if (string.IsNullOrWhiteSpace(character.Family))
-                        Logger.Warn("Safety", $"{path}: Character #{character.ID} missing family information.");
+                        Game.Core.Logger.Warn("Safety", $"{path}: Character #{character.ID} missing family information.");
                 }
 
                 return characters;
             }
             catch (Exception ex)
             {
-                Logger.Error("Safety", $"Failed to load base character file '{path}': {ex.Message}");
+                Game.Core.Logger.Error("Safety", $"Failed to load base character file '{path}': {ex.Message}");
                 return new List<Character>();
             }
         }
@@ -112,7 +112,7 @@ namespace Game.Systems.CharacterSystem
             {
                 if (character == null)
                 {
-                    Logger.Warn("Safety", $"{config.BaseDataPath}: Encountered null character entry during load. Skipping.");
+                    Game.Core.Logger.Warn("Safety", $"{config.BaseDataPath}: Encountered null character entry during load. Skipping.");
                     continue;
                 }
 
@@ -122,7 +122,7 @@ namespace Game.Systems.CharacterSystem
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("Safety", $"{config.BaseDataPath}: Failed to add character #{character.ID} to repository: {ex.Message}");
+                    Game.Core.Logger.Error("Safety", $"{config.BaseDataPath}: Failed to add character #{character.ID} to repository: {ex.Message}");
                 }
             }
 
@@ -157,7 +157,7 @@ namespace Game.Systems.CharacterSystem
             }
             catch (Exception ex)
             {
-                Logger.Warn("Safety", $"Birthday aging failed for {curMonth}/{curDay}: {ex.Message}");
+                Game.Core.Logger.Warn("Safety", $"Birthday aging failed for {curMonth}/{curDay}: {ex.Message}");
             }
 
             foreach (var id in mortality.SelectDailyDeaths())
