@@ -103,9 +103,9 @@ namespace Game.Systems.BirthSystem
                     {
                         MotherID = mother.ID,
                         FatherID = father?.ID,
-                        DueYear = due.Y,
-                        DueMonth = due.M,
-                        DueDay = due.D
+                        DueYear = due.Year,
+                        DueMonth = due.Month,
+                        DueDay = due.Day
                     });
                 }
             }
