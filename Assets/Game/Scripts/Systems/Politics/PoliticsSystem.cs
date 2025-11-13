@@ -29,6 +29,7 @@ namespace Game.Systems.Politics
 
         private readonly PoliticsTermTracker termTracker = new();
         private readonly Dictionary<int, List<string>> eligibilityByCharacter = new();
+        private readonly Dictionary<(int Month, int Day), HashSet<int>> birthdayIndex = new();
         private readonly PoliticsModelFactory.ElectionCycleState cycleState = new();
 
         private bool subscriptionsActive;
@@ -52,9 +53,12 @@ namespace Game.Systems.Politics
             if (!subscriptionsActive)
             {
                 eventBus.Subscribe<OnNewYearEvent>(OnNewYear);
+                eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
                 eventBus.Subscribe<ElectionSeasonOpenedEvent>(OnElectionSeasonOpened);
                 eventBus.Subscribe<ElectionSeasonCompletedEvent>(OnElectionSeasonCompleted);
                 eventBus.Subscribe<OfficeAssignedEvent>(OnOfficeAssigned);
+                eventBus.Subscribe<OnCharacterBorn>(OnCharacterBorn);
+                eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
                 subscriptionsActive = true;
             }
 
@@ -75,13 +79,17 @@ namespace Game.Systems.Politics
             if (subscriptionsActive)
             {
                 eventBus.Unsubscribe<OnNewYearEvent>(OnNewYear);
+                eventBus.Unsubscribe<OnNewDayEvent>(OnNewDay);
                 eventBus.Unsubscribe<ElectionSeasonOpenedEvent>(OnElectionSeasonOpened);
                 eventBus.Unsubscribe<ElectionSeasonCompletedEvent>(OnElectionSeasonCompleted);
                 eventBus.Unsubscribe<OfficeAssignedEvent>(OnOfficeAssigned);
+                eventBus.Unsubscribe<OnCharacterBorn>(OnCharacterBorn);
+                eventBus.Unsubscribe<OnCharacterDied>(OnCharacterDied);
                 subscriptionsActive = false;
             }
 
             eligibilityByCharacter.Clear();
+            birthdayIndex.Clear();
             termTracker.Reset();
 
             base.Shutdown();
@@ -112,6 +120,24 @@ namespace Game.Systems.Politics
             currentYear = e.Year;
             cycleState.Reset(currentYear);
             RefreshEligibility(currentYear);
+        }
+
+        private void OnNewDay(OnNewDayEvent e)
+        {
+            if (e == null)
+                return;
+
+            currentYear = e.Year;
+
+            var key = (e.Month, e.Day);
+            if (!birthdayIndex.TryGetValue(key, out var ids) || ids.Count == 0)
+                return;
+
+            var toUpdate = new List<int>(ids);
+            foreach (var characterId in toUpdate)
+            {
+                UpdateEligibilityForCharacter(characterId);
+            }
         }
 
         private void OnElectionSeasonOpened(ElectionSeasonOpenedEvent e)
@@ -170,6 +196,7 @@ namespace Game.Systems.Politics
         private void RefreshEligibility(int year)
         {
             eligibilityByCharacter.Clear();
+            birthdayIndex.Clear();
 
             var living = characterSystem.GetAllLiving();
             if (living == null)
@@ -180,6 +207,7 @@ namespace Game.Systems.Politics
                 if (character == null)
                     continue;
 
+                EnsureBirthdayTracked(character);
                 var eligible = officeSystem.GetEligibleOffices(character, year);
                 StoreEligibilitySnapshot(character.ID, eligible);
             }
@@ -188,12 +216,21 @@ namespace Game.Systems.Politics
         private void UpdateEligibilityForCharacter(int characterId)
         {
             var character = characterSystem.Get(characterId);
-            if (character == null || !character.IsAlive)
+            if (character == null)
             {
                 eligibilityByCharacter.Remove(characterId);
+                RemoveBirthdayEntry(characterId);
                 return;
             }
 
+            if (!character.IsAlive)
+            {
+                eligibilityByCharacter.Remove(characterId);
+                RemoveBirthdayEntry(character);
+                return;
+            }
+
+            EnsureBirthdayTracked(character);
             var eligible = officeSystem.GetEligibleOffices(character, currentYear);
             StoreEligibilitySnapshot(characterId, eligible);
         }
@@ -243,6 +280,63 @@ namespace Game.Systems.Politics
         {
             var definition = officeSystem.GetDefinition(officeId);
             return definition?.Name ?? officeId;
+        }
+
+        private void EnsureBirthdayTracked(Game.Data.Characters.Character character)
+        {
+            if (character == null)
+                return;
+
+            var key = (character.BirthMonth, character.BirthDay);
+            if (!birthdayIndex.TryGetValue(key, out var ids))
+            {
+                ids = new HashSet<int>();
+                birthdayIndex[key] = ids;
+            }
+
+            ids.Add(character.ID);
+        }
+
+        private void RemoveBirthdayEntry(int characterId)
+        {
+            var character = characterSystem.Get(characterId);
+            RemoveBirthdayEntry(character);
+        }
+
+        private void RemoveBirthdayEntry(Game.Data.Characters.Character character)
+        {
+            if (character == null)
+                return;
+
+            var key = (character.BirthMonth, character.BirthDay);
+            if (!birthdayIndex.TryGetValue(key, out var ids))
+                return;
+
+            ids.Remove(character.ID);
+            if (ids.Count == 0)
+                birthdayIndex.Remove(key);
+        }
+
+        private void OnCharacterBorn(OnCharacterBorn e)
+        {
+            if (e == null)
+                return;
+
+            var character = characterSystem.Get(e.ChildID);
+            if (character == null || !character.IsAlive)
+                return;
+
+            EnsureBirthdayTracked(character);
+            UpdateEligibilityForCharacter(e.ChildID);
+        }
+
+        private void OnCharacterDied(OnCharacterDied e)
+        {
+            if (e == null)
+                return;
+
+            RemoveBirthdayEntry(e.CharacterID);
+            eligibilityByCharacter.Remove(e.CharacterID);
         }
     }
 }
