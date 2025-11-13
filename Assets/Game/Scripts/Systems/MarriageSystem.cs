@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Game.Core;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
+using Game.Systems.Population;
 
 namespace Game.Systems.MarriageSystem
 {
@@ -19,18 +20,9 @@ namespace Game.Systems.MarriageSystem
         private System.Random rng;
         private bool subscriptionsActive;
 
-        [Serializable]
-        private class Config
-        {
-            public int RngSeed = 2025;
-            public int MinAgeMale = 14;
-            public int MinAgeFemale = 12;
-            public int DailyMatchmakingCap = 10;
-            public float DailyMarriageChanceWhenEligible = 0.002f;
-            public float PreferSameClassWeight = 1.5f;
-            public bool CrossClassAllowed = true;
-        }
-        private Config config = new();
+        private MarriageSettings config = new();
+
+        public string ConfigPath { get; set; } = PopulationSimulationConfigLoader.DefaultConfigPath;
 
         public override IEnumerable<Type> Dependencies =>
             new[] { typeof(EventBus.EventBus), typeof(CharacterSystem.CharacterSystem) };
@@ -44,6 +36,14 @@ namespace Game.Systems.MarriageSystem
         public override void Initialize(GameState state)
         {
             base.Initialize(state);
+
+            var loadedConfig = PopulationSimulationConfigLoader.Load(
+                ConfigPath,
+                LogInfo,
+                LogWarn,
+                LogError);
+
+            config = (loadedConfig ?? new PopulationSimulationConfig()).Marriage ?? new MarriageSettings();
 
             rng = new System.Random(config.RngSeed);
             if (!subscriptionsActive)
