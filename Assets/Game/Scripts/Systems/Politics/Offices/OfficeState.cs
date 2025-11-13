@@ -720,6 +720,58 @@ namespace Game.Systems.Politics.Offices
                 EndYear = endYear
             };
         }
+
+        [Serializable]
+        private class OfficeSaveBlob
+        {
+            public int Year;
+            public List<OfficeSeatSave> Seats;
+            public List<LastHeldEntry> LastHeld;
+            public List<HistoryEntry> History;
+        }
+
+        [Serializable]
+        private class OfficeSeatSave
+        {
+            public string OfficeId;
+            public List<SeatSaveData> Seats;
+        }
+
+        [Serializable]
+        private class SeatSaveData
+        {
+            public int SeatIndex;
+            public int? HolderId;
+            public int StartYear;
+            public int EndYear;
+            public int? PendingHolderId;
+            public int PendingStartYear;
+        }
+
+        [Serializable]
+        private class LastHeldEntry
+        {
+            public int CharacterId;
+            public string OfficeId;
+            public int Year;
+        }
+
+        [Serializable]
+        private class HistoryEntry
+        {
+            public int CharacterId;
+            public List<CareerSaveData> Records;
+        }
+
+        [Serializable]
+        private class CareerSaveData
+        {
+            public string OfficeId;
+            public int SeatIndex;
+            public int HolderId;
+            public int StartYear;
+            public int EndYear;
+        }
     }
 
     public class SeatActivationInfo
