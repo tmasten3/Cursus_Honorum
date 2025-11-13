@@ -49,6 +49,37 @@ namespace Game.Systems.Politics.Offices
                 : customDataPath;
         }
 
+        private string NormalizeOfficeId(string officeId)
+        {
+            if (string.IsNullOrWhiteSpace(officeId))
+                return null;
+
+            return officeId.Trim().ToLowerInvariant();
+        }
+
+        private List<OfficeSeat> GetOrCreateSeatList(string officeId, int requiredSeats = 0)
+        {
+            var normalized = NormalizeOfficeId(officeId);
+            if (normalized == null)
+            {
+                Logger.Warn("Safety", "[OfficeSystem] Requested seat list for null office id.");
+                return null;
+            }
+
+            if (!seatsByOffice.TryGetValue(normalized, out var seats))
+            {
+                seats = new List<OfficeSeat>();
+                seatsByOffice[normalized] = seats;
+            }
+
+            while (requiredSeats > 0 && seats.Count < requiredSeats)
+            {
+                seats.Add(new OfficeSeat { SeatIndex = seats.Count });
+            }
+
+            return seats;
+        }
+
         public override void Initialize(GameState state)
         {
             base.Initialize(state);
@@ -73,19 +104,40 @@ namespace Game.Systems.Politics.Offices
             try
             {
                 var json = File.ReadAllText(dataPath);
-                var wrapper = JsonUtility.FromJson<OfficeDefinitionCollection>(json);
+                OfficeDefinitionCollection wrapper;
+                try
+                {
+                    wrapper = JsonUtility.FromJson<OfficeDefinitionCollection>(json);
+                }
+                catch (Exception parseEx)
+                {
+                    LogError($"Failed to parse office definition file '{dataPath}': {parseEx.Message}");
+                    return;
+                }
+
                 if (wrapper?.Offices == null)
                 {
                     LogWarn("Office definition file did not contain any offices.");
                     return;
                 }
 
-                foreach (var def in wrapper.Offices)
+                for (int i = 0; i < wrapper.Offices.Length; i++)
                 {
-                    if (def == null || string.IsNullOrWhiteSpace(def.Id))
+                    var def = wrapper.Offices[i];
+                    if (def == null)
+                    {
+                        Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} was null. Skipping.");
                         continue;
+                    }
 
-                    def.Id = def.Id.Trim().ToLowerInvariant();
+                    var normalizedId = NormalizeOfficeId(def.Id);
+                    if (normalizedId == null)
+                    {
+                        Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} missing identifier.");
+                        continue;
+                    }
+
+                    def.Id = normalizedId;
                     def.Name ??= def.Id;
                     def.Seats = Math.Max(1, def.Seats);
                     def.TermLengthYears = Math.Max(1, def.TermLengthYears);
@@ -93,12 +145,16 @@ namespace Game.Systems.Politics.Offices
 
                     definitions[def.Id] = def;
 
-                    if (!seatsByOffice.ContainsKey(def.Id))
+                    var seats = GetOrCreateSeatList(def.Id, def.Seats);
+                    if (seats == null)
+                        continue;
+
+                    for (int seatIndex = 0; seatIndex < seats.Count; seatIndex++)
                     {
-                        var seats = new List<OfficeSeat>();
-                        for (int i = 0; i < def.Seats; i++)
-                            seats.Add(new OfficeSeat { SeatIndex = i });
-                        seatsByOffice[def.Id] = seats;
+                        if (seats[seatIndex] == null)
+                            seats[seatIndex] = new OfficeSeat();
+
+                        seats[seatIndex].SeatIndex = seatIndex;
                     }
                 }
 
@@ -141,7 +197,8 @@ namespace Game.Systems.Politics.Offices
             foreach (var kvp in assignments)
             {
                 string officeId = kvp.Key;
-                if (!seatsByOffice.TryGetValue(officeId, out var seats) || seats.Count == 0)
+                var seats = GetOrCreateSeatList(officeId);
+                if (seats == null || seats.Count == 0)
                     continue;
 
                 var def = GetDefinition(officeId);
@@ -160,7 +217,12 @@ namespace Game.Systems.Politics.Offices
                         continue;
                     }
 
-                    var seat = seats[i];
+                    var seat = seats.Count > i ? seats[i] : null;
+                    if (seat == null)
+                    {
+                        Logger.Warn("Safety", $"[OfficeSystem] Missing seat index {i} for office '{officeId}'.");
+                        continue;
+                    }
                     int termStart = initialYear - Math.Max(0, def.TermLengthYears - 1);
                     int termEnd = initialYear;
 
@@ -654,33 +716,36 @@ namespace Game.Systems.Politics.Offices
                 var descriptors = new List<OfficeSeatDescriptor>();
                 foreach (var seat in kvp.Value)
                 {
+                    if (seat == null)
+                        continue;
+
                     bool hasPending = seat.PendingHolderId.HasValue;
                     bool isVacant = !seat.HolderId.HasValue && !hasPending;
                     bool expiring = seat.HolderId.HasValue && seat.EndYear <= year && !hasPending;
-                    if (isVacant || expiring)
-                    {
-                        descriptors.Add(new OfficeSeatDescriptor
-                        {
-                            OfficeId = kvp.Key,
-                            SeatIndex = seat.SeatIndex,
-                            HolderId = seat.HolderId,
-                            StartYear = seat.StartYear,
-                            EndYear = seat.EndYear,
-                            PendingHolderId = seat.PendingHolderId,
-                            PendingStartYear = seat.PendingStartYear
-                        });
-                    }
-                }
+                    if (!isVacant && !expiring)
+                        continue;
 
-                if (descriptors.Count > 0)
-                {
-                    elections.Add(new OfficeElectionInfo
+                    descriptors.Add(new OfficeSeatDescriptor
                     {
-                        Definition = def,
-                        SeatsAvailable = descriptors.Count,
-                        Seats = descriptors
+                        OfficeId = kvp.Key,
+                        SeatIndex = seat.SeatIndex,
+                        HolderId = seat.HolderId,
+                        StartYear = seat.StartYear,
+                        EndYear = seat.EndYear,
+                        PendingHolderId = seat.PendingHolderId,
+                        PendingStartYear = seat.PendingStartYear
                     });
                 }
+
+                if (descriptors.Count == 0)
+                    continue;
+
+                elections.Add(new OfficeElectionInfo
+                {
+                    Definition = def,
+                    SeatsAvailable = descriptors.Count,
+                    Seats = descriptors
+                });
             }
 
             return elections
@@ -691,32 +756,38 @@ namespace Game.Systems.Politics.Offices
 
         public OfficeSeatDescriptor AssignOffice(string officeId, int characterId, int year, bool deferToNextYear = true)
         {
-            officeId = officeId?.Trim().ToLowerInvariant();
-            if (string.IsNullOrEmpty(officeId))
-                throw new ArgumentException("Invalid office id", nameof(officeId));
-
-            if (!definitions.TryGetValue(officeId, out var def))
-                throw new InvalidOperationException($"Unknown office {officeId}");
-
-            if (!seatsByOffice.TryGetValue(officeId, out var seats))
+            var normalizedId = NormalizeOfficeId(officeId);
+            if (normalizedId == null)
             {
-                seats = new List<OfficeSeat>();
-                seatsByOffice[officeId] = seats;
+                Logger.Warn("Safety", "[OfficeSystem] AssignOffice called with null identifier.");
+                return new OfficeSeatDescriptor { OfficeId = officeId ?? "unknown", SeatIndex = -1, StartYear = year, EndYear = year };
+            }
+
+            if (!definitions.TryGetValue(normalizedId, out var def))
+            {
+                Logger.Warn("Safety", $"[OfficeSystem] AssignOffice called with unknown office '{normalizedId}'.");
+                return new OfficeSeatDescriptor { OfficeId = normalizedId, SeatIndex = -1, StartYear = year, EndYear = year };
+            }
+
+            var seats = GetOrCreateSeatList(normalizedId, def.Seats);
+            if (seats == null)
+            {
+                Logger.Warn("Safety", $"[OfficeSystem] No seats collection available for '{normalizedId}'.");
+                return new OfficeSeatDescriptor { OfficeId = normalizedId, SeatIndex = -1, StartYear = year, EndYear = year };
             }
 
             OfficeSeat seat = null;
 
             if (deferToNextYear)
             {
-                seat = seats.FirstOrDefault(s => s.HolderId.HasValue && s.EndYear <= year && !s.PendingHolderId.HasValue)
-                    ?? seats.FirstOrDefault(s => !s.HolderId.HasValue && !s.PendingHolderId.HasValue)
-                    ?? seats.FirstOrDefault(s => !s.PendingHolderId.HasValue);
+                seat = seats.FirstOrDefault(s => s != null && s.HolderId.HasValue && s.EndYear <= year && !s.PendingHolderId.HasValue)
+                    ?? seats.FirstOrDefault(s => s != null && !s.HolderId.HasValue && !s.PendingHolderId.HasValue)
+                    ?? seats.FirstOrDefault(s => s != null && !s.PendingHolderId.HasValue);
             }
             else
             {
-                seat = seats.FirstOrDefault(s => !s.HolderId.HasValue);
-                if (seat == null)
-                    seat = seats.FirstOrDefault(s => s.HolderId.HasValue && s.EndYear <= year);
+                seat = seats.FirstOrDefault(s => s != null && !s.HolderId.HasValue)
+                    ?? seats.FirstOrDefault(s => s != null && s.HolderId.HasValue && s.EndYear <= year);
             }
 
             if (seat == null)
@@ -727,7 +798,7 @@ namespace Game.Systems.Politics.Offices
 
             if (deferToNextYear)
             {
-                CancelPendingAssignment(officeId, seat);
+                CancelPendingAssignment(normalizedId, seat);
 
                 int startYear = year + 1;
 
@@ -740,10 +811,10 @@ namespace Game.Systems.Politics.Offices
                     pendingByCharacter[characterId] = pendingList;
                 }
 
-                pendingList.RemoveAll(p => p.OfficeId == officeId && p.SeatIndex == seat.SeatIndex);
+                pendingList.RemoveAll(p => p.OfficeId == normalizedId && p.SeatIndex == seat.SeatIndex);
                 pendingList.Add(new PendingOfficeRecord
                 {
-                    OfficeId = officeId,
+                    OfficeId = normalizedId,
                     SeatIndex = seat.SeatIndex,
                     StartYear = startYear
                 });
@@ -756,7 +827,7 @@ namespace Game.Systems.Politics.Offices
 
                 return new OfficeSeatDescriptor
                 {
-                    OfficeId = officeId,
+                    OfficeId = normalizedId,
                     SeatIndex = seat.SeatIndex,
                     HolderId = characterId,
                     StartYear = startYear,
@@ -765,56 +836,52 @@ namespace Game.Systems.Politics.Offices
                     PendingStartYear = startYear
                 };
             }
-            else
+
+            if (seat.HolderId.HasValue)
+                VacateSeat(normalizedId, seat, seat.EndYear);
+
+            CancelPendingAssignment(normalizedId, seat);
+
+            seat.HolderId = characterId;
+            seat.StartYear = year;
+            seat.EndYear = year + def.TermLengthYears - 1;
+
+            if (!activeByCharacter.TryGetValue(characterId, out var activeList))
             {
-                if (seat.HolderId.HasValue)
-                {
-                    VacateSeat(officeId, seat, seat.EndYear);
-                }
-
-                CancelPendingAssignment(officeId, seat);
-
-                seat.HolderId = characterId;
-                seat.StartYear = year;
-                seat.EndYear = year + def.TermLengthYears - 1;
-
-                if (!activeByCharacter.TryGetValue(characterId, out var activeList))
-                {
-                    activeList = new List<ActiveOfficeRecord>();
-                    activeByCharacter[characterId] = activeList;
-                }
-
-                activeList.RemoveAll(a => a.OfficeId == officeId && a.SeatIndex == seat.SeatIndex);
-                activeList.Add(new ActiveOfficeRecord
-                {
-                    OfficeId = officeId,
-                    SeatIndex = seat.SeatIndex,
-                    EndYear = seat.EndYear
-                });
-
-                string name = ResolveCharacterName(characterId);
-
-                eventBus.Publish(new OfficeAssignedEvent(year, currentMonth, currentDay,
-                    officeId, def.Name, characterId, seat.SeatIndex, seat.StartYear, seat.EndYear, name));
-
-                LogInfo($"{name} assumes {def.Name} seat {seat.SeatIndex} ({FormatTermRange(seat.StartYear, seat.EndYear)}).");
-
-                return new OfficeSeatDescriptor
-                {
-                    OfficeId = officeId,
-                    SeatIndex = seat.SeatIndex,
-                    HolderId = characterId,
-                    StartYear = seat.StartYear,
-                    EndYear = seat.EndYear,
-                    PendingHolderId = seat.PendingHolderId,
-                    PendingStartYear = seat.PendingStartYear
-                };
+                activeList = new List<ActiveOfficeRecord>();
+                activeByCharacter[characterId] = activeList;
             }
+
+            activeList.RemoveAll(a => a.OfficeId == normalizedId && a.SeatIndex == seat.SeatIndex);
+            activeList.Add(new ActiveOfficeRecord
+            {
+                OfficeId = normalizedId,
+                SeatIndex = seat.SeatIndex,
+                EndYear = seat.EndYear
+            });
+
+            string characterName = ResolveCharacterName(characterId);
+
+            eventBus.Publish(new OfficeAssignedEvent(year, currentMonth, currentDay,
+                normalizedId, def.Name, characterId, seat.SeatIndex, seat.StartYear, seat.EndYear, characterName));
+
+            LogInfo($"{characterName} assumes {def.Name} seat {seat.SeatIndex} ({FormatTermRange(seat.StartYear, seat.EndYear)}).");
+
+            return new OfficeSeatDescriptor
+            {
+                OfficeId = normalizedId,
+                SeatIndex = seat.SeatIndex,
+                HolderId = characterId,
+                StartYear = seat.StartYear,
+                EndYear = seat.EndYear,
+                PendingHolderId = seat.PendingHolderId,
+                PendingStartYear = seat.PendingStartYear
+            };
         }
 
         private string ResolveCharacterName(int characterId)
         {
-            var character = characterSystem.Get(characterId);
+            var character = characterSystem?.Get(characterId);
             return character?.FullName ?? $"Character {characterId}";
         }
 
@@ -903,11 +970,10 @@ namespace Game.Systems.Politics.Offices
                 {
                     foreach (var seatEntry in blob.Seats)
                     {
-                        if (!seatsByOffice.TryGetValue(seatEntry.OfficeId, out var seats))
-                        {
-                            seats = new List<OfficeSeat>();
-                            seatsByOffice[seatEntry.OfficeId] = seats;
-                        }
+                        var normalizedId = NormalizeOfficeId(seatEntry.OfficeId);
+                        var seats = GetOrCreateSeatList(normalizedId);
+                        if (seats == null)
+                            continue;
 
                         seats.Clear();
                         if (seatEntry.Seats == null) continue;
@@ -936,7 +1002,7 @@ namespace Game.Systems.Politics.Offices
 
                                 activeList.Add(new ActiveOfficeRecord
                                 {
-                                    OfficeId = seatEntry.OfficeId,
+                                    OfficeId = normalizedId,
                                     SeatIndex = entry.SeatIndex,
                                     EndYear = entry.EndYear
                                 });
@@ -952,7 +1018,7 @@ namespace Game.Systems.Politics.Offices
 
                                 pendingList.Add(new PendingOfficeRecord
                                 {
-                                    OfficeId = seatEntry.OfficeId,
+                                    OfficeId = normalizedId,
                                     SeatIndex = entry.SeatIndex,
                                     StartYear = entry.PendingStartYear
                                 });
@@ -966,7 +1032,14 @@ namespace Game.Systems.Politics.Offices
                 {
                     foreach (var entry in blob.LastHeld)
                     {
-                        lastHeldYear[(entry.CharacterId, entry.OfficeId)] = entry.Year;
+                        var normalizedId = NormalizeOfficeId(entry.OfficeId);
+                        if (normalizedId == null)
+                        {
+                            LogWarn($"Last-held entry for character {entry.CharacterId} had an invalid office id '{entry.OfficeId}'.");
+                            continue;
+                        }
+
+                        lastHeldYear[(entry.CharacterId, normalizedId)] = entry.Year;
                     }
                 }
 

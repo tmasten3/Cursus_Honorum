@@ -72,6 +72,32 @@ namespace Game.Systems.CharacterSystem
             this.timeSystem = timeSystem ?? throw new ArgumentNullException(nameof(timeSystem));
         }
 
+        private List<Character> SafeLoadBaseCharacters(string path)
+        {
+            try
+            {
+                var characters = CharacterFactory.LoadBaseCharacters(path) ?? new List<Character>();
+                foreach (var character in characters)
+                {
+                    if (character == null)
+                        continue;
+
+                    if (character.RomanName == null)
+                        Logger.Warn("Safety", $"{path}: Character #{character.ID} missing RomanName definition.");
+
+                    if (string.IsNullOrWhiteSpace(character.Family))
+                        Logger.Warn("Safety", $"{path}: Character #{character.ID} missing family information.");
+                }
+
+                return characters;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Safety", $"Failed to load base character file '{path}': {ex.Message}");
+                return new List<Character>();
+            }
+        }
+
         public override void Initialize(GameState state)
         {
             base.Initialize(state);
@@ -81,8 +107,24 @@ namespace Game.Systems.CharacterSystem
             foreach (var band in config.Mortality.AgeBands)
                 band.DailyHazard = YearlyToDaily(band.YearlyHazard);
 
-            foreach (var character in CharacterFactory.LoadBaseCharacters(config.BaseDataPath))
-                repository.Add(character, config.KeepDeadInMemory);
+            var baseCharacters = SafeLoadBaseCharacters(config.BaseDataPath);
+            foreach (var character in baseCharacters)
+            {
+                if (character == null)
+                {
+                    Logger.Warn("Safety", $"{config.BaseDataPath}: Encountered null character entry during load. Skipping.");
+                    continue;
+                }
+
+                try
+                {
+                    repository.Add(character, config.KeepDeadInMemory);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Safety", $"{config.BaseDataPath}: Failed to add character #{character.ID} to repository: {ex.Message}");
+                }
+            }
 
             mortality = new CharacterMortalityService(repository, rng, GetDailyHazard);
 
@@ -109,7 +151,14 @@ namespace Game.Systems.CharacterSystem
 
             metrics.Reset();
 
-            repository.AgeUpBirthdays(curMonth, curDay);
+            try
+            {
+                repository.AgeUpBirthdays(curMonth, curDay);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Safety", $"Birthday aging failed for {curMonth}/{curDay}: {ex.Message}");
+            }
 
             foreach (var id in mortality.SelectDailyDeaths())
             {
@@ -133,6 +182,14 @@ namespace Game.Systems.CharacterSystem
         public IReadOnlyList<Character> GetByClass(SocialClass c) => repository.GetByClass(c);
 
         public int CountAlive() => repository.AliveCount;
+
+        public int GetFamilyCount() => repository.FamilyCount;
+
+        public bool TryGetRepository(out CharacterRepository repo)
+        {
+            repo = repository;
+            return repo != null;
+        }
 
         public void AddCharacter(Character character)
         {

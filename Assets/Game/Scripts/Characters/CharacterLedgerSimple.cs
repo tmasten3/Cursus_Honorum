@@ -1,12 +1,14 @@
-﻿using UnityEngine;
-using TMPro;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
 using Game.Core;
 using Game.Systems.CharacterSystem;
 using Game.Systems.EventBus;
 using Game.Data.Characters;
 
+[DisallowMultipleComponent]
 public class CharacterLedgerSimple : MonoBehaviour
 {
     [Header("UI References")]
@@ -15,27 +17,49 @@ public class CharacterLedgerSimple : MonoBehaviour
 
     private CharacterSystem characterSystem;
     private EventBus eventBus;
+    private bool initializationAttempted;
+
+    private void Awake()
+    {
+        if (listContainer == null)
+            Logger.Warn("Safety", "[CharacterLedger] List container reference missing.");
+        if (rowPrefab == null)
+            Logger.Warn("Safety", "[CharacterLedger] Row prefab reference missing.");
+    }
 
     private void OnEnable()
     {
-        StartCoroutine(InitializeWhenReady());
+        if (!initializationAttempted)
+        {
+            StartCoroutine(InitializeWhenReady());
+        }
+        else if (characterSystem != null)
+        {
+            Refresh();
+        }
+        else
+        {
+            StartCoroutine(InitializeWhenReady());
+        }
     }
 
     private IEnumerator InitializeWhenReady()
     {
+        initializationAttempted = true;
+
         // Wait one frame for GameController initialization
         yield return null;
 
         var controller = FindFirstObjectByType<GameController>();
         if (controller == null)
         {
-            Debug.LogError("[Ledger] No GameController found in scene!");
+            Logger.Warn("Safety", "[CharacterLedger] No GameController found in scene.");
             yield break;
         }
 
         if (controller.GameState == null)
         {
-            Debug.LogError("[Ledger] GameState not initialized on GameController!");
+            Logger.Warn("Safety", "[CharacterLedger] GameState not initialized on GameController.");
             yield break;
         }
 
@@ -44,7 +68,7 @@ public class CharacterLedgerSimple : MonoBehaviour
 
         if (characterSystem == null || eventBus == null)
         {
-            Debug.LogError("[Ledger] Required systems not found!");
+            Logger.Warn("Safety", "[CharacterLedger] Required systems not found.");
             yield break;
         }
 
@@ -66,30 +90,84 @@ public class CharacterLedgerSimple : MonoBehaviour
 
     private void BuildList()
     {
-        // Clear existing rows
-        foreach (Transform child in listContainer)
-            Destroy(child.gameObject);
+        if (listContainer == null || rowPrefab == null)
+            return;
 
-        var chars = characterSystem.GetAllLiving();
-
-        foreach (var c in chars)
+        if (characterSystem == null)
         {
-            var row = Instantiate(rowPrefab, listContainer);
-
-            // Ensure RomanName exists
-            if (c.RomanName == null)
-                c.RomanName = RomanNamingRules.GenerateRomanName(c.Gender, c.Family, c.Class);
-
-            string fullName = RomanNamingRules.GetFullName(c);
-            if (string.IsNullOrWhiteSpace(fullName) || fullName == "Unknown")
-            {
-                c.RomanName = RomanNamingRules.GenerateRomanName(c.Gender, c.Family, c.Class);
-                fullName = RomanNamingRules.GetFullName(c);
-            }
-
-            row.text = $"{fullName} — Age {c.Age} — {c.Class}";
+            Logger.Warn("Safety", "[CharacterLedger] CharacterSystem unavailable during refresh.");
+            return;
         }
 
-        Debug.Log($"[Ledger] Auto-refreshed list with {chars.Count} characters.");
+        try
+        {
+            foreach (Transform child in listContainer)
+                Destroy(child.gameObject);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Safety", $"[CharacterLedger] Failed to clear existing rows: {ex.Message}");
+        }
+
+        IReadOnlyList<Character> characters;
+        try
+        {
+            characters = characterSystem.GetAllLiving();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("Safety", $"[CharacterLedger] Unable to fetch living characters: {ex.Message}");
+            return;
+        }
+
+        foreach (var character in characters)
+        {
+            if (character == null)
+            {
+                Logger.Warn("Safety", "[CharacterLedger] Encountered null character while building list.");
+                continue;
+            }
+
+            TMP_Text rowInstance = null;
+            try
+            {
+                rowInstance = Instantiate(rowPrefab, listContainer);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Safety", $"[CharacterLedger] Failed to instantiate row prefab: {ex.Message}");
+                continue;
+            }
+
+            string fullName;
+            try
+            {
+                if (character.RomanName == null)
+                    character.RomanName = RomanNamingRules.GenerateRomanName(character.Gender, character.Family, character.Class);
+
+                fullName = RomanNamingRules.GetFullName(character);
+                if (string.IsNullOrWhiteSpace(fullName) || string.Equals(fullName, "Unknown", StringComparison.OrdinalIgnoreCase))
+                {
+                    character.RomanName = RomanNamingRules.GenerateRomanName(character.Gender, character.Family, character.Class);
+                    fullName = RomanNamingRules.GetFullName(character);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Safety", $"[CharacterLedger] Failed to resolve name for character #{character.ID}: {ex.Message}");
+                fullName = $"Character #{character.ID}";
+            }
+
+            try
+            {
+                rowInstance.text = $"{fullName} — Age {character.Age} — {character.Class}";
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Safety", $"[CharacterLedger] Failed to assign row text for character #{character.ID}: {ex.Message}");
+            }
+        }
+
+        Logger.Info("Ledger", $"Auto-refreshed list with {characters.Count} characters.");
     }
 }
