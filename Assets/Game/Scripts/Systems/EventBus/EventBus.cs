@@ -11,9 +11,11 @@ namespace Game.Systems.EventBus
     {
         public override string Name => "Event Bus";
 
+        public const int DefaultHistoryCapacity = 512;
+
         private readonly Queue<GameEvent> currentQueue = new();
         private readonly Queue<GameEvent> nextQueue = new();
-        private readonly List<GameEvent> history = new();
+        private readonly Queue<GameEvent> history;
         private readonly HashSet<Type> unhandledTypesLogged = new();
         private static readonly HashSet<Type> optionalEventTypes = new()
         {
@@ -26,6 +28,37 @@ namespace Game.Systems.EventBus
 
         private readonly EventRegistry registry = new();
         private readonly EventInvoker invoker = new();
+
+        private int historyCapacity;
+
+        public EventBus(int historyCapacity = DefaultHistoryCapacity)
+        {
+            if (historyCapacity <= 0)
+                throw new ArgumentOutOfRangeException(nameof(historyCapacity), "History capacity must be greater than zero.");
+
+            this.historyCapacity = historyCapacity;
+            history = new Queue<GameEvent>(Math.Min(historyCapacity, 16));
+        }
+
+        public int HistoryCapacity
+        {
+            get => historyCapacity;
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(value), "History capacity must be greater than zero.");
+
+                historyCapacity = value;
+                TrimHistory();
+            }
+        }
+
+        public int HistoryCount => history.Count;
+
+        public IReadOnlyList<GameEvent> GetHistorySnapshot()
+        {
+            return history.ToArray();
+        }
 
         public override void Initialize(GameState state)
         {
@@ -84,7 +117,7 @@ namespace Game.Systems.EventBus
             while (currentQueue.Count > 0)
             {
                 var e = currentQueue.Dequeue();
-                history.Add(e);
+                RecordHistory(e);
 
                 var eventType = e.GetType();
                 var handlers = registry.GetHandlers(eventType);
@@ -108,7 +141,8 @@ namespace Game.Systems.EventBus
             return new Dictionary<string, object>
             {
                 ["pending"] = nextQueue.Count + currentQueue.Count,
-                ["historyCount"] = history.Count
+                ["historyCount"] = history.Count,
+                ["historyCapacity"] = historyCapacity
             };
         }
 
@@ -117,6 +151,20 @@ namespace Game.Systems.EventBus
             if (data == null) return;
             if (data.TryGetValue("historyCount", out var count))
                 LogInfo($"Loaded event history with {count} entries.");
+            if (data.TryGetValue("historyCapacity", out var capacity))
+                LogInfo($"History capacity recorded as {capacity}.");
+        }
+
+        private void RecordHistory(GameEvent e)
+        {
+            history.Enqueue(e);
+            TrimHistory();
+        }
+
+        private void TrimHistory()
+        {
+            while (history.Count > historyCapacity)
+                history.Dequeue();
         }
     }
 }
