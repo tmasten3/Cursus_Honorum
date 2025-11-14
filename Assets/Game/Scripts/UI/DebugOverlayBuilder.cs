@@ -33,7 +33,9 @@ namespace Game.UI
 
         public DebugOverlayBuilder(RectTransform root)
         {
-            this.root = root ?? throw new ArgumentNullException(nameof(root));
+            if (root == null)
+                throw new ArgumentNullException(nameof(root));
+            this.root = root;
         }
 
         public void Build()
@@ -208,7 +210,7 @@ namespace Game.UI
         {
             var label = CreateText(parent, FontStyles.Normal);
             label.fontSize = 15f;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
 
             var element = label.gameObject.AddComponent<LayoutElement>();
             element.flexibleHeight = 1f;
@@ -233,7 +235,7 @@ namespace Game.UI
             label.fontStyle = style;
             label.color = new Color(0.85f, 0.9f, 1f, 0.95f);
             label.alignment = TextAlignmentOptions.Left;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
             label.raycastTarget = false;
 
             return label;
