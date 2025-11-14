@@ -20,9 +20,9 @@ namespace CursusHonorum.Tests.Core
 
             Assert.That(bus.HistoryCount, Is.EqualTo(3), "History count should match configured capacity.");
             Assert.That(snapshot.Count, Is.EqualTo(3));
-            Assert.That(snapshot[0].Day, Is.EqualTo(3));
-            Assert.That(snapshot[1].Day, Is.EqualTo(4));
-            Assert.That(snapshot[2].Day, Is.EqualTo(5));
+            Assert.That(((OnNewDayEvent)snapshot[0]).Day, Is.EqualTo(3));
+            Assert.That(((OnNewDayEvent)snapshot[1]).Day, Is.EqualTo(4));
+            Assert.That(((OnNewDayEvent)snapshot[2]).Day, Is.EqualTo(5));
         }
 
         [Test]
@@ -41,8 +41,8 @@ namespace CursusHonorum.Tests.Core
             var snapshot = bus.GetHistorySnapshot();
 
             Assert.That(bus.HistoryCount, Is.EqualTo(2));
-            Assert.That(snapshot[0].Day, Is.EqualTo(4));
-            Assert.That(snapshot[1].Day, Is.EqualTo(5));
+            Assert.That(((OnNewDayEvent)snapshot[0]).Day, Is.EqualTo(4));
+            Assert.That(((OnNewDayEvent)snapshot[1]).Day, Is.EqualTo(5));
         }
     }
 }

@@ -3,22 +3,54 @@ using System;
 namespace Game.Systems.EventBus
 {
     /// <summary>
-    /// Base class for all events routed through the EventBus.
-    /// Provides a common timestamp payload for downstream consumers.
+    /// Categorises events routed through the global event bus.
     /// </summary>
-    public abstract class GameEvent
+    public enum EventCategory
+    {
+        Time,
+        Character,
+        Family,
+        Influence,
+        Office,
+        Election,
+        Senate,
+        UI,
+        Debug
+    }
+
+    /// <summary>
+    /// Marker interface implemented by all events dispatched through the EventBus.
+    /// </summary>
+    public interface IGameEvent
+    {
+        string Name { get; }
+        EventCategory Category { get; }
+    }
+
+    /// <summary>
+    /// Base class for all timestamped simulation events.
+    /// Provides shared properties and simple diagnostics.
+    /// </summary>
+    public abstract class GameEvent : IGameEvent
     {
         public string Name { get; }
+        public EventCategory Category { get; }
         public int Year { get; }
         public int Month { get; }
         public int Day { get; }
 
-        protected GameEvent(string name, int year, int month, int day)
+        protected GameEvent(string name, EventCategory category, int year, int month, int day)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
+            Category = category;
             Year = year;
             Month = month;
             Day = day;
+        }
+
+        public override string ToString()
+        {
+            return $"{Name} ({Category}) @ {Year:D4}-{Month:D2}-{Day:D2}";
         }
     }
 
@@ -28,7 +60,7 @@ namespace Game.Systems.EventBus
     public sealed class OnNewDayEvent : GameEvent
     {
         public OnNewDayEvent(int year, int month, int day)
-            : base("OnNewDay", year, month, day) { }
+            : base(nameof(OnNewDayEvent), EventCategory.Time, year, month, day) { }
     }
 
     /// <summary>
@@ -37,7 +69,7 @@ namespace Game.Systems.EventBus
     public sealed class OnNewMonthEvent : GameEvent
     {
         public OnNewMonthEvent(int year, int month, int day)
-            : base("OnNewMonth", year, month, day) { }
+            : base(nameof(OnNewMonthEvent), EventCategory.Time, year, month, day) { }
     }
 
     /// <summary>
@@ -46,6 +78,6 @@ namespace Game.Systems.EventBus
     public sealed class OnNewYearEvent : GameEvent
     {
         public OnNewYearEvent(int year, int month, int day)
-            : base("OnNewYear", year, month, day) { }
+            : base(nameof(OnNewYearEvent), EventCategory.Time, year, month, day) { }
     }
 }

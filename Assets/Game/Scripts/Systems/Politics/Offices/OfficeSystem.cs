@@ -29,7 +29,8 @@ namespace Game.Systems.Politics.Offices
         private int currentDay;
 
         private bool initialHoldersSeeded;
-        private bool subscriptionsActive;
+        private EventSubscription newDaySubscription = EventSubscription.Empty;
+        private EventSubscription characterDiedSubscription = EventSubscription.Empty;
 
         public bool DebugMode { get; set; }
 
@@ -61,12 +62,11 @@ namespace Game.Systems.Politics.Offices
             definitions.LoadDefinitions(collection);
             this.state.EnsureSeatStructures(definitions.GetAllDefinitions());
 
-            if (!subscriptionsActive)
-            {
-                eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
-                eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
-                subscriptionsActive = true;
-            }
+            newDaySubscription.Dispose();
+            characterDiedSubscription.Dispose();
+
+            newDaySubscription = eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
+            characterDiedSubscription = eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
 
             SeedInitialOfficeHolders();
         }
@@ -75,12 +75,10 @@ namespace Game.Systems.Politics.Offices
 
         public override void Shutdown()
         {
-            if (subscriptionsActive)
-            {
-                eventBus.Unsubscribe<OnNewDayEvent>(OnNewDay);
-                eventBus.Unsubscribe<OnCharacterDied>(OnCharacterDied);
-                subscriptionsActive = false;
-            }
+            newDaySubscription.Dispose();
+            characterDiedSubscription.Dispose();
+            newDaySubscription = EventSubscription.Empty;
+            characterDiedSubscription = EventSubscription.Empty;
 
             base.Shutdown();
         }

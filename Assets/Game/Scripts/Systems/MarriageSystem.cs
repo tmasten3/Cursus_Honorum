@@ -22,7 +22,7 @@ namespace Game.Systems.MarriageSystem
         private System.Random rng;
         private int rngSeed;
         private int rngSampleCount;
-        private bool subscriptionsActive;
+        private EventSubscription newDaySubscription = EventSubscription.Empty;
 
         private MarriageSettings config = new();
 
@@ -58,11 +58,8 @@ namespace Game.Systems.MarriageSystem
 
             rngSeed = settings.RngSeed;
             RestoreRngState(rngSeed, 0);
-            if (!subscriptionsActive)
-            {
-                bus.Subscribe<OnNewDayEvent>(OnNewDay);
-                subscriptionsActive = true;
-            }
+            newDaySubscription.Dispose();
+            newDaySubscription = bus.Subscribe<OnNewDayEvent>(OnNewDay);
             LogInfo("Initialized and subscribed to OnNewDayEvent.");
         }
 
@@ -70,11 +67,8 @@ namespace Game.Systems.MarriageSystem
 
         public override void Shutdown()
         {
-            if (subscriptionsActive)
-            {
-                bus.Unsubscribe<OnNewDayEvent>(OnNewDay);
-                subscriptionsActive = false;
-            }
+            newDaySubscription.Dispose();
+            newDaySubscription = EventSubscription.Empty;
 
             base.Shutdown();
         }

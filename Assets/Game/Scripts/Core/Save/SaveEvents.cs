@@ -17,7 +17,7 @@ namespace Game.Core.Save
             int year,
             int month,
             int day)
-            : base("OnGameSaved", year, month, day)
+            : base(nameof(OnGameSavedEvent), EventCategory.Debug, year, month, day)
         {
             SlotName = slotName ?? string.Empty;
             FilePath = filePath ?? string.Empty;
@@ -50,7 +50,7 @@ namespace Game.Core.Save
             int year,
             int month,
             int day)
-            : base("OnGameLoaded", year, month, day)
+            : base(nameof(OnGameLoadedEvent), EventCategory.Debug, year, month, day)
         {
             SlotName = slotName ?? string.Empty;
             FilePath = filePath ?? string.Empty;

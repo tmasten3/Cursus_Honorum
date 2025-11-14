@@ -13,7 +13,7 @@ namespace Game.Systems.EventBus
         public int MotherID { get; }
 
         public OnCharacterBorn(int year, int month, int day, int childID, int? fatherID, int motherID)
-            : base(nameof(OnCharacterBorn), year, month, day)
+            : base(nameof(OnCharacterBorn), EventCategory.Family, year, month, day)
         {
             ChildID = childID;
             FatherID = fatherID;
@@ -31,7 +31,7 @@ namespace Game.Systems.EventBus
         public string Cause { get; }
 
         public OnCharacterDied(int year, int month, int day, int characterID, string cause)
-            : base(nameof(OnCharacterDied), year, month, day)
+            : base(nameof(OnCharacterDied), EventCategory.Character, year, month, day)
         {
             CharacterID = characterID;
             Cause = cause;
@@ -48,7 +48,7 @@ namespace Game.Systems.EventBus
         public int SpouseB { get; }
 
         public OnCharacterMarried(int year, int month, int day, int spouseA, int spouseB)
-            : base(nameof(OnCharacterMarried), year, month, day)
+            : base(nameof(OnCharacterMarried), EventCategory.Family, year, month, day)
         {
             SpouseA = spouseA;
             SpouseB = spouseB;
@@ -66,7 +66,7 @@ namespace Game.Systems.EventBus
         public int Marriages { get; }
 
         public OnPopulationTick(int year, int month, int day, int births, int deaths, int marriages)
-            : base(nameof(OnPopulationTick), year, month, day)
+            : base(nameof(OnPopulationTick), EventCategory.Character, year, month, day)
         {
             Births = births;
             Deaths = deaths;
@@ -91,7 +91,7 @@ namespace Game.Systems.EventBus
 
         public OnCharacterAmbitionChanged(int year, int month, int day, int characterId, string previousGoal, string currentGoal,
             int previousIntensity, int currentIntensity, int? previousTargetYear, int? currentTargetYear, bool isRetired)
-            : base(nameof(OnCharacterAmbitionChanged), year, month, day)
+            : base(nameof(OnCharacterAmbitionChanged), EventCategory.Influence, year, month, day)
         {
             CharacterID = characterId;
             PreviousGoal = previousGoal;
@@ -115,7 +115,7 @@ namespace Game.Systems.EventBus
         public string Notes { get; }
 
         public OnCharacterRetired(int year, int month, int day, int characterId, string previousGoal, string notes)
-            : base(nameof(OnCharacterRetired), year, month, day)
+            : base(nameof(OnCharacterRetired), EventCategory.Character, year, month, day)
         {
             CharacterID = characterId;
             PreviousGoal = previousGoal;
@@ -135,7 +135,7 @@ namespace Game.Systems.EventBus
         public int NewLevel { get; }
 
         public OnCharacterTraitAdvanced(int year, int month, int day, int characterId, string traitId, int previousLevel, int newLevel)
-            : base(nameof(OnCharacterTraitAdvanced), year, month, day)
+            : base(nameof(OnCharacterTraitAdvanced), EventCategory.Character, year, month, day)
         {
             CharacterID = characterId;
             TraitId = traitId;
@@ -155,7 +155,7 @@ namespace Game.Systems.EventBus
         public string Notes { get; }
 
         public OnCharacterCareerMilestoneRecorded(int year, int month, int day, int characterId, string title, string notes)
-            : base(nameof(OnCharacterCareerMilestoneRecorded), year, month, day)
+            : base(nameof(OnCharacterCareerMilestoneRecorded), EventCategory.Influence, year, month, day)
         {
             CharacterID = characterId;
             Title = title;

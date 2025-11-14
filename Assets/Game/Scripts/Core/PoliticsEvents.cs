@@ -11,7 +11,7 @@ namespace Game.Core
         public IReadOnlyList<ElectionOfficeSummary> Offices { get; }
 
         public ElectionSeasonOpenedEvent(int year, int month, int day, IReadOnlyList<ElectionOfficeSummary> offices)
-            : base(nameof(ElectionSeasonOpenedEvent), year, month, day)
+            : base(nameof(ElectionSeasonOpenedEvent), EventCategory.Election, year, month, day)
         {
             ElectionYear = year;
             Offices = offices ?? Array.Empty<ElectionOfficeSummary>();
@@ -24,7 +24,7 @@ namespace Game.Core
         public IReadOnlyList<ElectionResultSummary> Results { get; }
 
         public ElectionSeasonCompletedEvent(int year, int month, int day, IReadOnlyList<ElectionResultSummary> results)
-            : base(nameof(ElectionSeasonCompletedEvent), year, month, day)
+            : base(nameof(ElectionSeasonCompletedEvent), EventCategory.Election, year, month, day)
         {
             ElectionYear = year;
             Results = results ?? Array.Empty<ElectionResultSummary>();
@@ -43,7 +43,7 @@ namespace Game.Core
 
         public OfficeAssignedEvent(int year, int month, int day, string officeId, string officeName,
             int characterId, int seatIndex, int termStart, int termEnd, string characterName = null)
-            : base(nameof(OfficeAssignedEvent), year, month, day)
+            : base(nameof(OfficeAssignedEvent), EventCategory.Office, year, month, day)
         {
             OfficeId = officeId;
             OfficeName = officeName;

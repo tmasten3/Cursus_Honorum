@@ -88,7 +88,7 @@ namespace Game.UI
         private readonly ElectionSystem electionSystem;
         private readonly EventBus eventBus;
 
-        private bool subscribed;
+        private readonly List<EventSubscription> subscriptions = new();
         private int todaysBirths;
         private int todaysDeaths;
         private int todaysMarriages;
@@ -112,16 +112,15 @@ namespace Game.UI
 
         public void Initialize()
         {
-            if (eventBus == null || subscribed)
+            if (eventBus == null)
                 return;
 
-            eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
-            eventBus.Subscribe<OnPopulationTick>(OnPopulationTick);
-            eventBus.Subscribe<OnCharacterBorn>(OnCharacterBorn);
-            eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
-            eventBus.Subscribe<OnCharacterMarried>(OnCharacterMarried);
-
-            subscribed = true;
+            ResetSubscriptions();
+            AddSubscription(eventBus.Subscribe<OnNewDayEvent>(OnNewDay));
+            AddSubscription(eventBus.Subscribe<OnPopulationTick>(OnPopulationTick));
+            AddSubscription(eventBus.Subscribe<OnCharacterBorn>(OnCharacterBorn));
+            AddSubscription(eventBus.Subscribe<OnCharacterDied>(OnCharacterDied));
+            AddSubscription(eventBus.Subscribe<OnCharacterMarried>(OnCharacterMarried));
         }
 
         public Snapshot CreateSnapshot()
@@ -134,18 +133,26 @@ namespace Game.UI
 
         public void Dispose()
         {
-            if (eventBus != null && subscribed)
-            {
-                eventBus.Unsubscribe<OnNewDayEvent>(OnNewDay);
-                eventBus.Unsubscribe<OnPopulationTick>(OnPopulationTick);
-                eventBus.Unsubscribe<OnCharacterBorn>(OnCharacterBorn);
-                eventBus.Unsubscribe<OnCharacterDied>(OnCharacterDied);
-                eventBus.Unsubscribe<OnCharacterMarried>(OnCharacterMarried);
-            }
-
-            subscribed = false;
+            ResetSubscriptions();
             todaysBirths = todaysDeaths = todaysMarriages = 0;
             currentDayKey = -1;
+        }
+
+        private void AddSubscription(EventSubscription subscription)
+        {
+            if (subscription != null && subscription.IsActive)
+                subscriptions.Add(subscription);
+        }
+
+        private void ResetSubscriptions()
+        {
+            if (subscriptions.Count == 0)
+                return;
+
+            foreach (var subscription in subscriptions)
+                subscription.Dispose();
+
+            subscriptions.Clear();
         }
 
         private void OnNewDay(OnNewDayEvent e)
