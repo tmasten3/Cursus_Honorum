@@ -18,7 +18,6 @@ public class CharacterLedgerSimple : MonoBehaviour
     private CharacterSystem characterSystem;
     private EventBus eventBus;
     private bool initializationAttempted;
-    private bool handlersRegistered;
     private bool handlersBound;
 
     private Action<OnCharacterBorn> onCharacterBornHandler;
@@ -50,17 +49,7 @@ public class CharacterLedgerSimple : MonoBehaviour
             editorRefreshCountAtEnable = refreshCount;
 #endif
 
-        if (!initializationAttempted)
-        {
-            StartCoroutine(InitializeWhenReady());
-            return;
-        }
-        else if (characterSystem != null && eventBus != null)
-        {
-            EnsureSubscriptions();
-            Refresh();
-
-        if (characterSystem == null)
+        if (!initializationAttempted || characterSystem == null || eventBus == null)
         {
             StartCoroutine(InitializeWhenReady());
             return;
@@ -100,19 +89,6 @@ public class CharacterLedgerSimple : MonoBehaviour
 #endif
     }
 
-    private void OnDisable()
-    {
-        if (!handlersRegistered || eventBus == null)
-            return;
-
-        eventBus.Unsubscribe(onCharacterBornHandler);
-        eventBus.Unsubscribe(onCharacterDiedHandler);
-        eventBus.Unsubscribe(onCharacterMarriedHandler);
-        eventBus.Unsubscribe(onPopulationTickHandler);
-
-        handlersRegistered = false;
-    }
-
     private IEnumerator InitializeWhenReady()
     {
         initializationAttempted = true;
@@ -142,51 +118,9 @@ public class CharacterLedgerSimple : MonoBehaviour
             yield break;
         }
 
-        EnsureSubscriptions();
         EnsureEventHandlersBound();
 
         BuildList();
-    }
-
-    private void EnsureSubscriptions()
-    {
-        if (eventBus == null)
-            return;
-
-        if (!handlersRegistered)
-        {
-            onCharacterBornHandler ??= HandleCharacterBorn;
-            onCharacterDiedHandler ??= HandleCharacterDied;
-            onCharacterMarriedHandler ??= HandleCharacterMarried;
-            onPopulationTickHandler ??= HandlePopulationTick;
-
-            eventBus.Subscribe(onCharacterBornHandler);
-            eventBus.Subscribe(onCharacterDiedHandler);
-            eventBus.Subscribe(onCharacterMarriedHandler);
-            eventBus.Subscribe(onPopulationTickHandler);
-
-            handlersRegistered = true;
-        }
-    }
-
-    private void HandleCharacterBorn(OnCharacterBorn _)
-    {
-        Refresh();
-    }
-
-    private void HandleCharacterDied(OnCharacterDied _)
-    {
-        Refresh();
-    }
-
-    private void HandleCharacterMarried(OnCharacterMarried _)
-    {
-        Refresh();
-    }
-
-    private void HandlePopulationTick(OnPopulationTick _)
-    {
-        Refresh();
     }
 
     private void Refresh()

@@ -11,11 +11,11 @@ namespace Game.Systems.EventBus
     {
         public override string Name => "Event Bus";
 
-        public const int DefaultHistoryCapacity = 512;
+        public const int DefaultHistoryCapacity = 4096;
 
         private readonly Queue<GameEvent> currentQueue = new();
         private readonly Queue<GameEvent> nextQueue = new();
-        private readonly Queue<GameEvent> history;
+        private readonly List<GameEvent> history = new();
         private readonly HashSet<Type> unhandledTypesLogged = new();
         private static readonly HashSet<Type> optionalEventTypes = new()
         {
@@ -30,8 +30,6 @@ namespace Game.Systems.EventBus
         private readonly EventInvoker invoker = new();
         private int historyCapacity = DefaultHistoryCapacity;
 
-        public const int DefaultHistoryCapacity = 4096;
-
         public int HistoryCapacity
         {
             get => historyCapacity;
@@ -44,28 +42,9 @@ namespace Game.Systems.EventBus
 
         public IReadOnlyList<GameEvent> History => history;
 
-        private int historyCapacity;
-
         public EventBus(int historyCapacity = DefaultHistoryCapacity)
         {
-            if (historyCapacity <= 0)
-                throw new ArgumentOutOfRangeException(nameof(historyCapacity), "History capacity must be greater than zero.");
-
-            this.historyCapacity = historyCapacity;
-            history = new Queue<GameEvent>(Math.Min(historyCapacity, 16));
-        }
-
-        public int HistoryCapacity
-        {
-            get => historyCapacity;
-            set
-            {
-                if (value <= 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), "History capacity must be greater than zero.");
-
-                historyCapacity = value;
-                TrimHistory();
-            }
+            HistoryCapacity = historyCapacity;
         }
 
         public int HistoryCount => history.Count;
@@ -133,7 +112,6 @@ namespace Game.Systems.EventBus
             {
                 var e = currentQueue.Dequeue();
                 AddToHistory(e);
-                RecordHistory(e);
 
                 var eventType = e.GetType();
                 var handlers = registry.GetHandlers(eventType);
@@ -176,8 +154,10 @@ namespace Game.Systems.EventBus
             if (historyCapacity == 0 || e == null)
                 return;
 
+            if (history.Count == historyCapacity)
+                history.RemoveAt(0);
+
             history.Add(e);
-            EnforceHistoryCapacity();
         }
 
         private void EnforceHistoryCapacity()
@@ -190,24 +170,8 @@ namespace Game.Systems.EventBus
             }
 
             int overflow = history.Count - historyCapacity;
-            if (overflow <= 0)
-                return;
-
-            history.RemoveRange(0, overflow);
-            if (data.TryGetValue("historyCapacity", out var capacity))
-                LogInfo($"History capacity recorded as {capacity}.");
-        }
-
-        private void RecordHistory(GameEvent e)
-        {
-            history.Enqueue(e);
-            TrimHistory();
-        }
-
-        private void TrimHistory()
-        {
-            while (history.Count > historyCapacity)
-                history.Dequeue();
+            if (overflow > 0)
+                history.RemoveRange(0, overflow);
         }
     }
 }
