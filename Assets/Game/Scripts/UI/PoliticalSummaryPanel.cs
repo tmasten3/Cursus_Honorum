@@ -5,6 +5,7 @@ using Game.Data.Characters;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Game.Core;
 using Game.Systems.EventBus;
 using Game.Systems.Politics.Elections;
 using Game.Systems.Politics.Offices;
