@@ -65,6 +65,8 @@ namespace Game.Systems.BirthSystem
             config = (loadedConfig ?? new PopulationSimulationConfig()).Birth ?? new BirthSettings();
             ApplyLoadedConfig(config);
 
+            ApplyConfigOverrides(config);
+
             rngSeed = settings.RngSeed;
             RestoreRngState(rngSeed, 0);
             if (!subscriptionsActive)
@@ -93,6 +95,7 @@ namespace Game.Systems.BirthSystem
         {
             try
             {
+                config.RngSeed = settings.RngSeed;
                 settings.RngSeed = rngSeed;
                 config.RngSeed = rngSeed;
 
@@ -135,6 +138,7 @@ namespace Game.Systems.BirthSystem
                 int sampleCount = blob?.SampleCount ?? 0;
                 settings.RngSeed = seed;
                 config.RngSeed = seed;
+                settings.RngSeed = seed;
                 rngSeed = seed;
                 RestoreRngState(seed, sampleCount);
                 LogInfo($"Loaded {pregnancies.Count} pending pregnancies.");
@@ -149,6 +153,19 @@ namespace Game.Systems.BirthSystem
         {
             TrySchedulePregnancies(e.Year, e.Month, e.Day);
             ResolveDueBirths(e.Year, e.Month, e.Day);
+        }
+
+        private void ApplyConfigOverrides(BirthSettings overrides)
+        {
+            if (overrides == null)
+                return;
+
+            settings.RngSeed = overrides.RngSeed;
+            settings.FemaleMinAge = overrides.FemaleMinAge;
+            settings.FemaleMaxAge = overrides.FemaleMaxAge;
+            settings.DailyBirthChanceIfMarried = overrides.DailyBirthChanceIfMarried;
+            settings.GestationDays = overrides.GestationDays;
+            settings.MultipleBirthChance = overrides.MultipleBirthChance;
         }
 
         private void TrySchedulePregnancies(int year, int month, int day)

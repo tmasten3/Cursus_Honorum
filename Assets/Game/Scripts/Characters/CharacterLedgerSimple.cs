@@ -49,13 +49,7 @@ public class CharacterLedgerSimple : MonoBehaviour
             editorRefreshCountAtEnable = refreshCount;
 #endif
 
-        if (!initializationAttempted)
-        {
-            StartCoroutine(InitializeWhenReady());
-            return;
-        }
-
-        if (characterSystem == null)
+        if (!initializationAttempted || characterSystem == null || eventBus == null)
         {
             StartCoroutine(InitializeWhenReady());
             return;

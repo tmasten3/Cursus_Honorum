@@ -54,6 +54,8 @@ namespace Game.Systems.MarriageSystem
             config = (loadedConfig ?? new PopulationSimulationConfig()).Marriage ?? new MarriageSettings();
             ApplyLoadedConfig(config);
 
+            ApplyConfigOverrides(config);
+
             rngSeed = settings.RngSeed;
             RestoreRngState(rngSeed, 0);
             if (!subscriptionsActive)
@@ -81,6 +83,8 @@ namespace Game.Systems.MarriageSystem
         {
             try
             {
+                config.RngSeed = settings.RngSeed;
+                rngSeed = settings.RngSeed;
                 settings.RngSeed = rngSeed;
                 config.RngSeed = rngSeed;
 
@@ -118,6 +122,7 @@ namespace Game.Systems.MarriageSystem
                 int sampleCount = blob?.SampleCount ?? 0;
                 settings.RngSeed = seed;
                 config.RngSeed = seed;
+                settings.RngSeed = seed;
                 rngSeed = seed;
                 RestoreRngState(seed, sampleCount);
             }
@@ -195,6 +200,20 @@ namespace Game.Systems.MarriageSystem
                 if (roll <= acc) return i;
             }
             return females.Count - 1;
+        }
+
+        private void ApplyConfigOverrides(MarriageSettings overrides)
+        {
+            if (overrides == null)
+                return;
+
+            settings.RngSeed = overrides.RngSeed;
+            settings.MinAgeMale = overrides.MinAgeMale;
+            settings.MinAgeFemale = overrides.MinAgeFemale;
+            settings.DailyMatchmakingCap = overrides.DailyMatchmakingCap;
+            settings.DailyMarriageChanceWhenEligible = overrides.DailyMarriageChanceWhenEligible;
+            settings.PreferSameClassWeight = overrides.PreferSameClassWeight;
+            settings.CrossClassAllowed = overrides.CrossClassAllowed;
         }
 
         private double NextRandomDouble()
