@@ -3,10 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Game.Core;
 using Game.Systems.CharacterSystem;
 using Game.Systems.EventBus;
 using Game.Data.Characters;
+using Game.UI.CharacterDetail;
 
 [DisallowMultipleComponent]
 public class CharacterLedgerSimple : MonoBehaviour
@@ -210,9 +212,48 @@ public class CharacterLedgerSimple : MonoBehaviour
             {
                 Game.Core.Logger.Warn("Safety", $"[CharacterLedger] Failed to assign row text for character #{character.ID}: {ex.Message}");
             }
+
+            BindRowSelection(rowInstance, character);
         }
 
         Game.Core.Logger.Info("Ledger", $"Auto-refreshed list with {characters.Count} characters.");
+    }
+
+    private void BindRowSelection(TMP_Text rowInstance, Character character)
+    {
+        if (rowInstance == null || character == null)
+            return;
+
+        var button = rowInstance.GetComponent<Button>();
+        if (button == null)
+        {
+            button = rowInstance.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.ColorTint;
+            button.targetGraphic = rowInstance;
+        }
+
+        var baseColor = rowInstance.color;
+        var colors = button.colors;
+        colors.normalColor = baseColor;
+        colors.highlightedColor = ScaleColor(baseColor, 1.1f);
+        colors.pressedColor = ScaleColor(baseColor, 0.9f);
+        colors.selectedColor = colors.normalColor;
+        colors.disabledColor = ScaleColor(baseColor, 0.6f);
+        button.colors = colors;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() => CharacterSelection.SelectCharacter(character.ID));
+
+        rowInstance.raycastTarget = true;
+    }
+
+    private static Color ScaleColor(Color source, float multiplier)
+    {
+        return new Color(
+            Mathf.Clamp01(source.r * multiplier),
+            Mathf.Clamp01(source.g * multiplier),
+            Mathf.Clamp01(source.b * multiplier),
+            Mathf.Clamp01(source.a));
     }
 
     private void EnsureEventHandlersBound()
