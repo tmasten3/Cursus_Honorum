@@ -26,6 +26,21 @@ namespace Game.Systems.EventBus
 
         private readonly EventRegistry registry = new();
         private readonly EventInvoker invoker = new();
+        private int historyCapacity = DefaultHistoryCapacity;
+
+        public const int DefaultHistoryCapacity = 4096;
+
+        public int HistoryCapacity
+        {
+            get => historyCapacity;
+            set
+            {
+                historyCapacity = Math.Max(0, value);
+                EnforceHistoryCapacity();
+            }
+        }
+
+        public IReadOnlyList<GameEvent> History => history;
 
         public override void Initialize(GameState state)
         {
@@ -84,7 +99,7 @@ namespace Game.Systems.EventBus
             while (currentQueue.Count > 0)
             {
                 var e = currentQueue.Dequeue();
-                history.Add(e);
+                AddToHistory(e);
 
                 var eventType = e.GetType();
                 var handlers = registry.GetHandlers(eventType);
@@ -108,7 +123,8 @@ namespace Game.Systems.EventBus
             return new Dictionary<string, object>
             {
                 ["pending"] = nextQueue.Count + currentQueue.Count,
-                ["historyCount"] = history.Count
+                ["historyCount"] = history.Count,
+                ["historyCapacity"] = historyCapacity
             };
         }
 
@@ -117,6 +133,33 @@ namespace Game.Systems.EventBus
             if (data == null) return;
             if (data.TryGetValue("historyCount", out var count))
                 LogInfo($"Loaded event history with {count} entries.");
+            if (data.TryGetValue("historyCapacity", out var capacity) && capacity is int storedCapacity)
+                HistoryCapacity = storedCapacity;
+        }
+
+        private void AddToHistory(GameEvent e)
+        {
+            if (historyCapacity == 0 || e == null)
+                return;
+
+            history.Add(e);
+            EnforceHistoryCapacity();
+        }
+
+        private void EnforceHistoryCapacity()
+        {
+            if (historyCapacity <= 0)
+            {
+                if (history.Count > 0)
+                    history.Clear();
+                return;
+            }
+
+            int overflow = history.Count - historyCapacity;
+            if (overflow <= 0)
+                return;
+
+            history.RemoveRange(0, overflow);
         }
     }
 }
