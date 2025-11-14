@@ -197,6 +197,10 @@ namespace Game.UI
         {
             var label = CreateText(parent, FontStyles.Normal);
             label.fontSize = 16f;
+
+            var element = label.gameObject.AddComponent<LayoutElement>();
+            element.minHeight = 20f;
+
             return label;
         }
 
