@@ -8,6 +8,10 @@ namespace Game.Data.Characters
     public static class CharacterDataValidator
     {
         private const string LogCategory = "CharacterData";
+        private const int MinPoliticalStatValue = 0;
+        private const int MaxPoliticalStatValue = 20;
+        private const int MinSkillValue = 0;
+        private const int MaxSkillValue = 20;
 
         public static void Validate(
             IEnumerable<Character> characters,
@@ -42,6 +46,7 @@ namespace Game.Data.Characters
 
                 ValidateBirthData(character, sourceLabel, index, issueReporter);
                 ValidateRomanName(character, sourceLabel, index, issueReporter);
+                ValidatePoliticalData(character, sourceLabel, index, issueReporter);
             }
         }
 
@@ -196,6 +201,117 @@ namespace Game.Data.Characters
                 var message = $"{sourceLabel}: Female character #{character.ID} is missing a nomen.";
                 Logger.Warn(LogCategory, message);
                 ReportIssue(issueReporter, index, "RomanName.Nomen", message);
+            }
+        }
+
+        private static void ValidatePoliticalData(
+            Character character,
+            string sourceLabel,
+            int index,
+            Action<CharacterValidationIssue> issueReporter)
+        {
+            void CheckInfluence(float value, string field)
+            {
+                if (value < 0f)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has negative influence value '{value}' for {field}.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, field, message);
+                }
+            }
+
+            CheckInfluence(character.SenatorialInfluence, nameof(Character.SenatorialInfluence));
+            CheckInfluence(character.PopularInfluence, nameof(Character.PopularInfluence));
+            CheckInfluence(character.MilitaryInfluence, nameof(Character.MilitaryInfluence));
+            CheckInfluence(character.FamilyInfluence, nameof(Character.FamilyInfluence));
+
+            void CheckStat(int value, string field, int min, int max)
+            {
+                if (value < min || value > max)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has {field} value '{value}' outside range {min}-{max}.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, field, message);
+                }
+            }
+
+            CheckStat(character.Oratory, nameof(Character.Oratory), MinPoliticalStatValue, MaxPoliticalStatValue);
+            CheckStat(character.AmbitionScore, nameof(Character.AmbitionScore), MinPoliticalStatValue, MaxPoliticalStatValue);
+            CheckStat(character.Courage, nameof(Character.Courage), MinPoliticalStatValue, MaxPoliticalStatValue);
+            CheckStat(character.Dignitas, nameof(Character.Dignitas), MinPoliticalStatValue, MaxPoliticalStatValue);
+
+            CheckStat(character.Administration, nameof(Character.Administration), MinSkillValue, MaxSkillValue);
+            CheckStat(character.Judgment, nameof(Character.Judgment), MinSkillValue, MaxSkillValue);
+            CheckStat(character.Strategy, nameof(Character.Strategy), MinSkillValue, MaxSkillValue);
+            CheckStat(character.Civic, nameof(Character.Civic), MinSkillValue, MaxSkillValue);
+
+            if (!Enum.IsDefined(typeof(FactionType), character.Faction))
+            {
+                var message =
+                    $"{sourceLabel}: Character #{character.ID} has invalid faction value '{character.Faction}'.";
+                Logger.Warn(LogCategory, message);
+                ReportIssue(issueReporter, index, nameof(Character.Faction), message);
+            }
+
+            if (!string.IsNullOrEmpty(character.CurrentOffice.OfficeId))
+            {
+                if (character.CurrentOffice.SeatIndex < 0)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has negative seat index {character.CurrentOffice.SeatIndex} for current office '{character.CurrentOffice.OfficeId}'.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, nameof(OfficeAssignment.SeatIndex), message);
+                }
+
+                if (character.CurrentOffice.StartYear < 0)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has invalid start year {character.CurrentOffice.StartYear} for current office '{character.CurrentOffice.OfficeId}'.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, nameof(OfficeAssignment.StartYear), message);
+                }
+            }
+
+            if (character.OfficeHistory == null)
+                return;
+
+            for (int i = 0; i < character.OfficeHistory.Count; i++)
+            {
+                var entry = character.OfficeHistory[i];
+                if (entry == null)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has a null office history entry at index {i}.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, $"OfficeHistory[{i}]", message);
+                    continue;
+                }
+
+                if (entry.SeatIndex < 0)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has negative seat index {entry.SeatIndex} in office history entry {i}.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, $"OfficeHistory[{i}].SeatIndex", message);
+                }
+
+                if (entry.StartYear < 0)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has invalid start year {entry.StartYear} in office history entry {i}.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, $"OfficeHistory[{i}].StartYear", message);
+                }
+
+                if (entry.EndYear.HasValue && entry.EndYear.Value < entry.StartYear)
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has office history entry {i} with end year {entry.EndYear} earlier than start year {entry.StartYear}.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, $"OfficeHistory[{i}].EndYear", message);
+                }
             }
         }
 

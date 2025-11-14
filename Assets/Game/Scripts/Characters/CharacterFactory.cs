@@ -49,6 +49,11 @@ namespace Game.Data.Characters
             "adjusted cognomen to"
         };
 
+        private const int MinPoliticalStatValue = 0;
+        private const int MaxPoliticalStatValue = 20;
+        private const int MinSkillValue = 0;
+        private const int MaxSkillValue = 20;
+
         // ------------------------------------------------------------------
         // Loading
         // ------------------------------------------------------------------
@@ -150,6 +155,8 @@ namespace Game.Data.Characters
             else if (string.IsNullOrWhiteSpace(character.Ambition.CurrentGoal))
                 character.Ambition.CurrentGoal = AmbitionProfile.InferDefaultGoal(character);
 
+            NormalizePoliticalAttributes(character);
+
             if (analysis.Corrections.Count > 0)
             {
                 var infoCorrections = new List<string>();
@@ -177,6 +184,56 @@ namespace Game.Data.Characters
                     Game.Core.Logger.Info(LogCategory,
                         $"{sourcePath}: Character #{character.ID} - {string.Join("; ", infoCorrections)}");
                 }
+            }
+        }
+
+        private static void NormalizePoliticalAttributes(Character character)
+        {
+            if (character == null)
+                return;
+
+            character.SenatorialInfluence = Mathf.Max(0f, character.SenatorialInfluence);
+            character.PopularInfluence = Mathf.Max(0f, character.PopularInfluence);
+            character.MilitaryInfluence = Mathf.Max(0f, character.MilitaryInfluence);
+            character.FamilyInfluence = Mathf.Max(0f, character.FamilyInfluence);
+
+            character.Oratory = Mathf.Clamp(character.Oratory, MinPoliticalStatValue, MaxPoliticalStatValue);
+            character.AmbitionScore = Mathf.Clamp(character.AmbitionScore, MinPoliticalStatValue, MaxPoliticalStatValue);
+            character.Courage = Mathf.Clamp(character.Courage, MinPoliticalStatValue, MaxPoliticalStatValue);
+            character.Dignitas = Mathf.Clamp(character.Dignitas, MinPoliticalStatValue, MaxPoliticalStatValue);
+
+            character.Administration = Mathf.Clamp(character.Administration, MinSkillValue, MaxSkillValue);
+            character.Judgment = Mathf.Clamp(character.Judgment, MinSkillValue, MaxSkillValue);
+            character.Strategy = Mathf.Clamp(character.Strategy, MinSkillValue, MaxSkillValue);
+            character.Civic = Mathf.Clamp(character.Civic, MinSkillValue, MaxSkillValue);
+
+            if (!Enum.IsDefined(typeof(FactionType), character.Faction))
+                character.Faction = FactionType.Neutral;
+
+            var currentOffice = character.CurrentOffice;
+            currentOffice.SeatIndex = Mathf.Max(0, currentOffice.SeatIndex);
+            currentOffice.StartYear = Mathf.Max(0, currentOffice.StartYear);
+            character.CurrentOffice = currentOffice;
+
+            if (character.OfficeHistory == null)
+                character.OfficeHistory = new List<OfficeHistoryEntry>();
+
+            for (int i = character.OfficeHistory.Count - 1; i >= 0; i--)
+            {
+                var entry = character.OfficeHistory[i];
+                if (entry == null)
+                {
+                    character.OfficeHistory.RemoveAt(i);
+                    continue;
+                }
+
+                entry.OfficeId = string.IsNullOrWhiteSpace(entry.OfficeId) ? null : entry.OfficeId.Trim();
+                entry.SeatIndex = Mathf.Max(0, entry.SeatIndex);
+                entry.StartYear = Mathf.Max(0, entry.StartYear);
+                if (entry.EndYear.HasValue && entry.EndYear.Value < entry.StartYear)
+                    entry.EndYear = entry.StartYear;
+
+                character.OfficeHistory[i] = entry;
             }
         }
 

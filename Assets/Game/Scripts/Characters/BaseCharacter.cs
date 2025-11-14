@@ -10,6 +10,8 @@ namespace Game.Data.Characters
     [Serializable]
     public class Character
     {
+        private const int DefaultStatValue = 5;
+
         // ----------------------------------------------------------------------
         // Identity
         // ----------------------------------------------------------------------
@@ -43,8 +45,23 @@ namespace Game.Data.Characters
         public List<TraitRecord> TraitRecords = new();
         public int Wealth;
         public int Influence;
+        public float SenatorialInfluence;
+        public float PopularInfluence;
+        public float MilitaryInfluence;
+        public float FamilyInfluence;
+        public int Oratory = DefaultStatValue;
+        public int AmbitionScore = DefaultStatValue;
+        public int Courage = DefaultStatValue;
+        public int Dignitas = DefaultStatValue;
+        public int Administration = DefaultStatValue;
+        public int Judgment = DefaultStatValue;
+        public int Strategy = DefaultStatValue;
+        public int Civic = DefaultStatValue;
+        public FactionType Faction = FactionType.Neutral;
         public AmbitionProfile Ambition = new();
         public List<CareerMilestone> CareerMilestones = new();
+        public OfficeAssignment CurrentOffice;
+        public List<OfficeHistoryEntry> OfficeHistory = new();
 
         // ----------------------------------------------------------------------
         // Helper Methods
@@ -57,6 +74,21 @@ namespace Game.Data.Characters
         public void AgeUp() => Age++;
 
         public int AgeAt(int currentYear) => currentYear - BirthYear;
+
+        public float GetTotalInfluence()
+        {
+            return SenatorialInfluence + PopularInfluence + MilitaryInfluence + FamilyInfluence;
+        }
+
+        public bool IsAlignedWith(FactionType faction)
+        {
+            return Faction == faction;
+        }
+
+        public void ClearCurrentOffice()
+        {
+            CurrentOffice = default;
+        }
 
         public Character Clone()
         {
@@ -82,7 +114,22 @@ namespace Game.Data.Characters
                 Ambition = Ambition?.Clone(),
                 CareerMilestones = CloneCareerMilestones(),
                 Wealth = Wealth,
-                Influence = Influence
+                Influence = Influence,
+                SenatorialInfluence = SenatorialInfluence,
+                PopularInfluence = PopularInfluence,
+                MilitaryInfluence = MilitaryInfluence,
+                FamilyInfluence = FamilyInfluence,
+                Oratory = Oratory,
+                AmbitionScore = AmbitionScore,
+                Courage = Courage,
+                Dignitas = Dignitas,
+                Administration = Administration,
+                Judgment = Judgment,
+                Strategy = Strategy,
+                Civic = Civic,
+                Faction = Faction,
+                CurrentOffice = CurrentOffice,
+                OfficeHistory = CloneOfficeHistory()
             };
         }
 
@@ -109,6 +156,20 @@ namespace Game.Data.Characters
             foreach (var milestone in CareerMilestones)
             {
                 clone.Add(milestone?.Clone());
+            }
+
+            return clone;
+        }
+
+        private List<OfficeHistoryEntry> CloneOfficeHistory()
+        {
+            if (OfficeHistory == null)
+                return new List<OfficeHistoryEntry>();
+
+            var clone = new List<OfficeHistoryEntry>(OfficeHistory.Count);
+            foreach (var entry in OfficeHistory)
+            {
+                clone.Add(entry?.Clone());
             }
 
             return clone;
@@ -255,6 +316,38 @@ namespace Game.Data.Characters
     }
 
     [Serializable]
+    public class OfficeHistoryEntry
+    {
+        public string OfficeId;
+        public int SeatIndex;
+        public int StartYear;
+        public int? EndYear;
+        public string Notes;
+
+        public OfficeHistoryEntry Clone()
+        {
+            return new OfficeHistoryEntry
+            {
+                OfficeId = OfficeId,
+                SeatIndex = SeatIndex,
+                StartYear = StartYear,
+                EndYear = EndYear,
+                Notes = Notes
+            };
+        }
+    }
+
+    [Serializable]
+    public struct OfficeAssignment
+    {
+        public string OfficeId;
+        public int SeatIndex;
+        public int StartYear;
+
+        public bool IsEmpty => string.IsNullOrEmpty(OfficeId);
+    }
+
+    [Serializable]
     public class CharacterDataWrapper
     {
         public List<Character> Characters = new();
@@ -271,5 +364,14 @@ namespace Game.Data.Characters
         Patrician,
         Plebeian,
         Equestrian
+    }
+
+    public enum FactionType
+    {
+        Neutral = 0,
+        Optimates = 1,
+        Populares = 2,
+        Militarists = 3,
+        Moderates = 4
     }
 }
