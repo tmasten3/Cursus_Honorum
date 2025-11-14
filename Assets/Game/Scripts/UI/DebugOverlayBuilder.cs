@@ -122,7 +122,7 @@ namespace Game.UI
             layout.padding = new RectOffset(16, 16, 16, 16);
             layout.childAlignment = TextAnchor.UpperLeft;
             layout.childControlWidth = true;
-            layout.childControlHeight = false;
+            layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
@@ -140,7 +140,7 @@ namespace Game.UI
             layout.spacing = 6f;
             layout.childAlignment = TextAnchor.UpperLeft;
             layout.childControlWidth = true;
-            layout.childControlHeight = false;
+            layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
@@ -210,7 +210,7 @@ namespace Game.UI
         {
             var label = CreateText(parent, FontStyles.Normal);
             label.fontSize = 15f;
-            label.textWrappingMode = TextWrappingModes.Normal;
+            label.textWrappingMode = TextWrappingModes.Normal; // Use valid enum value
 
             var element = label.gameObject.AddComponent<LayoutElement>();
             element.flexibleHeight = 1f;
@@ -235,7 +235,7 @@ namespace Game.UI
             label.fontStyle = style;
             label.color = new Color(0.85f, 0.9f, 1f, 0.95f);
             label.alignment = TextAlignmentOptions.Left;
-            label.textWrappingMode = TextWrappingModes.Normal;
+            label.textWrappingMode = TextWrappingModes.Normal; // Use valid enum value
             label.raycastTarget = false;
 
             return label;
