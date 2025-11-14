@@ -6,8 +6,8 @@ namespace Game.Core
 {
     public class SystemRegistry
     {
-        private readonly List<IGameSystem> systems = new();
-        private readonly Dictionary<Type, IGameSystem> systemLookup = new();
+        private readonly List<GameSystemBase> systems = new();
+        private readonly Dictionary<Type, GameSystemBase> systemLookup = new();
         private readonly Dictionary<Type, int> registrationOrder = new();
         private int registrationSequence;
         private readonly List<SystemDescriptor> descriptors = new();
@@ -25,13 +25,13 @@ namespace Game.Core
             descriptors.Add(descriptor);
         }
 
-        public void RegisterSystem(IGameSystem system)
+        public void RegisterSystem(GameSystemBase system)
         {
             if (system == null) throw new ArgumentNullException(nameof(system));
             RegisterSystemInternal(system);
         }
 
-        private void RegisterSystemInternal(IGameSystem system)
+        private void RegisterSystemInternal(GameSystemBase system)
         {
             var type = system.GetType();
             if (systemLookup.ContainsKey(type))
@@ -75,7 +75,7 @@ namespace Game.Core
             }
         }
 
-        private List<IGameSystem> BuildInitializationOrder()
+        private List<GameSystemBase> BuildInitializationOrder()
         {
             var typeLookup = systems.ToDictionary(s => s.GetType());
             var indegree = new Dictionary<Type, int>();
@@ -109,7 +109,7 @@ namespace Game.Core
                 }
             }
 
-            var ordered = new List<IGameSystem>(systems.Count);
+            var ordered = new List<GameSystemBase>(systems.Count);
             var available = indegree
                 .Where(kv => kv.Value == 0)
                 .Select(kv => kv.Key)
@@ -215,17 +215,17 @@ namespace Game.Core
             }
         }
 
-        public void UpdateAll(GameState state)
+        public void TickAll(GameState state, float deltaTime)
         {
             foreach (var system in systems)
             {
-                system.Update(state);
+                system.Tick(state, deltaTime);
             }
         }
 
-        public T GetSystem<T>() where T : class, IGameSystem
+        public T GetSystem<T>() where T : GameSystemBase
         {
-            systemLookup.TryGetValue(typeof(T), out IGameSystem system);
+            systemLookup.TryGetValue(typeof(T), out GameSystemBase system);
             return system as T;
         }
 

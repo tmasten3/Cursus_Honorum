@@ -70,8 +70,6 @@ namespace Game.Systems.Politics
             LogInfo($"Politics system initialized for {year}. Tracking {eligibilityByCharacter.Count} eligible citizens (election engine: {electionSystem.Name}).");
         }
 
-        public override void Update(GameState state) { }
-
         public override void Shutdown()
         {
             ResetSubscriptions();

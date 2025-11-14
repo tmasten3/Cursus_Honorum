@@ -37,13 +37,16 @@ namespace Game.Systems.Time
             LogInfo($"Initialized: {state.GetDateString()}");
         }
 
-        public override void Update(GameState gameState)
+        protected override void OnTick(GameState gameState, float deltaTime)
         {
-            if (!IsActive || IsPaused)
+            if (IsPaused)
                 return;
 
-            elapsedRealTime += UnityEngine.Time.deltaTime * speedMultiplier;
-            if (elapsedRealTime >= configuration.SecondsPerDay)
+            if (deltaTime <= 0f)
+                return;
+
+            elapsedRealTime += deltaTime * speedMultiplier;
+            while (elapsedRealTime >= configuration.SecondsPerDay)
             {
                 elapsedRealTime -= configuration.SecondsPerDay;
                 AdvanceDay();

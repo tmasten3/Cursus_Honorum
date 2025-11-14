@@ -105,7 +105,7 @@ namespace CursusHonorum.Tests.Core
             for (int i = 0; i < days; i++)
             {
                 timeSystem.StepDays(1);
-                state.Update();
+                state.Tick(0f);
             }
         }
 

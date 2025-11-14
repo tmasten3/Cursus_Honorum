@@ -68,8 +68,6 @@ namespace Game.Systems.Politics.Elections
             calendar.Initialize();
         }
 
-        public override void Update(GameState state) { }
-
         public override void Shutdown()
         {
             calendar.YearStarted -= OnYearStarted;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Game.Systems.EventBus;
 
 namespace Game.Core
 {
@@ -33,7 +34,7 @@ namespace Game.Core
         /// <summary>
         /// Whether Initialize() has been called successfully.
         /// </summary>
-        protected bool IsInitialized { get; private set; }
+        public bool IsInitialized { get; private set; }
 
         // --------------------------------------------------------------------
         // 🔹 Lifecycle
@@ -46,11 +47,32 @@ namespace Game.Core
                 throw new InvalidOperationException($"{Name} has already been initialized.");
 
             State = state; // store GameState for shared access
+            IsActive = true;
             IsInitialized = true;
             LogInfo("Initialized (base)");
         }
 
-        public abstract void Update(GameState state);
+        public void Tick(GameState state, float deltaTime)
+        {
+            if (!IsInitialized)
+                return;
+
+            if (!IsActive)
+                return;
+
+            var context = state ?? State;
+            if (context == null)
+                return;
+
+            var safeDeltaTime = deltaTime < 0f ? 0f : deltaTime;
+
+            OnTick(context, safeDeltaTime);
+        }
+
+        protected virtual void OnTick(GameState state, float deltaTime)
+        {
+            // Default systems do not require per-frame ticking.
+        }
 
         public virtual void Shutdown()
         {
@@ -58,7 +80,9 @@ namespace Game.Core
                 return;
 
             LogInfo("Shutdown (base)");
+            IsActive = false;
             IsInitialized = false;
+            State = null;
         }
 
 
@@ -91,6 +115,11 @@ namespace Game.Core
         public virtual void Load(Dictionary<string, object> data)
         {
             // Safe default: do nothing
+        }
+
+        public virtual void OnEvent<TEvent>(TEvent evt) where TEvent : IGameEvent
+        {
+            // Optional override point for systems that consume routed events directly.
         }
 
         // --------------------------------------------------------------------

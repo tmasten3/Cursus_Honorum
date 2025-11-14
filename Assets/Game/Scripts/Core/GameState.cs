@@ -31,15 +31,15 @@ namespace Game.Core
             IsInitialized = true;
         }
 
-        public void Update()
+        public void Tick(float deltaTime)
         {
             if (!IsInitialized)
                 return;
 
-            registry.UpdateAll(this);
+            registry.TickAll(this, deltaTime);
         }
 
-        public T GetSystem<T>() where T : class, IGameSystem
+        public T GetSystem<T>() where T : GameSystemBase
         {
             return registry.GetSystem<T>();
         }

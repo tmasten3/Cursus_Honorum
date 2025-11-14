@@ -192,8 +192,7 @@ namespace CursusHonorum.Tests.Save
                     value = Convert.ToInt32(raw, CultureInfo.InvariantCulture);
             }
 
-            // Fix: Implement the abstract Update method from GameSystemBase
-            public override void Update(GameState state)
+            protected override void OnTick(GameState state, float deltaTime)
             {
                 // No-op for stub systems in tests
             }
