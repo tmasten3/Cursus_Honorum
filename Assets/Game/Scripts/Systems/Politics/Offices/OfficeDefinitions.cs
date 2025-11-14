@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using UnityEngine;
 
 namespace Game.Systems.Politics.Offices
 {
@@ -41,14 +39,12 @@ namespace Game.Systems.Politics.Offices
     public class OfficeDefinitions
     {
         private readonly Dictionary<string, OfficeDefinition> definitions = new();
-        private readonly string dataPath;
         private readonly Action<string> logInfo;
         private readonly Action<string> logWarn;
         private readonly Action<string> logError;
 
-        public OfficeDefinitions(string dataPath, Action<string> logInfo, Action<string> logWarn, Action<string> logError)
+        public OfficeDefinitions(Action<string> logInfo, Action<string> logWarn, Action<string> logError)
         {
-            this.dataPath = dataPath;
             this.logInfo = logInfo;
             this.logWarn = logWarn;
             this.logError = logError;
@@ -62,67 +58,42 @@ namespace Game.Systems.Politics.Offices
             return officeId.Trim().ToLowerInvariant();
         }
 
-        public void LoadDefinitions()
+        public void LoadDefinitions(OfficeDefinitionCollection source)
         {
             definitions.Clear();
 
-            if (!File.Exists(dataPath))
+            if (source?.Offices == null)
             {
-                logWarn?.Invoke($"No office definition file found at {dataPath}.");
+                logWarn?.Invoke("No office definitions were provided by the repository.");
                 return;
             }
 
-            try
+            for (int i = 0; i < source.Offices.Count; i++)
             {
-                var json = File.ReadAllText(dataPath);
-                OfficeDefinitionCollection wrapper;
-                try
+                var def = source.Offices[i];
+                if (def == null)
                 {
-                    wrapper = JsonUtility.FromJson<OfficeDefinitionCollection>(json);
-                }
-                catch (Exception parseEx)
-                {
-                    logError?.Invoke($"Failed to parse office definition file '{dataPath}': {parseEx.Message}");
-                    return;
+                    Game.Core.Logger.Warn("Safety", $"Office definition entry at index {i} was null. Skipping.");
+                    continue;
                 }
 
-                if (wrapper?.Offices == null)
+                var normalizedId = NormalizeOfficeId(def.Id);
+                if (normalizedId == null)
                 {
-                    logWarn?.Invoke("Office definition file did not contain any offices.");
-                    return;
+                    Game.Core.Logger.Warn("Safety", $"Office definition entry at index {i} missing identifier.");
+                    continue;
                 }
 
-                for (int i = 0; i < wrapper.Offices.Count; i++)
-                {
-                    var def = wrapper.Offices[i];
-                    if (def == null)
-                    {
-                        Game.Core.Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} was null. Skipping.");
-                        continue;
-                    }
+                def.Id = normalizedId;
+                def.Name ??= def.Id;
+                def.Seats = Math.Max(1, def.Seats);
+                def.TermLengthYears = Math.Max(1, def.TermLengthYears);
+                def.ReelectionGapYears = Math.Max(0, def.ReelectionGapYears);
 
-                    var normalizedId = NormalizeOfficeId(def.Id);
-                    if (normalizedId == null)
-                    {
-                        Game.Core.Logger.Warn("Safety", $"{dataPath}: Office entry at index {i} missing identifier.");
-                        continue;
-                    }
-
-                    def.Id = normalizedId;
-                    def.Name ??= def.Id;
-                    def.Seats = Math.Max(1, def.Seats);
-                    def.TermLengthYears = Math.Max(1, def.TermLengthYears);
-                    def.ReelectionGapYears = Math.Max(0, def.ReelectionGapYears);
-
-                    definitions[def.Id] = def;
-                }
-
-                logInfo?.Invoke($"Loaded {definitions.Count} offices from data file.");
+                definitions[def.Id] = def;
             }
-            catch (Exception ex)
-            {
-                logError?.Invoke($"Failed to load office definitions: {ex.Message}");
-            }
+
+            logInfo?.Invoke($"Loaded {definitions.Count} offices from repository data.");
         }
 
         public OfficeDefinition GetDefinition(string officeId)

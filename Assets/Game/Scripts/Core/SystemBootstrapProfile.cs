@@ -36,6 +36,8 @@ namespace Game.Core
         {
             descriptors.Clear();
 
+            var simulationConfig = SimulationConfigLoader.LoadOrDefault();
+
             AddSystem(_ => new Game.Systems.EventBus.EventBus());
             AddSystem(
                 resolver => new Game.Systems.Time.TimeSystem(
@@ -44,13 +46,15 @@ namespace Game.Core
             AddSystem(
                 resolver => new Game.Systems.CharacterSystem.CharacterSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
-                    resolver.Resolve<Game.Systems.Time.TimeSystem>()),
+                    resolver.Resolve<Game.Systems.Time.TimeSystem>(),
+                    simulationConfig),
                 typeof(Game.Systems.EventBus.EventBus),
                 typeof(Game.Systems.Time.TimeSystem));
             AddSystem(
                 resolver => new Game.Systems.BirthSystem.BirthSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
-                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
+                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>(),
+                    simulationConfig),
                 typeof(Game.Systems.EventBus.EventBus),
                 typeof(Game.Systems.CharacterSystem.CharacterSystem));
             AddSystem(
@@ -62,7 +66,8 @@ namespace Game.Core
             AddSystem(
                 resolver => new Game.Systems.MarriageSystem.MarriageSystem(
                     resolver.Resolve<Game.Systems.EventBus.EventBus>(),
-                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>()),
+                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>(),
+                    simulationConfig),
                 typeof(Game.Systems.EventBus.EventBus),
                 typeof(Game.Systems.CharacterSystem.CharacterSystem));
             AddSystem(
@@ -75,6 +80,18 @@ namespace Game.Core
                 typeof(Game.Systems.Time.TimeSystem),
                 typeof(Game.Systems.CharacterSystem.CharacterSystem),
                 typeof(Game.Systems.Politics.Offices.OfficeSystem));
+            AddSystem(
+                resolver => new Game.Systems.Politics.PoliticsSystem(
+                    resolver.Resolve<Game.Systems.EventBus.EventBus>(),
+                    resolver.Resolve<Game.Systems.Time.TimeSystem>(),
+                    resolver.Resolve<Game.Systems.CharacterSystem.CharacterSystem>(),
+                    resolver.Resolve<Game.Systems.Politics.Offices.OfficeSystem>(),
+                    resolver.Resolve<Game.Systems.Politics.Elections.ElectionSystem>()),
+                typeof(Game.Systems.EventBus.EventBus),
+                typeof(Game.Systems.Time.TimeSystem),
+                typeof(Game.Systems.CharacterSystem.CharacterSystem),
+                typeof(Game.Systems.Politics.Offices.OfficeSystem),
+                typeof(Game.Systems.Politics.Elections.ElectionSystem));
         }
 
         public void AddSystem<TSystem>(Func<SystemResolver, TSystem> factory, params Type[] dependencies)

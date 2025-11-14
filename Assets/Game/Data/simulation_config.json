@@ -1,0 +1,36 @@
+{
+  "Character": {
+    "RngSeed": 1337,
+    "KeepDeadInMemory": true,
+    "BaseDataPath": "Assets/Game/Data/base_characters.json",
+    "Mortality": {
+      "UseAgeBandHazards": true,
+      "AgeBands": [
+        { "Min": 0, "Max": 4, "YearlyHazard": 0.08 },
+        { "Min": 5, "Max": 14, "YearlyHazard": 0.01 },
+        { "Min": 15, "Max": 29, "YearlyHazard": 0.007 },
+        { "Min": 30, "Max": 44, "YearlyHazard": 0.012 },
+        { "Min": 45, "Max": 59, "YearlyHazard": 0.03 },
+        { "Min": 60, "Max": 74, "YearlyHazard": 0.08 },
+        { "Min": 75, "Max": 110, "YearlyHazard": 0.2 }
+      ]
+    }
+  },
+  "Birth": {
+    "RngSeed": 1338,
+    "FemaleMinAge": 14,
+    "FemaleMaxAge": 35,
+    "DailyBirthChanceIfMarried": 0.0015,
+    "GestationDays": 270,
+    "MultipleBirthChance": 0.02
+  },
+  "Marriage": {
+    "RngSeed": 2025,
+    "MinAgeMale": 14,
+    "MinAgeFemale": 12,
+    "DailyMatchmakingCap": 10,
+    "DailyMarriageChanceWhenEligible": 0.002,
+    "PreferSameClassWeight": 1.5,
+    "CrossClassAllowed": true
+  }
+}

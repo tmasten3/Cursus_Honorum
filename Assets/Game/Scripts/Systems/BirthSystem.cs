@@ -18,7 +18,9 @@ namespace Game.Systems.BirthSystem
 
         private readonly EventBus.EventBus bus;
         private readonly CharacterSystem.CharacterSystem characterSystem;
+        private readonly SimulationConfig.BirthSettings settings;
         private System.Random rng;
+        private int rngSeed;
         private int rngSampleCount;
         private bool subscriptionsActive;
 
@@ -39,10 +41,14 @@ namespace Game.Systems.BirthSystem
         public override IEnumerable<Type> Dependencies =>
             new[] { typeof(EventBus.EventBus), typeof(CharacterSystem.CharacterSystem) };
 
-        public BirthSystem(EventBus.EventBus bus, CharacterSystem.CharacterSystem characterSystem)
+        public BirthSystem(EventBus.EventBus bus, CharacterSystem.CharacterSystem characterSystem, SimulationConfig simulationConfig)
         {
             this.bus = bus ?? throw new ArgumentNullException(nameof(bus));
             this.characterSystem = characterSystem ?? throw new ArgumentNullException(nameof(characterSystem));
+            if (simulationConfig == null) throw new ArgumentNullException(nameof(simulationConfig));
+
+            settings = simulationConfig.Birth ?? throw new ArgumentNullException(nameof(simulationConfig.Birth));
+            rngSeed = settings.RngSeed;
         }
 
         public override void Initialize(GameState state)
@@ -57,7 +63,8 @@ namespace Game.Systems.BirthSystem
 
             config = (loadedConfig ?? new PopulationSimulationConfig()).Birth ?? new BirthSettings();
 
-            rng = new System.Random(config.RngSeed);
+            rngSeed = config.RngSeed;
+            RestoreRngState(rngSeed, 0);
             if (!subscriptionsActive)
             {
                 bus.Subscribe<OnNewDayEvent>(OnNewDay);
@@ -142,16 +149,16 @@ namespace Game.Systems.BirthSystem
             foreach (var mother in characterSystem.GetAllLiving().Where(c =>
                 c.Gender == Gender.Female &&
                 c.SpouseID.HasValue &&
-                c.Age >= config.FemaleMinAge &&
-                c.Age <= config.FemaleMaxAge))
+                c.Age >= settings.FemaleMinAge &&
+                c.Age <= settings.FemaleMaxAge))
             {
                 if (pregnancies.Any(p => p.MotherID == mother.ID))
                     continue;
 
-                if (NextRandomDouble() < config.DailyBirthChanceIfMarried)
+                if (NextRandomDouble() < settings.DailyBirthChanceIfMarried)
                 {
                     var father = characterSystem.Get(mother.SpouseID.Value);
-                    var due = CalendarUtility.AddDays(year, month, day, config.GestationDays);
+                    var due = CalendarUtility.AddDays(year, month, day, settings.GestationDays);
 
                     pregnancies.Add(new Pregnancy
                     {
@@ -179,7 +186,7 @@ namespace Game.Systems.BirthSystem
                 characterSystem.AddCharacter(child);
                 bus.Publish(new OnCharacterBorn(year, month, day, child.ID, father?.ID, mother.ID));
 
-                if (NextRandomDouble() < config.MultipleBirthChance)
+                if (NextRandomDouble() < settings.MultipleBirthChance)
                 {
                     var twin = CharacterFactory.CreateChild(father, mother, year, month, day);
                     characterSystem.AddCharacter(twin);

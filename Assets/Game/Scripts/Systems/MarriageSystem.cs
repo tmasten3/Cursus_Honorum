@@ -17,7 +17,9 @@ namespace Game.Systems.MarriageSystem
 
         private readonly EventBus.EventBus bus;
         private readonly CharacterSystem.CharacterSystem characterSystem;
+        private readonly SimulationConfig.MarriageSettings settings;
         private System.Random rng;
+        private int rngSeed;
         private int rngSampleCount;
         private bool subscriptionsActive;
 
@@ -28,10 +30,14 @@ namespace Game.Systems.MarriageSystem
         public override IEnumerable<Type> Dependencies =>
             new[] { typeof(EventBus.EventBus), typeof(CharacterSystem.CharacterSystem) };
 
-        public MarriageSystem(EventBus.EventBus bus, CharacterSystem.CharacterSystem characterSystem)
+        public MarriageSystem(EventBus.EventBus bus, CharacterSystem.CharacterSystem characterSystem, SimulationConfig simulationConfig)
         {
             this.bus = bus ?? throw new ArgumentNullException(nameof(bus));
             this.characterSystem = characterSystem ?? throw new ArgumentNullException(nameof(characterSystem));
+            if (simulationConfig == null) throw new ArgumentNullException(nameof(simulationConfig));
+
+            settings = simulationConfig.Marriage ?? throw new ArgumentNullException(nameof(simulationConfig.Marriage));
+            rngSeed = settings.RngSeed;
         }
 
         public override void Initialize(GameState state)
@@ -46,7 +52,9 @@ namespace Game.Systems.MarriageSystem
 
             config = (loadedConfig ?? new PopulationSimulationConfig()).Marriage ?? new MarriageSettings();
 
-            rng = new System.Random(config.RngSeed);
+            rngSeed = settings.RngSeed;
+            config.RngSeed = rngSeed;
+            RestoreRngState(rngSeed, 0);
             if (!subscriptionsActive)
             {
                 bus.Subscribe<OnNewDayEvent>(OnNewDay);
@@ -72,9 +80,11 @@ namespace Game.Systems.MarriageSystem
         {
             try
             {
+                config.RngSeed = rngSeed;
+
                 var blob = new SaveBlob
                 {
-                    Seed = config.RngSeed,
+                    Seed = rngSeed,
                     SampleCount = rngSampleCount
                 };
 
@@ -105,6 +115,7 @@ namespace Game.Systems.MarriageSystem
                 int seed = blob?.Seed ?? config.RngSeed;
                 int sampleCount = blob?.SampleCount ?? 0;
                 config.RngSeed = seed;
+                rngSeed = seed;
                 RestoreRngState(seed, sampleCount);
             }
             catch (Exception ex)
@@ -115,7 +126,7 @@ namespace Game.Systems.MarriageSystem
 
         private void OnNewDay(OnNewDayEvent e)
         {
-            int marriagesToday = 0;
+            int attempts = 0;
 
             var singlesMale = new List<Character>();
             var singlesFemale = new List<Character>();
@@ -124,14 +135,13 @@ namespace Game.Systems.MarriageSystem
             {
                 if (c.SpouseID.HasValue) continue;
 
-                if (c.Gender == Gender.Male && c.Age >= config.MinAgeMale)
+                if (c.Gender == Gender.Male && c.Age >= settings.MinAgeMale)
                     singlesMale.Add(c);
-                else if (c.Gender == Gender.Female && c.Age >= config.MinAgeFemale)
+                else if (c.Gender == Gender.Female && c.Age >= settings.MinAgeFemale)
                     singlesFemale.Add(c);
             }
 
-            int attempts = 0;
-            while (attempts < config.DailyMatchmakingCap && singlesMale.Count > 0 && singlesFemale.Count > 0)
+            while (attempts < settings.DailyMatchmakingCap && singlesMale.Count > 0 && singlesFemale.Count > 0)
             {
                 int mIndex = NextRandomInt(singlesMale.Count);
                 var male = singlesMale[mIndex];
@@ -139,12 +149,10 @@ namespace Game.Systems.MarriageSystem
                 int fIndex = WeightedPickFemale(singlesFemale, male.Class);
                 var female = singlesFemale[fIndex];
 
-                if (NextRandomDouble() < config.DailyMarriageChanceWhenEligible)
+                if (NextRandomDouble() < settings.DailyMarriageChanceWhenEligible)
                 {
                     if (characterSystem.Marry(male.ID, female.ID))
                     {
-                        marriagesToday++;
-
                         bus.Publish(new OnCharacterMarried(e.Year, e.Month, e.Day, male.ID, female.ID));
 
                         singlesMale.RemoveAt(mIndex);
@@ -166,8 +174,8 @@ namespace Game.Systems.MarriageSystem
                 var f = females[i];
                 double w = 1.0;
                 if (f.Class == maleClass)
-                    w *= config.PreferSameClassWeight;
-                if (!config.CrossClassAllowed && f.Class != maleClass)
+                    w *= settings.PreferSameClassWeight;
+                if (!settings.CrossClassAllowed && f.Class != maleClass)
                     w = 0.0;
 
                 weights[i] = w;

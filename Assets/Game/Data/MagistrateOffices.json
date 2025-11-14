@@ -1,0 +1,90 @@
+{
+  "Offices": [
+    {
+      "Id": "quaestor",
+      "Name": "Quaestor",
+      "Assembly": "ComitiaTributa",
+      "MinAge": 30,
+      "TermLengthYears": 1,
+      "Seats": 8,
+      "ReelectionGapYears": 10,
+      "Rank": 1,
+      "PrerequisitesAll": [],
+      "PrerequisitesAny": []
+    },
+    {
+      "Id": "aedile",
+      "Name": "Curule Aedile",
+      "Assembly": "ComitiaTributa",
+      "MinAge": 36,
+      "TermLengthYears": 1,
+      "Seats": 2,
+      "ReelectionGapYears": 10,
+      "Rank": 2,
+      "PrerequisitesAll": ["quaestor"],
+      "PrerequisitesAny": []
+    },
+    {
+      "Id": "plebeian_aedile",
+      "Name": "Plebeian Aedile",
+      "Assembly": "ConciliumPlebis",
+      "MinAge": 27,
+      "TermLengthYears": 1,
+      "Seats": 2,
+      "ReelectionGapYears": 10,
+      "Rank": 2,
+      "RequiresPlebeian": true,
+      "PrerequisitesAll": [],
+      "PrerequisitesAny": []
+    },
+    {
+      "Id": "praetor",
+      "Name": "Praetor",
+      "Assembly": "ComitiaCenturiata",
+      "MinAge": 39,
+      "TermLengthYears": 1,
+      "Seats": 2,
+      "ReelectionGapYears": 10,
+      "Rank": 3,
+      "PrerequisitesAll": [],
+      "PrerequisitesAny": ["aedile", "plebeian_aedile", "quaestor"]
+    },
+    {
+      "Id": "consul",
+      "Name": "Consul",
+      "Assembly": "ComitiaCenturiata",
+      "MinAge": 42,
+      "TermLengthYears": 1,
+      "Seats": 2,
+      "ReelectionGapYears": 10,
+      "Rank": 4,
+      "PrerequisitesAll": ["praetor"],
+      "PrerequisitesAny": []
+    },
+    {
+      "Id": "censor",
+      "Name": "Censor",
+      "Assembly": "ComitiaCenturiata",
+      "MinAge": 45,
+      "TermLengthYears": 5,
+      "Seats": 2,
+      "ReelectionGapYears": 10,
+      "Rank": 5,
+      "PrerequisitesAll": ["consul"],
+      "PrerequisitesAny": []
+    },
+    {
+      "Id": "tribune",
+      "Name": "Tribune of the Plebs",
+      "Assembly": "ConciliumPlebis",
+      "MinAge": 27,
+      "TermLengthYears": 1,
+      "Seats": 5,
+      "ReelectionGapYears": 10,
+      "Rank": 2,
+      "RequiresPlebeian": true,
+      "PrerequisitesAll": [],
+      "PrerequisitesAny": []
+    }
+  ]
+}
