@@ -57,11 +57,14 @@ namespace Game.Data.Characters
             var dignitas = NormalizeStat(profile.Dignitas);
             var administration = NormalizeStat(profile.Administration);
             var militaryLean = Mathf.Clamp01(profile.MilitaryLean);
+            var senatorialInfluence = Mathf.Max(0f, profile.SenatorialInfluence);
+            var popularInfluence = Mathf.Max(0f, profile.PopularInfluence);
+            var militaryInfluence = Mathf.Max(0f, profile.MilitaryInfluence);
 
             var assertiveness = BlendWithNeutral((courage + ambition) * 0.5f);
             var stability = BlendWithNeutral((judgment + civic) * 0.5f);
-            var ideologyConservatism = ComputeIdeologyValue(profile.SenatorialInfluence, profile.PopularInfluence);
-            var ideologyPopulism = ComputeIdeologyValue(profile.PopularInfluence, profile.SenatorialInfluence);
+            var ideologyConservatism = ComputeIdeologyValue(senatorialInfluence, popularInfluence);
+            var ideologyPopulism = ComputeIdeologyValue(popularInfluence, senatorialInfluence);
             var militaryAssertiveness = BlendWithNeutral((militaryLean + courage) * 0.5f);
             var honorInclination = BlendWithNeutral((dignitas + civic) * 0.5f);
             var corruptionRisk = Mathf.Clamp01(1f - honorInclination);
@@ -69,9 +72,9 @@ namespace Game.Data.Characters
             var shortTermOpportunism = BlendWithNeutral(ambition);
 
             var (powerBaseSenate, powerBasePopular, powerBaseMilitary) = ComputePowerBases(
-                profile.SenatorialInfluence,
-                profile.PopularInfluence,
-                profile.MilitaryInfluence);
+                senatorialInfluence,
+                popularInfluence,
+                militaryInfluence);
 
             return new PoliticalBehaviorModel(
                 assertiveness,
