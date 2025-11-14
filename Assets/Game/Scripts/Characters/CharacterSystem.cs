@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Game.Core;
+using Logger = Game.Core.Logger;
 using Game.Data.Characters;
 using Game.Systems.Characters;
 using Game.Systems.EventBus;
