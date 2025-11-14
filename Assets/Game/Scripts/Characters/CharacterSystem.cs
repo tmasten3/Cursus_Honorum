@@ -30,7 +30,8 @@ namespace Game.Systems.CharacterSystem
         private readonly CharacterMarriageService marriageService;
         private CharacterMortalityService mortality;
         private int curYear, curMonth, curDay;
-        private bool subscriptionsActive;
+        private EventSubscription newDaySubscription = EventSubscription.Empty;
+        private EventSubscription newYearSubscription = EventSubscription.Empty;
 
         public CharacterSystem(EventBus.EventBus bus, TimeSystem timeSystem, SimulationConfig simulationConfig)
         {
@@ -79,12 +80,10 @@ namespace Game.Systems.CharacterSystem
             }
 
             mortality = new CharacterMortalityService(repository, rng, GetDailyHazard);
-            if (!subscriptionsActive)
-            {
-                bus.Subscribe<OnNewDayEvent>(OnNewDay);
-                bus.Subscribe<OnNewYearEvent>(OnNewYear);
-                subscriptionsActive = true;
-            }
+            newDaySubscription.Dispose();
+            newYearSubscription.Dispose();
+            newDaySubscription = bus.Subscribe<OnNewDayEvent>(OnNewDay);
+            newYearSubscription = bus.Subscribe<OnNewYearEvent>(OnNewYear);
 
             LogInfo($"Initialized with {repository.AliveCount} living characters across {repository.FamilyCount} families (time source: {timeSystem.Name}).");
         }
@@ -102,12 +101,10 @@ namespace Game.Systems.CharacterSystem
 
         public override void Shutdown()
         {
-            if (subscriptionsActive)
-            {
-                bus.Unsubscribe<OnNewDayEvent>(OnNewDay);
-                bus.Unsubscribe<OnNewYearEvent>(OnNewYear);
-                subscriptionsActive = false;
-            }
+            newDaySubscription.Dispose();
+            newYearSubscription.Dispose();
+            newDaySubscription = EventSubscription.Empty;
+            newYearSubscription = EventSubscription.Empty;
 
             base.Shutdown();
             repository.Reset();

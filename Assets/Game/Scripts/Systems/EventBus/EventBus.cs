@@ -14,8 +14,8 @@ namespace Game.Systems.EventBus
 
         public const int DefaultHistoryCapacity = 4096;
 
-        private readonly Queue<GameEvent> currentQueue = new();
-        private readonly Queue<GameEvent> nextQueue = new();
+        private readonly Queue<IGameEvent> currentQueue = new();
+        private readonly Queue<IGameEvent> nextQueue = new();
         private readonly EventHistory history;
         private readonly HashSet<Type> unhandledTypesLogged = new();
         private static readonly HashSet<Type> optionalEventTypes = new()
@@ -44,7 +44,7 @@ namespace Game.Systems.EventBus
             }
         }
 
-        public IReadOnlyList<GameEvent> History => history;
+        public IReadOnlyList<IGameEvent> History => history;
 
         public EventBus(int historyCapacity = DefaultHistoryCapacity)
         {
@@ -54,7 +54,7 @@ namespace Game.Systems.EventBus
 
         public int HistoryCount => history.Count;
 
-        public IReadOnlyList<GameEvent> GetHistorySnapshot()
+        public IReadOnlyList<IGameEvent> GetHistorySnapshot()
         {
             return history.ToArray();
         }
@@ -71,41 +71,52 @@ namespace Game.Systems.EventBus
             FlushEvents();
         }
 
-        public void Publish(GameEvent e)
+        public void Publish<TEvent>(TEvent eventData) where TEvent : IGameEvent
         {
-            if (e == null)
-                throw new ArgumentNullException(nameof(e));
+            if (eventData is null)
+                throw new ArgumentNullException(nameof(eventData));
 
-            nextQueue.Enqueue(e);
+            nextQueue.Enqueue(eventData);
+            Log($"Publish -> {eventData.Name} [{eventData.Category}]");
 
             if (!isFlushing)
                 FlushEvents();
         }
 
-        public void Subscribe<T>(Action<T> handler) where T : GameEvent
+        public EventSubscription Subscribe<TEvent>(Action<TEvent> handler) where TEvent : IGameEvent
         {
             if (handler == null) throw new ArgumentNullException(nameof(handler));
 
             if (!registry.TryAddSubscriber(handler, out bool isDuplicate))
             {
                 if (isDuplicate)
-                    LogWarn($"Duplicate subscription to {typeof(T).Name} ignored.");
-                return;
+                    LogWarn($"Duplicate subscription to {typeof(TEvent).Name} ignored.");
+                return EventSubscription.Empty;
             }
 
-            unhandledTypesLogged.Remove(typeof(T));
-            LogInfo($"Subscribed to {typeof(T).Name}");
+            unhandledTypesLogged.Remove(typeof(TEvent));
+            LogInfo($"Subscribed to {typeof(TEvent).Name}");
+            return new EventSubscription(this, typeof(TEvent), handler);
         }
 
-        public void Unsubscribe<T>(Action<T> handler) where T : GameEvent
+        public void Unsubscribe<TEvent>(Action<TEvent> handler) where TEvent : IGameEvent
         {
             if (handler == null)
                 return;
 
-            if (!registry.TryRemoveSubscriber(handler))
-                return;
+            Unsubscribe(typeof(TEvent), handler);
+        }
 
-            LogInfo($"Unsubscribed from {typeof(T).Name}");
+        internal bool Unsubscribe(Type eventType, Delegate handler)
+        {
+            if (eventType == null || handler == null)
+                return false;
+
+            if (!registry.TryRemoveSubscriber(eventType, handler))
+                return false;
+
+            LogInfo($"Unsubscribed from {eventType.Name}");
+            return true;
         }
 
         private void FlushEvents()
@@ -169,7 +180,7 @@ namespace Game.Systems.EventBus
                 HistoryCapacity = storedCapacity;
         }
 
-        private void AddToHistory(GameEvent e)
+        private void AddToHistory(IGameEvent e)
         {
             if (historyCapacity == 0 || e == null)
                 return;
@@ -182,9 +193,9 @@ namespace Game.Systems.EventBus
             history.SetCapacity(historyCapacity);
         }
 
-        private sealed class EventHistory : IReadOnlyList<GameEvent>
+        private sealed class EventHistory : IReadOnlyList<IGameEvent>
         {
-            private GameEvent[] buffer;
+            private IGameEvent[] buffer;
             private int start;
             private int count;
 
@@ -193,7 +204,7 @@ namespace Game.Systems.EventBus
                 if (capacity < 0)
                     capacity = 0;
 
-                buffer = capacity == 0 ? Array.Empty<GameEvent>() : new GameEvent[capacity];
+                buffer = capacity == 0 ? Array.Empty<IGameEvent>() : new IGameEvent[capacity];
                 start = 0;
                 count = 0;
                 Capacity = capacity;
@@ -203,7 +214,7 @@ namespace Game.Systems.EventBus
 
             public int Count => count;
 
-            public GameEvent this[int index]
+            public IGameEvent this[int index]
             {
                 get
                 {
@@ -215,13 +226,13 @@ namespace Game.Systems.EventBus
                 }
             }
 
-            public void Add(GameEvent e)
+            public void Add(IGameEvent e)
             {
                 if (Capacity == 0)
                     return;
 
                 if (buffer.Length != Capacity)
-                    buffer = new GameEvent[Capacity];
+                    buffer = new IGameEvent[Capacity];
 
                 if (count < Capacity)
                 {
@@ -246,14 +257,14 @@ namespace Game.Systems.EventBus
 
                 if (capacity == 0)
                 {
-                    buffer = Array.Empty<GameEvent>();
+                    buffer = Array.Empty<IGameEvent>();
                     Capacity = 0;
                     start = 0;
                     count = 0;
                     return;
                 }
 
-                var newBuffer = new GameEvent[capacity];
+                var newBuffer = new IGameEvent[capacity];
                 int itemsToCopy = Math.Min(count, capacity);
 
                 for (int i = 0; i < itemsToCopy; i++)
@@ -267,19 +278,19 @@ namespace Game.Systems.EventBus
                 count = itemsToCopy;
             }
 
-            public GameEvent[] ToArray()
+            public IGameEvent[] ToArray()
             {
                 if (count == 0)
-                    return Array.Empty<GameEvent>();
+                    return Array.Empty<IGameEvent>();
 
-                var result = new GameEvent[count];
+                var result = new IGameEvent[count];
                 for (int i = 0; i < count; i++)
                     result[i] = this[i];
 
                 return result;
             }
 
-            public IEnumerator<GameEvent> GetEnumerator()
+            public IEnumerator<IGameEvent> GetEnumerator()
             {
                 for (int i = 0; i < count; i++)
                     yield return this[i];

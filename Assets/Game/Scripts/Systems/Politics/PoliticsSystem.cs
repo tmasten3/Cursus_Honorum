@@ -32,7 +32,7 @@ namespace Game.Systems.Politics
         private readonly Dictionary<(int Month, int Day), HashSet<int>> birthdayIndex = new();
         private readonly PoliticsModelFactory.ElectionCycleState cycleState = new();
 
-        private bool subscriptionsActive;
+        private readonly List<EventSubscription> subscriptions = new();
         private int currentYear;
 
         public PoliticsSystem(EventBus.EventBus eventBus, TimeSystem timeSystem,
@@ -50,18 +50,15 @@ namespace Game.Systems.Politics
         {
             base.Initialize(state);
 
-            if (!subscriptionsActive)
-            {
-                eventBus.Subscribe<OnNewYearEvent>(OnNewYear);
-                eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
-                eventBus.Subscribe<ElectionSeasonOpenedEvent>(OnElectionSeasonOpened);
-                eventBus.Subscribe<ElectionSeasonCompletedEvent>(OnElectionSeasonCompleted);
-                eventBus.Subscribe<OfficeAssignedEvent>(OnOfficeAssigned);
-                eventBus.Subscribe<OnCharacterBorn>(OnCharacterBorn);
-                eventBus.Subscribe<OnCharacterDied>(OnCharacterDied);
-                eventBus.Subscribe<OnPopulationTick>(OnPopulationTick);
-                subscriptionsActive = true;
-            }
+            ResetSubscriptions();
+            AddSubscription(eventBus.Subscribe<OnNewYearEvent>(OnNewYear));
+            AddSubscription(eventBus.Subscribe<OnNewDayEvent>(OnNewDay));
+            AddSubscription(eventBus.Subscribe<ElectionSeasonOpenedEvent>(OnElectionSeasonOpened));
+            AddSubscription(eventBus.Subscribe<ElectionSeasonCompletedEvent>(OnElectionSeasonCompleted));
+            AddSubscription(eventBus.Subscribe<OfficeAssignedEvent>(OnOfficeAssigned));
+            AddSubscription(eventBus.Subscribe<OnCharacterBorn>(OnCharacterBorn));
+            AddSubscription(eventBus.Subscribe<OnCharacterDied>(OnCharacterDied));
+            AddSubscription(eventBus.Subscribe<OnPopulationTick>(OnPopulationTick));
 
             var (year, _, _) = timeSystem.GetCurrentDate();
             currentYear = year;
@@ -77,24 +74,30 @@ namespace Game.Systems.Politics
 
         public override void Shutdown()
         {
-            if (subscriptionsActive)
-            {
-                eventBus.Unsubscribe<OnNewYearEvent>(OnNewYear);
-                eventBus.Unsubscribe<OnNewDayEvent>(OnNewDay);
-                eventBus.Unsubscribe<ElectionSeasonOpenedEvent>(OnElectionSeasonOpened);
-                eventBus.Unsubscribe<ElectionSeasonCompletedEvent>(OnElectionSeasonCompleted);
-                eventBus.Unsubscribe<OfficeAssignedEvent>(OnOfficeAssigned);
-                eventBus.Unsubscribe<OnCharacterBorn>(OnCharacterBorn);
-                eventBus.Unsubscribe<OnCharacterDied>(OnCharacterDied);
-                eventBus.Unsubscribe<OnPopulationTick>(OnPopulationTick);
-                subscriptionsActive = false;
-            }
+            ResetSubscriptions();
 
             eligibilityByCharacter.Clear();
             birthdayIndex.Clear();
             termTracker.Reset();
 
             base.Shutdown();
+        }
+
+        private void AddSubscription(EventSubscription subscription)
+        {
+            if (subscription != null && subscription.IsActive)
+                subscriptions.Add(subscription);
+        }
+
+        private void ResetSubscriptions()
+        {
+            if (subscriptions.Count == 0)
+                return;
+
+            foreach (var subscription in subscriptions)
+                subscription.Dispose();
+
+            subscriptions.Clear();
         }
 
         public ElectionCycleSnapshot GetCurrentElectionCycle()

@@ -8,17 +8,17 @@ namespace Game.Systems.EventBus
     /// </summary>
     public class EventRegistry
     {
-        private readonly Dictionary<Type, List<Action<GameEvent>>> subscribers = new();
-        private readonly Dictionary<Type, Dictionary<Delegate, Action<GameEvent>>> subscriberLookup = new();
+        private readonly Dictionary<Type, List<Action<IGameEvent>>> subscribers = new();
+        private readonly Dictionary<Type, Dictionary<Delegate, Action<IGameEvent>>> subscriberLookup = new();
 
-        public bool TryAddSubscriber<T>(Action<T> handler, out bool isDuplicate) where T : GameEvent
+        public bool TryAddSubscriber<TEvent>(Action<TEvent> handler, out bool isDuplicate) where TEvent : IGameEvent
         {
             if (handler == null) throw new ArgumentNullException(nameof(handler));
 
-            var eventType = typeof(T);
+            var eventType = typeof(TEvent);
             if (!subscriberLookup.TryGetValue(eventType, out var typedLookup))
             {
-                typedLookup = new Dictionary<Delegate, Action<GameEvent>>();
+                typedLookup = new Dictionary<Delegate, Action<IGameEvent>>();
                 subscriberLookup[eventType] = typedLookup;
             }
 
@@ -28,12 +28,12 @@ namespace Game.Systems.EventBus
                 return false;
             }
 
-            Action<GameEvent> wrapper = e => handler((T)e);
+            Action<IGameEvent> wrapper = e => handler((TEvent)e);
             typedLookup[handler] = wrapper;
 
             if (!subscribers.TryGetValue(eventType, out var handlerList))
             {
-                handlerList = new List<Action<GameEvent>>();
+                handlerList = new List<Action<IGameEvent>>();
                 subscribers[eventType] = handlerList;
             }
 
@@ -42,12 +42,10 @@ namespace Game.Systems.EventBus
             return true;
         }
 
-        public bool TryRemoveSubscriber<T>(Action<T> handler) where T : GameEvent
+        public bool TryRemoveSubscriber(Type eventType, Delegate handler)
         {
-            if (handler == null)
+            if (eventType == null || handler == null)
                 return false;
-
-            var eventType = typeof(T);
 
             if (!subscriberLookup.TryGetValue(eventType, out var typedLookup))
                 return false;
@@ -74,7 +72,7 @@ namespace Game.Systems.EventBus
             return true;
         }
 
-        public IReadOnlyList<Action<GameEvent>> GetHandlers(Type eventType)
+        public IReadOnlyList<Action<IGameEvent>> GetHandlers(Type eventType)
         {
             if (eventType == null)
                 throw new ArgumentNullException(nameof(eventType));
@@ -82,7 +80,7 @@ namespace Game.Systems.EventBus
             if (subscribers.TryGetValue(eventType, out var handlers))
                 return handlers;
 
-            return Array.Empty<Action<GameEvent>>();
+            return Array.Empty<Action<IGameEvent>>();
         }
 
         public bool HasHandlers(Type eventType)

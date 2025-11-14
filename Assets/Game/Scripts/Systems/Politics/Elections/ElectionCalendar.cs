@@ -8,7 +8,8 @@ namespace Game.Systems.Politics.Elections
     {
         private readonly EventBus.EventBus eventBus;
         private readonly TimeSystem timeSystem;
-        private bool subscriptionsActive;
+        private EventSubscription newDaySubscription = EventSubscription.Empty;
+        private EventSubscription newYearSubscription = EventSubscription.Empty;
 
         public int CurrentYear { get; private set; }
         public int CurrentMonth { get; private set; }
@@ -26,12 +27,11 @@ namespace Game.Systems.Politics.Elections
 
         public void Initialize()
         {
-            if (subscriptionsActive)
-                return;
+            newDaySubscription.Dispose();
+            newYearSubscription.Dispose();
 
-            eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
-            eventBus.Subscribe<OnNewYearEvent>(OnNewYear);
-            subscriptionsActive = true;
+            newDaySubscription = eventBus.Subscribe<OnNewDayEvent>(OnNewDay);
+            newYearSubscription = eventBus.Subscribe<OnNewYearEvent>(OnNewYear);
 
             var (year, month, day) = timeSystem.GetCurrentDate();
             UpdateDate(year, month, day);
@@ -39,12 +39,10 @@ namespace Game.Systems.Politics.Elections
 
         public void Shutdown()
         {
-            if (!subscriptionsActive)
-                return;
-
-            eventBus.Unsubscribe<OnNewDayEvent>(OnNewDay);
-            eventBus.Unsubscribe<OnNewYearEvent>(OnNewYear);
-            subscriptionsActive = false;
+            newDaySubscription.Dispose();
+            newYearSubscription.Dispose();
+            newDaySubscription = EventSubscription.Empty;
+            newYearSubscription = EventSubscription.Empty;
         }
 
         private void OnNewYear(OnNewYearEvent e)

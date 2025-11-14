@@ -23,7 +23,7 @@ namespace Game.Systems.BirthSystem
         private System.Random rng;
         private int rngSeed;
         private int rngSampleCount;
-        private bool subscriptionsActive;
+        private EventSubscription newDaySubscription = EventSubscription.Empty;
 
         [Serializable]
         private struct Pregnancy
@@ -69,11 +69,8 @@ namespace Game.Systems.BirthSystem
 
             rngSeed = settings.RngSeed;
             RestoreRngState(rngSeed, 0);
-            if (!subscriptionsActive)
-            {
-                bus.Subscribe<OnNewDayEvent>(OnNewDay);
-                subscriptionsActive = true;
-            }
+            newDaySubscription.Dispose();
+            newDaySubscription = bus.Subscribe<OnNewDayEvent>(OnNewDay);
             LogInfo("Initialized and subscribed to OnNewDayEvent.");
         }
 
@@ -81,11 +78,8 @@ namespace Game.Systems.BirthSystem
 
         public override void Shutdown()
         {
-            if (subscriptionsActive)
-            {
-                bus.Unsubscribe<OnNewDayEvent>(OnNewDay);
-                subscriptionsActive = false;
-            }
+            newDaySubscription.Dispose();
+            newDaySubscription = EventSubscription.Empty;
 
             pregnancies.Clear();
             base.Shutdown();

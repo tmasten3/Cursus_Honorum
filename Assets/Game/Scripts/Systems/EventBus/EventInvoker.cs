@@ -8,13 +8,13 @@ namespace Game.Systems.EventBus
     /// </summary>
     public class EventInvoker
     {
-        public void Invoke(GameEvent eventData, IReadOnlyList<Action<GameEvent>> handlers, Action<Exception> onHandlerException)
+        public void Invoke(IGameEvent eventData, IReadOnlyList<Action<IGameEvent>> handlers, Action<Exception> onHandlerException)
         {
             if (eventData == null) throw new ArgumentNullException(nameof(eventData));
             if (handlers == null) throw new ArgumentNullException(nameof(handlers));
             if (handlers.Count == 0) return;
 
-            var snapshot = new Action<GameEvent>[handlers.Count];
+            var snapshot = new Action<IGameEvent>[handlers.Count];
             for (int i = 0; i < handlers.Count; i++)
                 snapshot[i] = handlers[i];
 
