@@ -286,7 +286,7 @@ namespace Game.UI
             viewportRect.offsetMax = Vector2.zero;
             viewport.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.25f);
 
-            var content = CreateChild("Content", viewport.transform, typeof(RectTransform), typeof(TextMeshProUGUI));
+            var content = CreateChild("Content", viewport.transform, typeof(RectTransform), typeof(TextMeshProUGUI), typeof(ContentSizeFitter));
             var contentRect = (RectTransform)content.transform;
             contentRect.anchorMin = new Vector2(0f, 1f);
             contentRect.anchorMax = new Vector2(1f, 1f);
@@ -294,6 +294,10 @@ namespace Game.UI
             contentRect.offsetMin = new Vector2(8f, 0f);
             contentRect.offsetMax = new Vector2(-8f, 0f);
             contentRect.sizeDelta = Vector2.zero;
+
+            var fitter = content.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var text = content.GetComponent<TextMeshProUGUI>();
             text.text = "Logs will appear here.";

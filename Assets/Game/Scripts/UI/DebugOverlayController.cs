@@ -167,7 +167,7 @@ namespace Game.UI
             {
                 SubscribeToController();
 
-                if (gameController.IsInitialized && gameController.GameState != null)
+                if (ShouldBindToGameState(gameController))
                 {
                     BindToGameState(gameController.GameState);
                 }
@@ -178,10 +178,18 @@ namespace Game.UI
             LocateGameController();
             SubscribeToController();
 
-            if (gameController != null && gameController.IsInitialized && gameController.GameState != null)
+            if (ShouldBindToGameState(gameController))
             {
                 BindToGameState(gameController.GameState);
             }
+        }
+
+        private bool ShouldBindToGameState(GameController controller)
+        {
+            return controller != null
+                && controller.IsInitialized
+                && controller.GameState != null
+                && (!overlayBound || !ReferenceEquals(gameState, controller.GameState));
         }
 
         private void LocateGameController()
@@ -249,10 +257,7 @@ namespace Game.UI
                 return;
 
             if (overlayBound && ReferenceEquals(gameState, state))
-            {
-                RefreshOverlay();
                 return;
-            }
 
             var resolvedTimeSystem = state.GetSystem<TimeSystem>();
             if (resolvedTimeSystem == null)
