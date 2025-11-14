@@ -190,6 +190,19 @@ namespace Game.Data.Characters
 
             var deterministicRandom = new System.Random(0);
 
+            var deduplicationKeys = new HashSet<string>(StringComparer.Ordinal);
+
+            bool TryAddIssue(CharacterValidationIssue issue)
+            {
+                var field = issue.Field ?? string.Empty;
+                var key = $"{issue.CharacterIndex}:{field}";
+                if (!deduplicationKeys.Add(key))
+                    return false;
+
+                LastValidationResult.Issues.Add(issue);
+                return true;
+            }
+
             for (int i = 0; i < characters.Count; i++)
             {
                 var character = characters[i];
@@ -202,7 +215,7 @@ namespace Game.Data.Characters
 
                 foreach (var correction in analysis.Corrections)
                 {
-                    LastValidationResult.Issues.Add(new CharacterValidationIssue
+                    TryAddIssue(new CharacterValidationIssue
                     {
                         CharacterIndex = i,
                         Field = DetermineFieldFromCorrection(correction),
@@ -213,13 +226,13 @@ namespace Game.Data.Characters
 
             CharacterDataValidator.Validate(characters, sourcePath, issue =>
             {
-                LastValidationResult.Issues.Add(issue);
+                TryAddIssue(issue);
             });
 
             foreach (var issue in EnumerateStructuralRelationshipIssues(characters, sourcePath))
             {
                 Game.Core.Logger.Warn(LogCategory, issue.Message);
-                LastValidationResult.Issues.Add(issue);
+                TryAddIssue(issue);
             }
 
             LastValidationResult.Success = LastValidationResult.Issues.Count == 0;
