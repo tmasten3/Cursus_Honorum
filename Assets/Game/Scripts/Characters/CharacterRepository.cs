@@ -6,7 +6,7 @@ using Game.Data.Characters;
 
 namespace Game.Systems.CharacterSystem
 {
-    internal sealed class CharacterRepository
+    public sealed class CharacterRepository
     {
         private readonly Dictionary<int, Character> byId = new();
         private readonly Dictionary<string, List<int>> byName = new(StringComparer.OrdinalIgnoreCase);
