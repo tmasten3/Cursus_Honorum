@@ -216,6 +216,12 @@ namespace Game.Data.Characters
                 LastValidationResult.Issues.Add(issue);
             });
 
+            foreach (var issue in EnumerateStructuralRelationshipIssues(characters, sourcePath))
+            {
+                Game.Core.Logger.Warn(LogCategory, issue.Message);
+                LastValidationResult.Issues.Add(issue);
+            }
+
             LastValidationResult.Success = LastValidationResult.Issues.Count == 0;
         }
 
@@ -223,20 +229,9 @@ namespace Game.Data.Characters
         {
             CharacterDataValidator.Validate(characters, sourcePath);
 
-            foreach (var c in characters)
+            foreach (var issue in EnumerateStructuralRelationshipIssues(characters, sourcePath))
             {
-                if (c == null)
-                    continue;
-
-                if (c.FatherID == c.ID || c.MotherID == c.ID)
-                {
-                    Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is listed as their own parent.");
-                }
-
-                if (c.SpouseID == c.ID)
-                {
-                    Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is married to themselves.");
-                }
+                Game.Core.Logger.Warn(LogCategory, issue.Message);
             }
         }
 
@@ -333,6 +328,43 @@ namespace Game.Data.Characters
                 Field = field,
                 Message = message
             });
+        }
+
+        private static IEnumerable<CharacterValidationIssue> EnumerateStructuralRelationshipIssues(
+            List<Character> characters,
+            string sourcePath)
+        {
+            if (characters == null)
+                yield break;
+
+            for (int i = 0; i < characters.Count; i++)
+            {
+                var character = characters[i];
+                if (character == null)
+                    continue;
+
+                string displayName = character.RomanName?.GetFullName() ?? "(unknown)";
+
+                if (character.FatherID == character.ID || character.MotherID == character.ID)
+                {
+                    yield return new CharacterValidationIssue
+                    {
+                        CharacterIndex = i,
+                        Field = "Relationships.Parent",
+                        Message = $"{sourcePath}: Character #{character.ID} '{displayName}' is listed as their own parent."
+                    };
+                }
+
+                if (character.SpouseID == character.ID)
+                {
+                    yield return new CharacterValidationIssue
+                    {
+                        CharacterIndex = i,
+                        Field = "Relationships.Spouse",
+                        Message = $"{sourcePath}: Character #{character.ID} '{displayName}' is married to themselves."
+                    };
+                }
+            }
         }
 
         // ------------------------------------------------------------------
