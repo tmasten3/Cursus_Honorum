@@ -62,6 +62,7 @@ namespace Game.Systems.BirthSystem
                 LogError);
 
             config = (loadedConfig ?? new PopulationSimulationConfig()).Birth ?? new BirthSettings();
+            ApplyLoadedConfig(config);
 
             ApplyConfigOverrides(config);
 
@@ -94,10 +95,12 @@ namespace Game.Systems.BirthSystem
             try
             {
                 config.RngSeed = settings.RngSeed;
+                settings.RngSeed = rngSeed;
+                config.RngSeed = rngSeed;
 
                 var blob = new SaveBlob
                 {
-                    Seed = config.RngSeed,
+                    Seed = rngSeed,
                     SampleCount = rngSampleCount,
                     Pregnancies = new List<Pregnancy>(pregnancies)
                 };
@@ -130,10 +133,12 @@ namespace Game.Systems.BirthSystem
                     ? new List<Pregnancy>(blob.Pregnancies)
                     : new List<Pregnancy>();
 
-                int seed = blob?.Seed ?? config.RngSeed;
+                int seed = blob?.Seed ?? settings.RngSeed;
                 int sampleCount = blob?.SampleCount ?? 0;
+                settings.RngSeed = seed;
                 config.RngSeed = seed;
                 settings.RngSeed = seed;
+                rngSeed = seed;
                 RestoreRngState(seed, sampleCount);
                 LogInfo($"Loaded {pregnancies.Count} pending pregnancies.");
             }
@@ -241,6 +246,19 @@ namespace Game.Systems.BirthSystem
             public int Seed;
             public int SampleCount;
             public List<Pregnancy> Pregnancies = new();
+        }
+
+        private void ApplyLoadedConfig(BirthSettings source)
+        {
+            if (source == null)
+                return;
+
+            settings.RngSeed = source.RngSeed;
+            settings.FemaleMinAge = source.FemaleMinAge;
+            settings.FemaleMaxAge = source.FemaleMaxAge;
+            settings.DailyBirthChanceIfMarried = source.DailyBirthChanceIfMarried;
+            settings.GestationDays = source.GestationDays;
+            settings.MultipleBirthChance = source.MultipleBirthChance;
         }
     }
 }

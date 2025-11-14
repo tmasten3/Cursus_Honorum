@@ -19,11 +19,20 @@ public class CharacterLedgerSimple : MonoBehaviour
     private EventBus eventBus;
     private bool initializationAttempted;
     private bool handlersRegistered;
+    private bool handlersBound;
 
     private Action<OnCharacterBorn> onCharacterBornHandler;
     private Action<OnCharacterDied> onCharacterDiedHandler;
     private Action<OnCharacterMarried> onCharacterMarriedHandler;
     private Action<OnPopulationTick> onPopulationTickHandler;
+
+    private int refreshCount;
+
+#if UNITY_EDITOR
+    private bool editorCycleActive;
+    private int editorRefreshCountAtEnable;
+    private int editorLastCycleRefreshCount = -1;
+#endif
 
     private void Awake()
     {
@@ -35,19 +44,60 @@ public class CharacterLedgerSimple : MonoBehaviour
 
     private void OnEnable()
     {
+#if UNITY_EDITOR
+        editorCycleActive = Application.isPlaying;
+        if (editorCycleActive)
+            editorRefreshCountAtEnable = refreshCount;
+#endif
+
         if (!initializationAttempted)
         {
             StartCoroutine(InitializeWhenReady());
+            return;
         }
         else if (characterSystem != null && eventBus != null)
         {
             EnsureSubscriptions();
             Refresh();
-        }
-        else
+
+        if (characterSystem == null)
         {
             StartCoroutine(InitializeWhenReady());
+            return;
         }
+
+        EnsureEventHandlersBound();
+        Refresh();
+    }
+
+    private void OnDisable()
+    {
+        if (eventBus != null && handlersBound)
+        {
+            eventBus.Unsubscribe(onCharacterBornHandler);
+            eventBus.Unsubscribe(onCharacterDiedHandler);
+            eventBus.Unsubscribe(onCharacterMarriedHandler);
+            eventBus.Unsubscribe(onPopulationTickHandler);
+            handlersBound = false;
+        }
+
+#if UNITY_EDITOR
+        if (editorCycleActive)
+        {
+            var cycleRefreshCount = refreshCount - editorRefreshCountAtEnable;
+            if (editorLastCycleRefreshCount >= 0 && cycleRefreshCount != editorLastCycleRefreshCount)
+            {
+                Game.Core.Logger.Warn("Validation", $"[CharacterLedger] Play mode toggle detected inconsistent refresh count: previous {editorLastCycleRefreshCount}, current {cycleRefreshCount}.");
+            }
+            else
+            {
+                Game.Core.Logger.Info("Validation", $"[CharacterLedger] Play mode toggle refresh count verified at {cycleRefreshCount}.");
+            }
+
+            editorLastCycleRefreshCount = cycleRefreshCount;
+            editorCycleActive = false;
+        }
+#endif
     }
 
     private void OnDisable()
@@ -93,6 +143,7 @@ public class CharacterLedgerSimple : MonoBehaviour
         }
 
         EnsureSubscriptions();
+        EnsureEventHandlersBound();
 
         BuildList();
     }
@@ -155,6 +206,8 @@ public class CharacterLedgerSimple : MonoBehaviour
             Game.Core.Logger.Warn("Safety", "[CharacterLedger] CharacterSystem unavailable during refresh.");
             return;
         }
+
+        refreshCount++;
 
         try
         {
@@ -226,5 +279,43 @@ public class CharacterLedgerSimple : MonoBehaviour
         }
 
         Game.Core.Logger.Info("Ledger", $"Auto-refreshed list with {characters.Count} characters.");
+    }
+
+    private void EnsureEventHandlersBound()
+    {
+        if (eventBus == null || handlersBound)
+            return;
+
+        onCharacterBornHandler ??= HandleCharacterBorn;
+        onCharacterDiedHandler ??= HandleCharacterDied;
+        onCharacterMarriedHandler ??= HandleCharacterMarried;
+        onPopulationTickHandler ??= HandlePopulationTick;
+
+        eventBus.Subscribe(onCharacterBornHandler);
+        eventBus.Subscribe(onCharacterDiedHandler);
+        eventBus.Subscribe(onCharacterMarriedHandler);
+        eventBus.Subscribe(onPopulationTickHandler);
+
+        handlersBound = true;
+    }
+
+    private void HandleCharacterBorn(OnCharacterBorn _)
+    {
+        Refresh();
+    }
+
+    private void HandleCharacterDied(OnCharacterDied _)
+    {
+        Refresh();
+    }
+
+    private void HandleCharacterMarried(OnCharacterMarried _)
+    {
+        Refresh();
+    }
+
+    private void HandlePopulationTick(OnPopulationTick _)
+    {
+        Refresh();
     }
 }

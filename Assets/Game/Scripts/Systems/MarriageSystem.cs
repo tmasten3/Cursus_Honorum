@@ -51,6 +51,7 @@ namespace Game.Systems.MarriageSystem
                 LogError);
 
             config = (loadedConfig ?? new PopulationSimulationConfig()).Marriage ?? new MarriageSettings();
+            ApplyLoadedConfig(config);
 
             ApplyConfigOverrides(config);
 
@@ -83,6 +84,8 @@ namespace Game.Systems.MarriageSystem
             {
                 config.RngSeed = settings.RngSeed;
                 rngSeed = settings.RngSeed;
+                settings.RngSeed = rngSeed;
+                config.RngSeed = rngSeed;
 
                 var blob = new SaveBlob
                 {
@@ -114,8 +117,9 @@ namespace Game.Systems.MarriageSystem
                 }
 
                 var blob = JsonUtility.FromJson<SaveBlob>(json);
-                int seed = blob?.Seed ?? config.RngSeed;
+                int seed = blob?.Seed ?? settings.RngSeed;
                 int sampleCount = blob?.SampleCount ?? 0;
+                settings.RngSeed = seed;
                 config.RngSeed = seed;
                 settings.RngSeed = seed;
                 rngSeed = seed;
@@ -234,6 +238,20 @@ namespace Game.Systems.MarriageSystem
                 }
             }
             rngSampleCount = sampleCount;
+        }
+
+        private void ApplyLoadedConfig(MarriageSettings source)
+        {
+            if (source == null)
+                return;
+
+            settings.RngSeed = source.RngSeed;
+            settings.MinAgeMale = source.MinAgeMale;
+            settings.MinAgeFemale = source.MinAgeFemale;
+            settings.DailyMatchmakingCap = source.DailyMatchmakingCap;
+            settings.DailyMarriageChanceWhenEligible = source.DailyMarriageChanceWhenEligible;
+            settings.PreferSameClassWeight = source.PreferSameClassWeight;
+            settings.CrossClassAllowed = source.CrossClassAllowed;
         }
 
         [Serializable]
