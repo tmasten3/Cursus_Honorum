@@ -85,6 +85,11 @@ namespace Game.Data.Characters
             return PoliticalProfile.FromCharacter(this);
         }
 
+        public PoliticalBehaviorModel GetPoliticalBehavior()
+        {
+            return PoliticalBehaviorModel.FromProfile(GetPoliticalProfile());
+        }
+
         public bool IsAlignedWith(FactionType faction)
         {
             return Faction == faction;
