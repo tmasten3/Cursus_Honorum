@@ -33,7 +33,9 @@ namespace Game.UI
 
         public DebugOverlayBuilder(RectTransform root)
         {
-            this.root = root ?? throw new ArgumentNullException(nameof(root));
+            if (root == null)
+                throw new ArgumentNullException(nameof(root));
+            this.root = root;
         }
 
         public void Build()
