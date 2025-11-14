@@ -77,5 +77,59 @@ namespace CursusHonorum.Tests.Runtime
                 state.Shutdown();
             }
         }
+
+        [Test]
+        public void SubscriptionDispose_PreventsFurtherEvents()
+        {
+            var state = CreateInitializedState(out var eventBus);
+            try
+            {
+                int received = 0;
+                var subscription = eventBus.Subscribe<DummyEvent>(_ => received++);
+
+                eventBus.Publish(new DummyEvent("First", -248, 1, 1));
+                eventBus.Publish(new DummyEvent("Second", -248, 1, 2));
+
+                Assert.AreEqual(2, received, "Subscriber should receive events published before disposal.");
+
+                subscription.Dispose();
+
+                eventBus.Publish(new DummyEvent("Third", -248, 1, 3));
+
+                Assert.AreEqual(2, received, "Disposed subscription should not receive further events.");
+            }
+            finally
+            {
+                state.Shutdown();
+            }
+        }
+
+        [Test]
+        public void HistoryCapacity_LimitsStoredEvents()
+        {
+            var state = CreateInitializedState(out var eventBus);
+            try
+            {
+                eventBus.HistoryCapacity = 2;
+
+                var names = new[] { "A", "B", "C", "D" };
+                for (int i = 0; i < names.Length; i++)
+                {
+                    eventBus.Publish(new DummyEvent(names[i], -248, 1, i + 1));
+                }
+
+                Assert.AreEqual(2, eventBus.HistoryCount, "History count should not exceed the configured capacity.");
+
+                var snapshot = eventBus.GetHistorySnapshot().Cast<DummyEvent>().ToList();
+                var historyNames = snapshot.Select(e => e.Name).ToArray();
+                var expected = names.Skip(names.Length - eventBus.HistoryCount).ToArray();
+
+                CollectionAssert.AreEqual(expected, historyNames, "Event history should retain only the most recent events.");
+            }
+            finally
+            {
+                state.Shutdown();
+            }
+        }
     }
 }
