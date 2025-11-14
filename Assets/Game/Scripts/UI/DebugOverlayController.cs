@@ -204,6 +204,10 @@ namespace Game.UI
             layout.padding = new RectOffset(12, 12, 12, 12);
             layout.spacing = 8f;
             layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
 
             dateText = CreateLabel(panel.transform, "DateText", "Date: --");
             livingText = CreateLabel(panel.transform, "LivingText", "Living: 0");
@@ -221,13 +225,18 @@ namespace Game.UI
             go.transform.SetParent(parent, false);
 
             var rect = (RectTransform)go.transform;
-            rect.sizeDelta = new Vector2(0f, 28f);
+            rect.sizeDelta = Vector2.zero;
 
             var text = go.GetComponent<TextMeshProUGUI>();
             text.text = initialText;
             text.fontSize = 22f;
             text.color = Color.white;
             text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.alignment = TextAlignmentOptions.Left;
+
+            var fitter = go.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             return text;
         }
@@ -269,6 +278,7 @@ namespace Game.UI
             contentRect.pivot = new Vector2(0f, 1f);
             contentRect.offsetMin = new Vector2(8f, 0f);
             contentRect.offsetMax = new Vector2(-8f, 0f);
+            contentRect.sizeDelta = Vector2.zero;
 
             var text = content.GetComponent<TextMeshProUGUI>();
             text.text = "Logs will appear here.";
@@ -276,6 +286,10 @@ namespace Game.UI
             text.color = new Color(0.85f, 0.9f, 1f);
             text.alignment = TextAlignmentOptions.TopLeft;
             text.textWrappingMode = TextWrappingModes.Normal;
+
+            var fitter = content.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             scrollRect.content = contentRect;
             scrollRect.viewport = viewportRect;

@@ -76,6 +76,10 @@ namespace Game.UI
             layout.padding = new RectOffset(10, 10, 8, 8);
             layout.spacing = 4f;
             layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
 
             var layoutElement = root.GetComponent<LayoutElement>();
             layoutElement.preferredHeight = 200f;
@@ -128,7 +132,7 @@ namespace Game.UI
             go.transform.SetParent(root.transform, false);
 
             var rect = (RectTransform)go.transform;
-            rect.sizeDelta = new Vector2(0f, 24f);
+            rect.sizeDelta = Vector2.zero;
 
             var text = go.GetComponent<TextMeshProUGUI>();
             text.fontSize = fontSize;
@@ -136,6 +140,10 @@ namespace Game.UI
             text.fontStyle = style;
             text.textWrappingMode = TextWrappingModes.Normal;
             text.alignment = TextAlignmentOptions.TopLeft;
+
+            var fitter = go.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             return text;
         }
