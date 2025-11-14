@@ -1,96 +1,112 @@
-# Cursus Honorum — Project Map for AI Agents
+# Agent Operating Specification
 
-## High-Level Overview
-- **Project type:** Unity simulation game set in the Roman Republic, focused on generational character dynamics, civic offices, and political seasons.
-- **Architecture:** Modular service-based systems composed of `IGameSystem` implementations managed by `SystemRegistry`. Systems communicate almost exclusively through the event-driven `EventBus`, keeping data, logic, and presentation layers decoupled.
-- **Simulation focus:** Time progression, character lifecycle, family structures, births, marriages, magistrate offices, and elections. Debug tooling and logging provide runtime visibility without altering deterministic gameplay logic.
+## 1. High-Level Purpose
+Cursus Honorum is a system-driven Roman Republic simulation in Unity. The simulation is modular, event-driven, and deterministic. All gameplay arises from systems, not scripts or story vignettes. Agents must preserve determinism, modularity, data-driven design, separation of concerns, subsystem PDF alignment, and must never add flavor events or emotional content.
 
-## Directory Structure Summary
-- **Assets/Game/Core** – No standalone folder; core runtime code lives under `Assets/Game/Scripts/Core`, containing entry points (`GameController`, `GameState`), the modular system framework (`GameSystemBase`, `SystemRegistry`, bootstrap profiles), and the global `EventBus`/`GameEvent` definitions.
-- **Assets/Game/Systems** – Located at `Assets/Game/Scripts/Systems`. Hosts deterministic simulation modules (Time, Birth, Marriage, Politics). Subfolders such as `Politics/Offices` and `Politics/Elections` encapsulate office management and election orchestration.
-- **Assets/Game/Scripts/UI** – UI-specific behaviours like `DebugOverlayController` that render simulation stats and log output without owning gameplay logic.
-- **Assets/Game/Data** – Authoritative JSON data (`base_characters.json`, `BaseOffices.json`) providing initial state for characters and political offices. Treated as read-only configuration.
-- **Assets/Game/Utilities** – Shared infrastructure utilities (`Logger`, `LogBatch`) for diagnostics and cross-system helpers.
-- **Assets/Game/Core (assembly)** – `Game.asmdef` defines the assembly for all game scripts to enforce namespace and dependency boundaries.
-- **Packages/** – Unity package manifest and lock files managing editor/runtime packages. Do not edit manually unless package changes are requested.
-- **ProjectSettings/** – Unity project configuration (input, quality, editor). Modify only when explicitly required for engine setup.
+## 2. Architectural Overview
+### 2.1 System Framework
+- All runtime logic is implemented as `IGameSystem` modules derived from `GameSystemBase`.
+- Systems are registered, ordered, and lifecycle-managed by `SystemRegistry`.
+- Lifecycle phases are `Initialize()`, `Tick(deltaTime)`, and `Shutdown()`; every system must respect this contract.
+- Systems communicate only through the global `EventBus`; no direct cross-system calls beyond constructor-injected services provided at registration.
 
-## System Definitions
-### Event Bus
-- **Purpose:** Central publish/subscribe hub for all gameplay events (`GameEvent` subclasses). Ensures loose coupling between systems.
-- **Communication:** Systems inject `EventBus` and subscribe to relevant events (`OnNewDay`, `OnCharacterBorn`, election notifications). Queue-based processing flushes in `Update`.
-- **Key files:** `Assets/Game/Scripts/Core/EventBus.cs`, `Assets/Game/Scripts/Core/GameEvent.cs`.
-- **Notes:** Maintains delivery history, optional event whitelist, and duplicate subscription guards.
+### 2.2 EventBus
+- The `EventBus` is the global publish/subscribe hub for the simulation.
+- Every major simulation beat (time progression, births, deaths, marriages, office changes, elections) is emitted as a strongly typed event.
+- Systems subscribe only to events they actively consume and must unsubscribe on shutdown.
+- Event ordering and delivery must remain deterministic; never introduce asynchronous dispatch or unordered handlers.
 
-### Time System
-- **Purpose:** Advances the simulation calendar, translating Unity `Time.deltaTime` into in-game days/months/years.
-- **Communication:** Publishes `OnNewDayEvent`, `OnNewMonthEvent`, and `OnNewYearEvent` through the `EventBus`. Consumed by character, birth, marriage, and political systems.
-- **Key files:** `Assets/Game/Scripts/Systems/TimeSystem.cs`.
-- **Notes:** Supports pause/resume, configurable day length, deterministic stepping via explicit `StepDays`.
+### 2.3 GameController & GameState
+- `GameController` is the Unity entry point that instantiates `GameState`.
+- `GameState` constructs the `SystemRegistry`, creates all systems, runs their lifecycle, exposes services to the UI, coordinates save/load, and owns shutdown.
+- All runtime system access (including UI) goes through `GameState`; agents must not bypass this orchestration.
 
+### 2.4 Time System
+- The time system converts Unity `deltaTime` into deterministic days, months, and years.
+- It publishes `OnNewDay`, `OnNewMonth`, and `OnNewYear` events that drive the rest of the simulation.
+- Time cadence changes must remain deterministic and preserve downstream expectations.
+
+### 2.5 SaveService
+- `SaveService` serializes and restores the complete deterministic game state, including characters, families, births, marriages, office and election status, and time progression.
+- Save/load flows rely on stable JSON contracts validated by `SaveSerializer`; compatibility must be preserved across revisions.
+
+## 3. Current Implemented Systems
 ### Character System
-- **Purpose:** Owns authoritative character repository including life state, families, ages, and mortality.
-- **Communication:** Subscribes to time events for daily updates, publishes lifecycle events (deaths, population metrics). Consumed by birth, marriage, office, and election systems via direct service access.
-- **Key files:** `Assets/Game/Scripts/Characters/*` (repository, services, factory) and `Assets/Game/Scripts/Systems/CharacterSystem/CharacterSystem.cs`.
-- **Notes:** Loads initial population from `base_characters.json`, uses injected services for age/mortality/family logic, and persists via JSON save blobs.
+Maintains the authoritative repository of every citizen, tracks lifecycle state, families, ages, mortality, and marriage relationships. Subscribes to time events to advance aging, apply deterministic mortality tables, and publish population metrics (`OnCharacterDied`, `OnPopulationTick`). Provides query services to other systems via `GameState` lookups and persists its state through JSON blobs produced by deterministic RNG sequences.
 
 ### Birth System
-- **Purpose:** Schedules pregnancies for eligible married women and resolves births (including multiples).
-- **Communication:** Subscribes to daily time events; invokes `CharacterSystem` APIs to spawn children and publishes `OnCharacterBorn` events.
-- **Key files:** `Assets/Game/Scripts/Systems/BirthSystem.cs`.
-- **Notes:** Maintains in-memory pregnancy queue derived from deterministic RNG seeded via config.
+Schedules pregnancies for eligible married women, resolves births on due dates, and creates new characters via the character repository. Listens to `OnNewDay`, consumes deterministic fertility settings, and publishes `OnCharacterBorn` events. Saves and restores pending pregnancies and RNG state to keep outcomes reproducible.
 
 ### Marriage System
-- **Purpose:** Matches single characters each day based on eligibility, class weighting, and chance.
-- **Communication:** Listens for `OnNewDayEvent` and performs direct calls to `CharacterSystem.Marry`. Publishes `OnCharacterMarried` when unions succeed.
-- **Key files:** `Assets/Game/Scripts/Systems/MarriageSystem.cs`.
-- **Notes:** Caps matchmaking attempts per day and respects configurable social-class biases.
+Performs daily matchmaking between eligible singles using deterministic weighted selections that respect class constraints. Subscribes to `OnNewDay`, invokes `CharacterSystem.Marry`, and emits `OnCharacterMarried` events. Persists RNG state so marriage outcomes remain stable across save/load cycles.
 
 ### Office System
-- **Purpose:** Manages Roman magistrate offices, including definitions, seat occupancy, eligibility, and historical records.
-- **Communication:** Loads office definitions from `BaseOffices.json`, responds to time/death events, publishes `OfficeAssignedEvent` via the `EventBus`, and feeds election data.
-- **Key files:** `Assets/Game/Scripts/Systems/Politics/Offices/*` (definitions, state, eligibility, system).
-- **Notes:** Seeds initial office holders deterministically, tracks active/pending terms, and enforces seat structures.
+Loads magistracy definitions from `BaseOffices.json`, manages seat availability, term limits, and incumbency history. Reacts to time and character lifecycle events, enforces eligibility rules, and publishes `OfficeAssignedEvent` whenever a seat changes hands. Provides data to elections and politics subsystems while maintaining deterministic office states for saves.
 
 ### Election System
-- **Purpose:** Simulates annual election cycles, including candidate declarations, ambition scoring, and seat allocation outcomes.
-- **Communication:** Consumes time events, queries `OfficeSystem` for open seats, `CharacterSystem` for candidate data, and publishes election lifecycle events (`ElectionSeasonOpenedEvent`, `ElectionSeasonCompletedEvent`, `OfficeAssignedEvent`).
-- **Key files:** `Assets/Game/Scripts/Systems/Politics/Elections/*` (system, events, models).
-- **Notes:** Maintains per-year declaration/results registries and uses deterministic RNG for weighted picks.
+Runs annual election cycles by opening seasons, evaluating candidate ambition, drawing winners, and allocating offices. Consumes time events, queries the character and office systems, and publishes `ElectionSeasonOpenedEvent`, `ElectionSeasonCompletedEvent`, and `OfficeAssignedEvent` outcomes. Stores per-year election state and RNG progress in its save data to guarantee repeatable results.
+
+### Politics System
+Coordinates high-level political state by tracking eligibility, term histories, and election-cycle summaries. Listens to time, population, election, and office events to refresh eligibility snapshots and maintain deterministic trackers. Exposes read-only snapshots for other consumers (UI, debug) without owning UI logic or direct state mutation outside of event responses.
 
 ### Debug Overlay
-- **Purpose:** Runtime UI overlay that surfaces current date, population stats, and recent logs for developers.
-- **Communication:** Binds to `GameController` to access `GameState`, `TimeSystem`, `CharacterSystem`, `OfficeSystem`, and `ElectionSystem`. Pulls data directly and displays `Logger` output.
-- **Key files:** `Assets/Game/Scripts/UI/DebugOverlayController.cs`.
-- **Notes:** Pure presentation; avoid placing gameplay logic here.
+Unity UI component that queries `GameState` for time, character, office, and election snapshots, then renders diagnostic information. Contains no gameplay logic; only observes systems through adapters and must not change simulation data.
 
-### Logging / LogBatch
-- **Purpose:** Provide centralized logging with console colorization, persistent file output, and batched warning helpers.
-- **Communication:** Static `Logger` class used across systems; `LogBatch` collects related warnings before flushing to disk.
-- **Key files:** `Assets/Game/Scripts/Utilities/Logger.cs`, `Assets/Game/Scripts/Utilities/LogBatch.cs`.
-- **Notes:** Respects `MinimumLevel`, writes to Unity console and persistent files, supports debug overlay consumption.
+## 4. Systems Required by Design Documents (Not Implemented)
+- **Senate System:** Full senate proceedings, sessions, and decrees.
+- **Factions:** Persistent political blocs with systemic influence mechanics.
+- **Rivalry System:** Structured interpersonal rivalries affecting eligibility and outcomes.
+- **Systemic Indices:** Citywide indices (order, unrest, legitimacy) affecting mechanics.
+- **Era System:** Era progression gates altering available systems and parameters.
+- **Economy / Estates / Wealth:** Wealth, estate ownership, and economic flows.
+- **Provinces:** Provincial governance, assignments, and regional data.
+- **Military System:** Legions, commands, campaigns, and war resolution.
+- **Full Game UI Vision:** Complete production UI beyond the current debug overlay.
 
-## Constraints & Rules for AI Agents
-1. Do **not** change gameplay or simulation logic unless explicitly requested.
-2. Keep all systems deterministic; preserve seeded RNG usage and repeatable event ordering.
-3. Maintain strict separation between data (`Assets/Game/Data`), logic (`Assets/Game/Scripts`), and UI (`Assets/Game/Scripts/UI`).
-4. Never modify `.meta` files manually.
-5. Do not import or modify Unity packages unless instructed.
-6. Do not run Unity editor or automated Unity tests in this environment.
-7. Adhere to existing namespaces under `Game.*`; follow the assembly definition boundaries.
-8. Preserve JSON structures exactly when editing data files.
-9. Prefer creating new focused files over bloating existing ones.
-10. Avoid introducing circular dependencies; systems must remain decoupled via the `EventBus` and registry.
-11. Respect `SystemRegistry` initialization ordering and dependency declarations.
+Codex must not build any of these systems unless explicitly instructed.
 
-## Recommended Workflow for Agents
-- Perform structural refactoring before introducing new behaviour; align with modular `IGameSystem` patterns.
-- Touch only the systems requested; avoid collateral edits across unrelated modules.
-- Keep changes scoped and files small to ease code review and maintain determinism.
-- Leverage dependency injection via constructors/descriptors already used throughout the project.
-- Follow the existing event-driven architecture: publish through `EventBus`, subscribe minimally, and avoid direct cross-system coupling unless already established.
-- Maintain developer tooling (`Logger`, debug overlay) separately from core simulation.
+## 5. Agent Modification Rules
+### 5.1 Absolute Do-Not-Break
+- Event-driven architecture and event contracts.
+- `SystemRegistry` creation order and lifecycle management.
+- Determinism, seeded randomness, and reproducible simulation results.
+- JSON serialization contracts and schema expectations.
+- Save/load compatibility managed by `SaveService` and `SaveSerializer`.
+- Namespace organization under existing assemblies.
+- Assembly definition boundaries and project structure.
+- Time-driven cadence emitted by the time system.
 
-## Version
-This agents.md file is automatically regenerated by Codex to reflect the latest project state.
-Last updated: 2025-02-14
+### 5.2 Behavioral Rules
+- No flavor events, narrative scripting, or bespoke story beats.
+- All mechanics must remain systemic and data-driven.
+- Keep UI logic outside of systems; keep simulation logic outside of UI.
+- Systems may not directly couple to each other; all interaction flows through the `EventBus` and `GameState` accessors.
+
+### 5.3 Editing Rules
+- Keep every change tightly scoped to the requested area.
+- Prefer adding new files over expanding unrelated ones.
+- Never edit `.meta` files.
+- Do not modify Unity packages unless explicitly told to do so.
+- Leave debug tooling untouched unless the request targets it.
+
+### 5.4 Data Rules
+- JSON assets must remain human-editable and formatted for authors.
+- Do not change JSON schemas or keys without explicit approval.
+- Never embed JSON-equivalent data inside scripts; keep data in data files.
+
+## 6. Workflow Guidance
+- Resolve compile errors before adjusting simulation logic.
+- Run and pass all available tests or checks before extending features.
+- Work in small, reversible patches that maintain determinism at each step.
+- Validate every change against the relevant subsystem PDF specification.
+- Follow roadmap alignment:
+  - Phase 0 – stabilization.
+  - Phase 1 – character/family foundation.
+  - Phase 2 – politics core.
+  - Phase 3+ – senate, factions, rivalries.
+  - Phase 4+ – UI.
+  - Phase 5–7 – indices, economy, military.
+  - Phase 8–10 – AI, integration, polish.
+
+## 7. Versioning Rule
+Regenerate this file only when the architecture or the list of implemented systems materially changes.
