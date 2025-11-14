@@ -1,3 +1,4 @@
+using Game.Core;
 using Game.Systems.EventBus;
 using NUnit.Framework;
 
@@ -12,7 +13,7 @@ namespace CursusHonorum.Tests.EventBus
             {
                 HistoryCapacity = 5
             };
-            eventBus.Initialize(null);
+            eventBus.Initialize(new GameState());
 
             for (int i = 0; i < 20; i++)
             {
@@ -33,7 +34,7 @@ namespace CursusHonorum.Tests.EventBus
             {
                 HistoryCapacity = 0
             };
-            eventBus.Initialize(null);
+            eventBus.Initialize(new GameState());
 
             for (int i = 0; i < 10; i++)
             {
