@@ -1,11 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Game.Core;
 using Game.Systems.CharacterSystem;
 using Game.Systems.EventBus;
@@ -16,10 +10,7 @@ using EventBusSystem = Game.Systems.EventBus.EventBus;
 
 namespace Game.UI
 {
-    [RequireComponent(typeof(Canvas))]
-    [RequireComponent(typeof(CanvasScaler))]
-    [RequireComponent(typeof(GraphicRaycaster))]
-    [DisallowMultipleComponent]
+    [RequireComponent(typeof(DebugOverlayView))]
     public class DebugOverlayController : MonoBehaviour
     {
         [SerializeField, Min(0.1f)]
@@ -38,95 +29,103 @@ namespace Game.UI
         [SerializeField]
         private bool showPoliticalPanel = true;
 
-        private Canvas overlayCanvas;
-        private CanvasScaler scaler;
-        private TMP_Text dateText;
-        private TMP_Text livingText;
-        private TMP_Text familyText;
-        private TMP_Text officeHeaderText;
-        private TMP_Text officeListText;
-        private TMP_Text electionHeaderText;
-        private TMP_Text electionListText;
-        private TMP_Text logText;
-        private ScrollRect logScroll;
-        private GameObject logContainer;
+        [Header("Display Limits")]
+        [SerializeField, Min(1)]
+        private int maxOfficeEntries = 8;
+
+        [SerializeField, Min(1)]
+        private int maxElectionEntries = 6;
+
+        [SerializeField, Min(1)]
+        private int maxWinnersPerElection = 3;
+
+        [SerializeField, Min(1)]
+        private int electionLookbackYears = 5;
+
+        [SerializeField]
+        private GameController controllerOverride;
+
+        private DebugOverlayView view;
         private PopulationStatsPanel populationPanel;
         private DailyEventLogPanel dailyEventPanel;
         private PoliticalSummaryPanel politicalPanel;
 
         private GameController gameController;
         private GameState gameState;
+        private EventBusSystem eventBus;
         private TimeSystem timeSystem;
         private CharacterSystem characterSystem;
         private CharacterRepository characterRepository;
         private OfficeSystem officeSystem;
         private ElectionSystem electionSystem;
-        private EventBusSystem eventBus;
-        private bool overlayBound;
-        private Coroutine bindingRoutine;
-        private bool loggedMissingTimeSystem;
-        private bool loggedMissingCharacterSystem;
+        private DebugOverlayDataProvider dataProvider;
+        private DebugOverlayDataProvider.DebugOverlayConfiguration providerConfiguration;
 
+        private bool overlayBound;
+        private float refreshTimer;
         private bool previousShowSystemLogPanel;
         private bool previousShowPopulationPanel;
         private bool previousShowDailyEventPanel;
         private bool previousShowPoliticalPanel;
-
-        private float refreshTimer;
-        private readonly StringBuilder builder = new();
-        private int lastLogCount;
-        private DateTime lastLogTimestamp;
-        [SerializeField, Min(1)]
-        private int maxOfficeEntries = 8;
-        [SerializeField, Min(1)]
-        private int maxElectionEntries = 6;
-        [SerializeField, Min(1)]
-        private int maxWinnersPerElection = 3;
-        [SerializeField, Min(1)]
-        private int electionLookbackYears = 5;
+        private int lastLogCount = -1;
+        private DateTime lastLogTimestamp = DateTime.MinValue;
         private int lastOfficeDisplayHash;
         private int lastElectionDisplayHash;
+
 #if UNITY_EDITOR
         private int lastSeasonValidationKey = int.MinValue;
         private int lastSeasonOfficeHash;
         private int lastSeasonElectionHash;
 #endif
 
+        private static GameController cachedController;
+        private static bool loggedMissingController;
+        private bool controllerSubscribed;
+
         private void Awake()
         {
-            overlayCanvas = GetComponent<Canvas>();
-            if (overlayCanvas == null)
-                overlayCanvas = gameObject.AddComponent<Canvas>();
+            view = GetComponent<DebugOverlayView>();
+            if (view == null)
+                view = gameObject.AddComponent<DebugOverlayView>();
 
-            scaler = GetComponent<CanvasScaler>();
-            if (scaler == null)
-                scaler = gameObject.AddComponent<CanvasScaler>();
-
-            if (GetComponent<GraphicRaycaster>() == null)
-                gameObject.AddComponent<GraphicRaycaster>();
-
-            ConfigureCanvas();
-            BuildUI();
+            view.EnsureInitialized();
+            InitializeSections();
+            view.EnsureOfficeAndElectionSections();
 
             previousShowSystemLogPanel = showSystemLogPanel;
             previousShowPopulationPanel = showPopulationPanel;
             previousShowDailyEventPanel = showDailyEventPanel;
             previousShowPoliticalPanel = showPoliticalPanel;
+
+            UpdateConfiguration();
             ApplySectionVisibility(forceRefresh: true);
+        }
+
+        private void OnValidate()
+        {
+            refreshInterval = Mathf.Max(0.1f, refreshInterval);
+            UpdateConfiguration();
         }
 
         private void OnEnable()
         {
-            if (bindingRoutine == null && isActiveAndEnabled)
-                bindingRoutine = StartCoroutine(WaitForGameState());
+            EnsureControllerReady();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeFromController();
+            UnbindFromGameState();
         }
 
         private void Update()
         {
+            EnsureControllerReady();
+
             if (CheckVisibilityChanges())
                 ApplySectionVisibility();
 
-            if (!overlayBound)
+            if (!overlayBound || dataProvider == null)
                 return;
 
             refreshTimer += Time.unscaledDeltaTime;
@@ -137,269 +136,151 @@ namespace Game.UI
             }
         }
 
-        private void ConfigureCanvas()
+        private void InitializeSections()
         {
-            overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            overlayCanvas.sortingOrder = short.MaxValue;
+            if (populationPanel != null)
+                return;
 
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 1f;
+            Transform parent = view.SectionParent;
+            populationPanel = new PopulationStatsPanel(parent);
+            dailyEventPanel = new DailyEventLogPanel(parent);
+            politicalPanel = new PoliticalSummaryPanel(parent);
         }
 
-        private void OnDisable()
+        private void UpdateConfiguration()
         {
-            if (bindingRoutine != null)
+            int officeEntries = Mathf.Max(1, maxOfficeEntries);
+            int electionEntries = Mathf.Max(1, maxElectionEntries);
+            int winnersPerElection = Mathf.Max(1, maxWinnersPerElection);
+            int lookback = Mathf.Max(1, electionLookbackYears);
+
+            providerConfiguration = new DebugOverlayDataProvider.DebugOverlayConfiguration(
+                officeEntries,
+                electionEntries,
+                winnersPerElection,
+                lookback);
+        }
+
+        private void EnsureControllerReady()
+        {
+            if (gameController != null)
             {
-                StopCoroutine(bindingRoutine);
-                bindingRoutine = null;
+                SubscribeToController();
+
+                if (ShouldBindToGameState(gameController))
+                {
+                    BindToGameState(gameController.GameState);
+                }
+
+                return;
             }
 
-            UnsubscribeFromController();
-            DisposeSections();
+            LocateGameController();
+            SubscribeToController();
 
-            overlayBound = false;
-            gameController = null;
-            gameState = null;
-            timeSystem = null;
-            characterSystem = null;
-            characterRepository = null;
-            officeSystem = null;
-            electionSystem = null;
-            eventBus = null;
-            loggedMissingTimeSystem = false;
-            loggedMissingCharacterSystem = false;
+            if (ShouldBindToGameState(gameController))
+            {
+                BindToGameState(gameController.GameState);
+            }
+        }
+
+        private bool ShouldBindToGameState(GameController controller)
+        {
+            return controller != null
+                && controller.IsInitialized
+                && controller.GameState != null
+                && (!overlayBound || !ReferenceEquals(gameState, controller.GameState));
+        }
+
+        private void LocateGameController()
+        {
+            if (controllerOverride != null)
+            {
+                cachedController = controllerOverride;
+            }
+            else if (cachedController == null)
+            {
+                cachedController = FindFirstObjectByType<GameController>();
+
+                if (cachedController == null)
+                {
+                    if (!loggedMissingController)
+                    {
+                        Logger.Warn("UI", "[DebugOverlay] GameController not found during initialization.");
+                        loggedMissingController = true;
+                    }
+
+                    return;
+                }
+
+                loggedMissingController = false;
+            }
+
+            gameController = cachedController;
+        }
+
+        private void SubscribeToController()
+        {
+            if (gameController == null || controllerSubscribed)
+                return;
+
+            gameController.GameStateInitialized -= OnGameStateInitialized;
+            gameController.GameStateInitialized += OnGameStateInitialized;
+            gameController.GameStateShuttingDown -= OnGameStateShuttingDown;
+            gameController.GameStateShuttingDown += OnGameStateShuttingDown;
+            controllerSubscribed = true;
         }
 
         private void UnsubscribeFromController()
         {
-            if (gameController == null)
+            if (gameController == null || !controllerSubscribed)
                 return;
 
+            gameController.GameStateInitialized -= OnGameStateInitialized;
             gameController.GameStateShuttingDown -= OnGameStateShuttingDown;
+            controllerSubscribed = false;
         }
 
-        private void BuildUI()
+        private void OnGameStateInitialized(GameState state)
         {
-            var rectTransform = (RectTransform)transform;
-            rectTransform.anchorMin = Vector2.zero;
-            rectTransform.anchorMax = Vector2.one;
-            rectTransform.offsetMin = Vector2.zero;
-            rectTransform.offsetMax = Vector2.zero;
-
-            var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup));
-            panel.transform.SetParent(transform, false);
-
-            var panelRect = (RectTransform)panel.transform;
-            panelRect.anchorMin = new Vector2(0f, 1f);
-            panelRect.anchorMax = new Vector2(0f, 1f);
-            panelRect.pivot = new Vector2(0f, 1f);
-            panelRect.anchoredPosition = new Vector2(16f, -16f);
-            panelRect.sizeDelta = new Vector2(480f, 720f);
-
-            var panelImage = panel.GetComponent<Image>();
-            panelImage.color = new Color(0f, 0f, 0f, 0.65f);
-
-            var layout = panel.GetComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(12, 12, 12, 12);
-            layout.spacing = 8f;
-            layout.childAlignment = TextAnchor.UpperLeft;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            dateText = CreateLabel(panel.transform, "DateText", "Date: --");
-            livingText = CreateLabel(panel.transform, "LivingText", "Living: 0");
-            familyText = CreateLabel(panel.transform, "FamilyText", "Families: 0");
-
-            logText = CreateLogArea(panel.transform, out logContainer, out logScroll);
-            populationPanel = new PopulationStatsPanel(panel.transform);
-            dailyEventPanel = new DailyEventLogPanel(panel.transform);
-            politicalPanel = new PoliticalSummaryPanel(panel.transform);
-        }
-
-        private TMP_Text CreateLabel(Transform parent, string name, string initialText)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
-
-            var rect = (RectTransform)go.transform;
-            rect.sizeDelta = Vector2.zero;
-
-            var text = go.GetComponent<TextMeshProUGUI>();
-            text.text = initialText;
-            text.fontSize = 22f;
-            text.color = Color.white;
-            text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.alignment = TextAlignmentOptions.Left;
-
-            var fitter = go.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            return text;
-        }
-
-        private TMP_Text CreateLogArea(Transform parent, out GameObject container, out ScrollRect scrollRect)
-        {
-            container = new GameObject("LogArea", typeof(RectTransform), typeof(Image), typeof(LayoutElement), typeof(ScrollRect));
-            container.transform.SetParent(parent, false);
-
-            var rect = (RectTransform)container.transform;
-            rect.sizeDelta = new Vector2(0f, 200f);
-
-            var layoutElement = container.GetComponent<LayoutElement>();
-            layoutElement.preferredHeight = 200f;
-            layoutElement.flexibleHeight = 1f;
-
-            var bg = container.GetComponent<Image>();
-            bg.color = new Color(1f, 1f, 1f, 0.05f);
-
-            scrollRect = container.GetComponent<ScrollRect>();
-            scrollRect.horizontal = false;
-            scrollRect.vertical = true;
-            scrollRect.movementType = ScrollRect.MovementType.Clamped;
-
-            var viewport = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
-            viewport.transform.SetParent(container.transform, false);
-            var viewportRect = (RectTransform)viewport.transform;
-            viewportRect.anchorMin = Vector2.zero;
-            viewportRect.anchorMax = Vector2.one;
-            viewportRect.offsetMin = Vector2.zero;
-            viewportRect.offsetMax = Vector2.zero;
-            viewport.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.25f);
-
-            var content = new GameObject("Content", typeof(RectTransform), typeof(TextMeshProUGUI));
-            content.transform.SetParent(viewport.transform, false);
-            var contentRect = (RectTransform)content.transform;
-            contentRect.anchorMin = new Vector2(0f, 1f);
-            contentRect.anchorMax = new Vector2(1f, 1f);
-            contentRect.pivot = new Vector2(0f, 1f);
-            contentRect.offsetMin = new Vector2(8f, 0f);
-            contentRect.offsetMax = new Vector2(-8f, 0f);
-            contentRect.sizeDelta = Vector2.zero;
-
-            var text = content.GetComponent<TextMeshProUGUI>();
-            text.text = "Logs will appear here.";
-            text.fontSize = 18f;
-            text.color = new Color(0.85f, 0.9f, 1f);
-            text.alignment = TextAlignmentOptions.TopLeft;
-            text.textWrappingMode = TextWrappingModes.Normal;
-
-            var fitter = content.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            scrollRect.content = contentRect;
-            scrollRect.viewport = viewportRect;
-
-            return text;
+            BindToGameState(state);
         }
 
         private void OnGameStateShuttingDown()
         {
-            if (!overlayBound)
+            UnbindFromGameState();
+        }
+
+        private void BindToGameState(GameState state)
+        {
+            if (state == null)
                 return;
 
-            overlayBound = false;
-
-            UnsubscribeFromController();
-            gameController = null;
-            gameState = null;
-            timeSystem = null;
-            characterSystem = null;
-            characterRepository = null;
-            officeSystem = null;
-            electionSystem = null;
-            eventBus = null;
-
-            refreshTimer = 0f;
-            lastLogCount = -1;
-            lastLogTimestamp = DateTime.MinValue;
-            loggedMissingTimeSystem = false;
-            loggedMissingCharacterSystem = false;
-
-            DisposeSections();
-
-            if (bindingRoutine == null && isActiveAndEnabled)
-                bindingRoutine = StartCoroutine(WaitForGameState());
-        }
-
-        private IEnumerator WaitForGameState()
-        {
-            try
-            {
-                while (true)
-                {
-                    GameController controller = FindFirstObjectByType<GameController>();
-
-                    while (controller == null)
-                    {
-                        yield return null;
-                        controller = FindFirstObjectByType<GameController>();
-                    }
-
-                    while (controller != null)
-                    {
-                        if (TryBindSystems(controller))
-                            yield break;
-
-                        if (controller == null)
-                            break;
-
-                        yield return null;
-                    }
-
-                    yield return null;
-                }
-            }
-            finally
-            {
-                bindingRoutine = null;
-            }
-        }
-
-        private bool TryBindSystems(GameController controller)
-        {
-            var state = controller.GameState;
-            if (state == null)
-                return false;
+            if (overlayBound && ReferenceEquals(gameState, state))
+                return;
 
             var resolvedTimeSystem = state.GetSystem<TimeSystem>();
             if (resolvedTimeSystem == null)
             {
-                if (!loggedMissingTimeSystem)
-                {
-                    loggedMissingTimeSystem = true;
-                    Game.Core.Logger.Error("Safety", "[DebugOverlay] TimeSystem unavailable during binding.");
-                }
-
-                return false;
+                Logger.Error("Safety", "[DebugOverlay] TimeSystem unavailable during binding.");
+                return;
             }
-
-            loggedMissingTimeSystem = false;
 
             var resolvedCharacterSystem = state.GetSystem<CharacterSystem>();
             if (resolvedCharacterSystem == null)
             {
-                if (!loggedMissingCharacterSystem)
-                {
-                    loggedMissingCharacterSystem = true;
-                    Game.Core.Logger.Error("Safety", "[DebugOverlay] CharacterSystem unavailable during binding.");
-                }
-
-                return false;
+                Logger.Error("Safety", "[DebugOverlay] CharacterSystem unavailable during binding.");
+                return;
             }
 
-            loggedMissingCharacterSystem = false;
-
-            CharacterRepository repository = null;
-            if (resolvedCharacterSystem.TryGetRepository(out var resolvedRepository))
-                repository = resolvedRepository;
+            CharacterRepository resolvedRepository = null;
+            if (resolvedCharacterSystem.TryGetRepository(out var repository))
+            {
+                resolvedRepository = repository;
+            }
             else
             {
-                Game.Core.Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
+                Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
             }
 
             var resolvedOfficeSystem = state.GetSystem<OfficeSystem>();
@@ -407,30 +288,51 @@ namespace Game.UI
             var resolvedEventBus = state.GetSystem<EventBusSystem>();
             if (resolvedEventBus == null)
             {
-                Game.Core.Logger.Error("Safety", "[DebugOverlay] EventBus unavailable during binding.");
-                return false;
+                Logger.Error("Safety", "[DebugOverlay] EventBus unavailable during binding.");
+                return;
             }
-
-            gameController = controller;
-            gameController.GameStateShuttingDown -= OnGameStateShuttingDown;
-            gameController.GameStateShuttingDown += OnGameStateShuttingDown;
 
             gameState = state;
             timeSystem = resolvedTimeSystem;
             characterSystem = resolvedCharacterSystem;
-            characterRepository = repository;
+            characterRepository = resolvedRepository;
             officeSystem = resolvedOfficeSystem;
             electionSystem = resolvedElectionSystem;
             eventBus = resolvedEventBus;
+            dataProvider = new DebugOverlayDataProvider(timeSystem, characterSystem, characterRepository, officeSystem, electionSystem);
 
             overlayBound = true;
             refreshTimer = 0f;
             lastLogCount = -1;
             lastLogTimestamp = DateTime.MinValue;
+            lastOfficeDisplayHash = 0;
+            lastElectionDisplayHash = 0;
 
             BindSections();
             RefreshOverlay();
-            return true;
+        }
+
+        private void UnbindFromGameState()
+        {
+            if (!overlayBound)
+                return;
+
+            overlayBound = false;
+            refreshTimer = 0f;
+            dataProvider = null;
+            gameState = null;
+            timeSystem = null;
+            characterSystem = null;
+            characterRepository = null;
+            officeSystem = null;
+            electionSystem = null;
+            eventBus = null;
+            lastLogCount = -1;
+            lastLogTimestamp = DateTime.MinValue;
+            lastOfficeDisplayHash = 0;
+            lastElectionDisplayHash = 0;
+
+            DisposeSections();
         }
 
         private void BindSections()
@@ -485,8 +387,7 @@ namespace Game.UI
 
         private void ApplySectionVisibility(bool forceRefresh = false)
         {
-            if (logContainer != null)
-                logContainer.SetActive(showSystemLogPanel);
+            view.SetLogVisibility(showSystemLogPanel);
 
             if (populationPanel != null)
             {
@@ -510,27 +411,23 @@ namespace Game.UI
             }
         }
 
-        private void ForceRefresh()
-        {
-            if (!overlayBound)
-                return;
-
-            refreshTimer = 0f;
-            lastLogCount = -1;
-            lastLogTimestamp = DateTime.MinValue;
-            RefreshOverlay();
-        }
-
         private void RefreshOverlay()
         {
-            if (!overlayBound)
+            if (!overlayBound || dataProvider == null)
                 return;
 
-            UpdateDate();
-            UpdatePopulation();
-            UpdateOfficeAssignments();
-            UpdateElectionResults();
-            UpdateLogs();
+            var snapshot = dataProvider.CreateSnapshot(providerConfiguration);
+
+            view.SetDate(snapshot.Date);
+            view.SetLivingPopulation(snapshot.CharacterCountText);
+            view.SetFamilyCount(snapshot.FamilyCountText);
+            view.SetOfficeSection(snapshot.OfficeHeader, snapshot.OfficeBody);
+            view.SetElectionSection(snapshot.ElectionHeader, snapshot.ElectionBody);
+
+            UpdateLogs(snapshot);
+
+            lastOfficeDisplayHash = snapshot.OfficeDisplayHash;
+            lastElectionDisplayHash = snapshot.ElectionDisplayHash;
 
             if (populationPanel != null && showPopulationPanel)
                 populationPanel.RefreshImmediate();
@@ -540,339 +437,31 @@ namespace Game.UI
 
             if (politicalPanel != null && showPoliticalPanel)
                 politicalPanel.RefreshImmediate();
+
+            ValidateSeasonalSections();
         }
 
-        private void UpdateDate()
+        private void UpdateLogs(DebugOverlayDataProvider.DebugOverlaySnapshot snapshot)
         {
-            string dateString = timeSystem != null ? timeSystem.GetCurrentDateString() : "Date unavailable";
-            dateText.text = $"Date: {dateString}";
-        }
-
-        private void UpdatePopulation()
-        {
-            int living = characterSystem?.CountAlive() ?? 0;
-            int families = characterRepository?.FamilyCount ?? characterSystem?.GetFamilyCount() ?? 0;
-
-            livingText.text = $"Living: {living}";
-            familyText.text = $"Families: {families}";
-        }
-
-        private void UpdateLogs()
-        {
-            IReadOnlyList<Game.Core.Logger.LogEntry> entries = Game.Core.Logger.GetRecentEntries();
-            if (entries == null || entries.Count == 0)
+            if (snapshot.LogCount == 0)
             {
+                if (lastLogCount != 0)
+                    view.SetLogText(string.Empty);
+
                 lastLogCount = 0;
                 lastLogTimestamp = DateTime.MinValue;
-                if (logText != null && logText.text.Length > 0)
-                    logText.text = string.Empty;
                 return;
             }
 
-            var newestEntry = entries[entries.Count - 1];
-            if (entries.Count == lastLogCount && newestEntry.Timestamp == lastLogTimestamp)
+            if (snapshot.LogCount == lastLogCount && snapshot.LatestLogTimestamp == lastLogTimestamp)
                 return;
 
-            lastLogCount = entries.Count;
-            lastLogTimestamp = newestEntry.Timestamp;
+            lastLogCount = snapshot.LogCount;
+            lastLogTimestamp = snapshot.LatestLogTimestamp;
 
-            builder.Clear();
-            foreach (var entry in entries)
-            {
-                builder.Append('[').Append(entry.Timestamp.ToString("HH:mm:ss"));
-                builder.Append("] [").Append(entry.Category).Append("] ");
-                builder.Append(entry.Message).Append('\n');
-            }
-
-            logText.text = builder.ToString();
+            view.SetLogText(snapshot.LogText);
             Canvas.ForceUpdateCanvases();
-            if (logScroll != null)
-                logScroll.verticalNormalizedPosition = 0f;
-        }
-
-        private void UpdateOfficeAssignments()
-        {
-            if (officeHeaderText == null || officeListText == null)
-                return;
-
-            if (officeSystem == null || characterSystem == null)
-            {
-                officeHeaderText.text = "Offices: unavailable";
-                officeListText.text = string.Empty;
-                lastOfficeDisplayHash = 0;
-                return;
-            }
-
-            var definitions = officeSystem.GetAllDefinitions();
-            var living = characterSystem.GetAllLiving();
-            if (definitions == null || definitions.Count == 0 || living == null || living.Count == 0)
-            {
-                officeHeaderText.text = "Offices: none";
-                officeListText.text = "No active office holders.";
-                lastOfficeDisplayHash = officeListText.text.GetHashCode();
-                return;
-            }
-
-            var definitionsById = definitions
-                .Where(d => d != null && !string.IsNullOrEmpty(d.Id))
-                .ToDictionary(d => d.Id, d => d, StringComparer.OrdinalIgnoreCase);
-
-            var rows = new List<OfficeDisplayRow>();
-            for (int i = 0; i < living.Count; i++)
-            {
-                var character = living[i];
-                if (character == null)
-                    continue;
-
-                var holdings = officeSystem.GetCurrentHoldings(character.ID);
-                if (holdings == null || holdings.Count == 0)
-                    continue;
-
-                for (int j = 0; j < holdings.Count; j++)
-                {
-                    var seat = holdings[j];
-                    if (seat == null || !seat.HolderId.HasValue)
-                        continue;
-
-                    var holderName = !string.IsNullOrEmpty(character.FullName) ? character.FullName : $"#{seat.HolderId.Value}";
-                    definitionsById.TryGetValue(seat.OfficeId ?? string.Empty, out var definition);
-
-                    string pendingName = null;
-                    if (seat.PendingHolderId.HasValue)
-                    {
-                        var pending = characterSystem.Get(seat.PendingHolderId.Value);
-                        pendingName = !string.IsNullOrEmpty(pending?.FullName)
-                            ? pending.FullName
-                            : $"#{seat.PendingHolderId.Value}";
-                    }
-
-                    rows.Add(new OfficeDisplayRow
-                    {
-                        OfficeId = seat.OfficeId,
-                        OfficeName = definition?.Name ?? seat.OfficeId ?? "Office",
-                        Rank = definition?.Rank ?? int.MinValue,
-                        SeatIndex = seat.SeatIndex,
-                        HolderName = holderName,
-                        StartYear = seat.StartYear,
-                        EndYear = seat.EndYear,
-                        PendingName = pendingName,
-                        PendingStartYear = seat.PendingStartYear
-                    });
-                }
-            }
-
-            if (rows.Count == 0)
-            {
-                officeHeaderText.text = "Offices: none";
-                officeListText.text = "No active office holders.";
-                lastOfficeDisplayHash = officeListText.text.GetHashCode();
-                return;
-            }
-
-            rows.Sort((a, b) =>
-            {
-                int rankCompare = b.Rank.CompareTo(a.Rank);
-                if (rankCompare != 0)
-                    return rankCompare;
-
-                int nameCompare = string.Compare(a.OfficeName, b.OfficeName, StringComparison.OrdinalIgnoreCase);
-                if (nameCompare != 0)
-                    return nameCompare;
-
-                int seatCompare = a.SeatIndex.CompareTo(b.SeatIndex);
-                if (seatCompare != 0)
-                    return seatCompare;
-
-                return string.Compare(a.HolderName, b.HolderName, StringComparison.OrdinalIgnoreCase);
-            });
-
-            int total = rows.Count;
-            int displayCount = Mathf.Clamp(maxOfficeEntries, 1, total);
-
-            builder.Clear();
-            for (int i = 0; i < displayCount; i++)
-            {
-                var row = rows[i];
-                builder.Append(row.OfficeName);
-                if (row.SeatIndex >= 0)
-                {
-                    builder.Append(" #").Append(row.SeatIndex + 1);
-                }
-
-                builder.Append(':').Append(' ').Append(row.HolderName);
-
-                if (row.StartYear != 0 || row.EndYear != 0)
-                {
-                    builder.Append(" (");
-                    if (row.StartYear == row.EndYear)
-                        builder.Append(row.StartYear);
-                    else
-                        builder.Append(row.StartYear).Append('-').Append(row.EndYear);
-                    builder.Append(')');
-                }
-
-                if (!string.IsNullOrEmpty(row.PendingName))
-                {
-                    builder.Append(" → ").Append(row.PendingName);
-                    if (row.PendingStartYear > 0)
-                        builder.Append(" (from ").Append(row.PendingStartYear).Append(')');
-                }
-
-                if (i < displayCount - 1)
-                    builder.Append('\n');
-            }
-
-            if (total > displayCount)
-            {
-                builder.Append('\n').Append('+').Append(total - displayCount).Append(" more…");
-            }
-
-            string text = builder.ToString();
-            officeListText.text = text;
-            officeHeaderText.text = total > displayCount
-                ? $"Offices ({displayCount}/{total})"
-                : $"Offices ({total})";
-            lastOfficeDisplayHash = text.GetHashCode();
-            builder.Clear();
-        }
-
-        private void UpdateElectionResults()
-        {
-            if (electionHeaderText == null || electionListText == null)
-                return;
-
-            if (electionSystem == null || timeSystem == null)
-            {
-                electionHeaderText.text = "Recent Elections: unavailable";
-                electionListText.text = string.Empty;
-                lastElectionDisplayHash = 0;
-                return;
-            }
-
-            var currentDate = timeSystem.GetCurrentDate();
-            int year = currentDate.year;
-            if (year == 0)
-            {
-                electionHeaderText.text = "Recent Elections";
-                electionListText.text = "No election timeline available.";
-                lastElectionDisplayHash = electionListText.text.GetHashCode();
-                return;
-            }
-
-            var entries = GatherRecentElectionRows(year);
-            if (entries.Count == 0)
-            {
-                electionHeaderText.text = "Recent Elections";
-                electionListText.text = "No election results recorded.";
-                lastElectionDisplayHash = electionListText.text.GetHashCode();
-                return;
-            }
-
-            int total = entries.Count;
-            int displayCount = Mathf.Clamp(maxElectionEntries, 1, total);
-
-            builder.Clear();
-            for (int i = 0; i < displayCount; i++)
-            {
-                var entry = entries[i];
-                builder.Append(entry.Year).Append(':').Append(' ').Append(entry.OfficeName).Append(" — ");
-
-                if (entry.Winners == null || entry.Winners.Count == 0)
-                {
-                    builder.Append("No winners recorded");
-                }
-                else
-                {
-                    int winnerCount = Mathf.Clamp(maxWinnersPerElection, 1, entry.Winners.Count);
-                    for (int j = 0; j < winnerCount; j++)
-                    {
-                        var winner = entry.Winners[j];
-                        string name = !string.IsNullOrEmpty(winner.CharacterName)
-                            ? winner.CharacterName
-                            : $"#{winner.CharacterId}";
-                        int seatIndex = winner.SeatIndex >= 0 ? winner.SeatIndex + 1 : winner.SeatIndex;
-                        builder.Append(name);
-                        if (seatIndex > 0)
-                        {
-                            builder.Append(" (seat ").Append(seatIndex).Append(')');
-                        }
-
-                        if (!string.IsNullOrEmpty(winner.Notes))
-                        {
-                            builder.Append(" [").Append(winner.Notes).Append(']');
-                        }
-
-                        if (j < winnerCount - 1)
-                            builder.Append(", ");
-                    }
-
-                    if (entry.Winners.Count > winnerCount)
-                    {
-                        builder.Append(", +").Append(entry.Winners.Count - winnerCount).Append(" more");
-                    }
-                }
-
-                if (i < displayCount - 1)
-                    builder.Append('\n');
-            }
-
-            if (total > displayCount)
-            {
-                builder.Append('\n').Append('+').Append(total - displayCount).Append(" more…");
-            }
-
-            string text = builder.ToString();
-            electionListText.text = text;
-            electionHeaderText.text = total > displayCount
-                ? $"Recent Elections ({displayCount}/{total})"
-                : $"Recent Elections ({total})";
-            lastElectionDisplayHash = text.GetHashCode();
-            builder.Clear();
-        }
-
-        private List<ElectionDisplayRow> GatherRecentElectionRows(int startYear)
-        {
-            var rows = new List<ElectionDisplayRow>();
-            if (electionSystem == null)
-                return rows;
-
-            int yearsToCheck = Mathf.Max(1, electionLookbackYears);
-            for (int year = startYear; year >= startYear - yearsToCheck; year--)
-            {
-                var records = electionSystem.GetResultsForYear(year);
-                if (records == null || records.Count == 0)
-                    continue;
-
-                for (int i = records.Count - 1; i >= 0; i--)
-                {
-                    var record = records[i];
-                    if (record == null)
-                        continue;
-
-                    rows.Add(new ElectionDisplayRow
-                    {
-                        Year = record.Year,
-                        OfficeName = record.Office?.Name ?? record.Office?.Id ?? "Office",
-                        Rank = record.Office?.Rank ?? int.MinValue,
-                        Winners = record.Winners ?? new List<ElectionWinnerSummary>()
-                    });
-                }
-            }
-
-            rows.Sort((a, b) =>
-            {
-                int yearCompare = b.Year.CompareTo(a.Year);
-                if (yearCompare != 0)
-                    return yearCompare;
-
-                int rankCompare = b.Rank.CompareTo(a.Rank);
-                if (rankCompare != 0)
-                    return rankCompare;
-
-                return string.Compare(a.OfficeName, b.OfficeName, StringComparison.OrdinalIgnoreCase);
-            });
-
-            return rows;
+            view.ScrollLogsToBottom();
         }
 
         private void ValidateSeasonalSections()
@@ -886,27 +475,27 @@ namespace Game.UI
             if (seasonKey == lastSeasonValidationKey)
                 return;
 
-            if (officeSystem != null && officeListText != null)
+            if (officeSystem != null)
             {
                 if (lastSeasonValidationKey != int.MinValue && current.month == 1 && lastSeasonOfficeHash == lastOfficeDisplayHash)
                 {
-                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Office section did not update at the new year. Verify bindings.");
+                    Logger.Warn("UI", "[DebugOverlay] Office section did not update at the new year. Verify bindings.");
                 }
 
                 lastSeasonOfficeHash = lastOfficeDisplayHash;
             }
 
-            if (electionSystem != null && electionListText != null)
+            if (electionSystem != null)
             {
                 bool inElectionSeason = current.month >= 6 && current.month <= 7;
-                if (inElectionSeason && string.IsNullOrEmpty(electionListText.text))
+                if (inElectionSeason && view != null && !view.HasElectionEntries)
                 {
-                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Election section empty during election season.");
+                    Logger.Warn("UI", "[DebugOverlay] Election section empty during election season.");
                 }
 
                 if (lastSeasonValidationKey != int.MinValue && current.month == 7 && lastSeasonElectionHash == lastElectionDisplayHash)
                 {
-                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Election results section did not refresh after elections.");
+                    Logger.Warn("UI", "[DebugOverlay] Election results section did not refresh after elections.");
                 }
 
                 lastSeasonElectionHash = lastElectionDisplayHash;
@@ -914,27 +503,6 @@ namespace Game.UI
 
             lastSeasonValidationKey = seasonKey;
 #endif
-        }
-
-        private struct OfficeDisplayRow
-        {
-            public string OfficeId;
-            public string OfficeName;
-            public int Rank;
-            public int SeatIndex;
-            public string HolderName;
-            public int StartYear;
-            public int EndYear;
-            public string PendingName;
-            public int PendingStartYear;
-        }
-
-        private struct ElectionDisplayRow
-        {
-            public int Year;
-            public string OfficeName;
-            public int Rank;
-            public List<ElectionWinnerSummary> Winners;
         }
     }
 }
