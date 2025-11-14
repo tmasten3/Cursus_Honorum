@@ -6,12 +6,15 @@ using UnityEngine.UI;
 
 namespace Game.UI
 {
+    /// <summary>
+    /// Minimal UI factory for the debug overlay. Creates a simple column layout so
+    /// the overlay can display placeholder information without relying on editor
+    /// prefabs.
+    /// </summary>
     public sealed class DebugOverlayBuilder
     {
         private readonly RectTransform root;
-
-        private RectTransform layoutRoot;
-        private GameObject contentContainer;
+        private GameObject contentRoot;
 
         private TextMeshProUGUI dateText;
         private TextMeshProUGUI tickRateText;
@@ -21,9 +24,7 @@ namespace Game.UI
         private TextMeshProUGUI livingCountText;
         private TextMeshProUGUI familyCountText;
         private TextMeshProUGUI todayStatsText;
-        private RectTransform populationHistoryContent;
-        private ScrollRect populationHistoryScroll;
-        private readonly List<TextMeshProUGUI> populationHistoryRows = new();
+        private TextMeshProUGUI populationHistoryText;
 
         private TextMeshProUGUI officeHoldersText;
         private TextMeshProUGUI upcomingElectionsText;
@@ -38,13 +39,13 @@ namespace Game.UI
         public void Build()
         {
             ConfigureRoot();
-            BuildColumns();
+            CreateLayout();
         }
 
         public void SetRootActive(bool visible)
         {
-            if (contentContainer != null)
-                contentContainer.SetActive(visible);
+            if (contentRoot != null)
+                contentRoot.SetActive(visible);
         }
 
         public void UpdateSimulation(DebugOverlayDataAdapter.SimulationData data)
@@ -73,22 +74,23 @@ namespace Game.UI
             if (todayStatsText != null)
                 todayStatsText.text = data.TodayLine;
 
-            UpdatePopulationHistory(data.HistoryLines);
+            if (populationHistoryText != null)
+                populationHistoryText.text = BuildMultilineText(data.HistoryLines, "No population history recorded.");
         }
 
         public void UpdatePolitics(DebugOverlayDataAdapter.PoliticsData data)
         {
             if (officeHoldersText != null)
-                officeHoldersText.text = BuildMultilineText(data.CurrentOfficeLines, "No active office holders.");
+                officeHoldersText.text = BuildMultilineText(data.CurrentOfficeLines, "No office information available.");
 
             if (upcomingElectionsText != null)
                 upcomingElectionsText.text = BuildMultilineText(data.UpcomingElectionLines, "No scheduled elections.");
 
             if (recentResultsText != null)
-                recentResultsText.text = BuildMultilineText(data.RecentElectionResults, "No recent election results.");
+                recentResultsText.text = BuildMultilineText(data.RecentElectionResults, "No election results recorded.");
 
             if (recentAppointmentsText != null)
-                recentAppointmentsText.text = BuildMultilineText(data.RecentAppointments, "No recent appointments.");
+                recentAppointmentsText.text = BuildMultilineText(data.RecentAppointments, "No appointments recorded.");
         }
 
         private void ConfigureRoot()
@@ -96,260 +98,141 @@ namespace Game.UI
             root.gameObject.name = "DebugOverlay";
 
             if (!root.TryGetComponent(out Image background))
-            {
                 background = root.gameObject.AddComponent<Image>();
-            }
 
-            background.color = new Color(0f, 0f, 0f, 0.55f);
+            background.color = new Color(0f, 0f, 0f, 0.5f);
             background.raycastTarget = false;
         }
 
-        private void BuildColumns()
+        private void CreateLayout()
         {
-            layoutRoot = CreateChild("ColumnLayout", root);
-            layoutRoot.offsetMin = new Vector2(12f, 12f);
-            layoutRoot.offsetMax = new Vector2(-12f, -12f);
+            contentRoot = new GameObject("Content", typeof(RectTransform));
+            contentRoot.transform.SetParent(root, false);
 
-            var layoutGroup = layoutRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layoutGroup.spacing = 16f;
-            layoutGroup.padding = new RectOffset(16, 16, 16, 16);
-            layoutGroup.childAlignment = TextAnchor.UpperLeft;
-            layoutGroup.childControlWidth = true;
-            layoutGroup.childControlHeight = true;
-            layoutGroup.childForceExpandWidth = true;
-            layoutGroup.childForceExpandHeight = false;
+            var rect = (RectTransform)contentRoot.transform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.offsetMin = new Vector2(16f, 16f);
+            rect.offsetMax = new Vector2(-16f, -16f);
 
-            contentContainer = layoutRoot.gameObject;
-
-            BuildSimulationColumn(CreateColumn("SimulationColumn"));
-            BuildPopulationColumn(CreateColumn("PopulationColumn"));
-            BuildPoliticsColumn(CreateColumn("PoliticsColumn"));
-        }
-
-        private RectTransform CreateColumn(string name)
-        {
-            var column = CreateChild(name, layoutRoot);
-            var layout = column.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.padding = new RectOffset(12, 12, 12, 12);
+            var layout = contentRoot.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.padding = new RectOffset(16, 16, 16, 16);
             layout.childAlignment = TextAnchor.UpperLeft;
             layout.childControlWidth = true;
-            layout.childControlHeight = true;
+            layout.childControlHeight = false;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
-            var element = column.gameObject.AddComponent<LayoutElement>();
-            element.flexibleWidth = 1f;
-            element.minWidth = 0f;
+            BuildSimulationSection(CreateSection("Simulation / Time"));
+            BuildPopulationSection(CreateSection("Population"));
+            BuildPoliticsSection(CreateSection("Politics"));
+        }
 
-            var background = column.gameObject.AddComponent<Image>();
-            background.color = new Color(0.08f, 0.1f, 0.14f, 0.75f);
+        private RectTransform CreateSection(string headerText)
+        {
+            var section = new GameObject(headerText.Replace(' ', '_'), typeof(RectTransform));
+            section.transform.SetParent(contentRoot.transform, false);
+
+            var layout = section.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var background = section.AddComponent<Image>();
+            background.color = new Color(0.08f, 0.1f, 0.14f, 0.65f);
             background.raycastTarget = false;
 
-            return column;
+            CreateHeader(section.transform, headerText);
+            return section.GetComponent<RectTransform>();
         }
 
-        private void BuildSimulationColumn(RectTransform column)
+        private void BuildSimulationSection(RectTransform section)
         {
-            CreateSectionHeader(column, "Simulation / Time");
-            dateText = CreateBodyText(column);
-            tickRateText = CreateBodyText(column);
-            speedText = CreateBodyText(column);
-            pauseStateText = CreateBodyText(column);
+            dateText = CreateValueLabel(section.transform);
+            tickRateText = CreateValueLabel(section.transform);
+            speedText = CreateValueLabel(section.transform);
+            pauseStateText = CreateValueLabel(section.transform);
         }
 
-        private void BuildPopulationColumn(RectTransform column)
+        private void BuildPopulationSection(RectTransform section)
         {
-            CreateSectionHeader(column, "Population");
-            livingCountText = CreateBodyText(column);
-            familyCountText = CreateBodyText(column);
-            todayStatsText = CreateBodyText(column);
-            CreateSubHeader(column, "Last 30 Daily Population Ticks");
-            populationHistoryContent = CreateScrollArea(column, 200f, out populationHistoryScroll);
+            livingCountText = CreateValueLabel(section.transform);
+            familyCountText = CreateValueLabel(section.transform);
+            todayStatsText = CreateValueLabel(section.transform);
+            populationHistoryText = CreateMultilineLabel(section.transform);
         }
 
-        private void BuildPoliticsColumn(RectTransform column)
+        private void BuildPoliticsSection(RectTransform section)
         {
-            CreateSectionHeader(column, "Politics");
-            CreateSubHeader(column, "Current Office Holders");
-            officeHoldersText = CreateBodyText(column, flexible: true);
-
-            CreateSubHeader(column, "Upcoming Elections");
-            upcomingElectionsText = CreateBodyText(column, flexible: true);
-
-            CreateSubHeader(column, "Recent Election Results");
-            recentResultsText = CreateBodyText(column, flexible: true);
-
-            CreateSubHeader(column, "Recent Office Appointments");
-            recentAppointmentsText = CreateBodyText(column, flexible: true);
+            officeHoldersText = CreateMultilineLabel(section.transform);
+            upcomingElectionsText = CreateMultilineLabel(section.transform);
+            recentResultsText = CreateMultilineLabel(section.transform);
+            recentAppointmentsText = CreateMultilineLabel(section.transform);
         }
 
-        private TextMeshProUGUI CreateSectionHeader(Transform parent, string text)
+        private void CreateHeader(Transform parent, string text)
         {
-            var label = CreateText(parent, FontStyles.Bold);
-            label.fontSize = 24f;
+            var headerObject = new GameObject("Header", typeof(RectTransform), typeof(TextMeshProUGUI));
+            headerObject.transform.SetParent(parent, false);
+
+            var rect = (RectTransform)headerObject.transform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.sizeDelta = new Vector2(0f, 0f);
+
+            var label = headerObject.GetComponent<TextMeshProUGUI>();
             label.text = text;
+            label.fontSize = 22f;
+            label.fontStyle = FontStyles.Bold;
+            label.color = new Color(0.9f, 0.95f, 1f, 0.95f);
+            label.alignment = TextAlignmentOptions.Left;
+            label.raycastTarget = false;
+        }
+
+        private TextMeshProUGUI CreateValueLabel(Transform parent)
+        {
+            var label = CreateText(parent, FontStyles.Normal);
+            label.fontSize = 16f;
             return label;
         }
 
-        private TextMeshProUGUI CreateSubHeader(Transform parent, string text)
+        private TextMeshProUGUI CreateMultilineLabel(Transform parent)
         {
-            var label = CreateText(parent, FontStyles.Bold);
-            label.fontSize = 18f;
-            label.text = text;
+            var label = CreateText(parent, FontStyles.Normal);
+            label.fontSize = 15f;
+            label.enableWordWrapping = true;
+
+            var element = label.gameObject.AddComponent<LayoutElement>();
+            element.flexibleHeight = 1f;
+            element.minHeight = 48f;
+
             return label;
-        }
-
-        private TextMeshProUGUI CreateBodyText(Transform parent, bool flexible = false)
-        {
-            var text = CreateText(parent, FontStyles.Normal);
-            text.fontSize = 16f;
-            text.lineSpacing = 2f;
-            text.enableWordWrapping = true;
-
-            if (flexible)
-            {
-                var element = text.gameObject.AddComponent<LayoutElement>();
-                element.flexibleHeight = 1f;
-                element.minHeight = 60f;
-            }
-
-            return text;
         }
 
         private TextMeshProUGUI CreateText(Transform parent, FontStyles style)
         {
-            var go = new GameObject("TMP_Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
+            var textObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(parent, false);
 
-            var rect = (RectTransform)go.transform;
+            var rect = (RectTransform)textObject.transform;
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.sizeDelta = new Vector2(0f, 0f);
-
-            var text = go.GetComponent<TextMeshProUGUI>();
-            text.text = string.Empty;
-            text.fontSize = 18f;
-            text.fontStyle = style;
-            text.color = new Color(0.85f, 0.9f, 1f, 0.95f);
-            text.alignment = TextAlignmentOptions.Left;
-            text.enableWordWrapping = true;
-            text.raycastTarget = false;
-
-            return text;
-        }
-
-        private RectTransform CreateScrollArea(Transform parent, float minHeight, out ScrollRect scrollRect)
-        {
-            var scrollRoot = new GameObject("Scroll", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
-            scrollRoot.transform.SetParent(parent, false);
-
-            var rect = (RectTransform)scrollRoot.transform;
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(0f, 0f);
-            rect.sizeDelta = new Vector2(0f, minHeight);
-
-            var image = scrollRoot.GetComponent<Image>();
-            image.color = new Color(0f, 0f, 0f, 0.35f);
-            image.raycastTarget = true;
-
-            var layoutElement = scrollRoot.AddComponent<LayoutElement>();
-            layoutElement.minHeight = minHeight;
-            layoutElement.flexibleHeight = 1f;
-
-            scrollRect = scrollRoot.GetComponent<ScrollRect>();
-            scrollRect.horizontal = false;
-            scrollRect.movementType = ScrollRect.MovementType.Clamped;
-            scrollRect.scrollSensitivity = 20f;
-
-            var viewport = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
-            viewport.transform.SetParent(scrollRoot.transform, false);
-            var viewportRect = (RectTransform)viewport.transform;
-            viewportRect.anchorMin = Vector2.zero;
-            viewportRect.anchorMax = Vector2.one;
-            viewportRect.sizeDelta = Vector2.zero;
-            viewportRect.pivot = new Vector2(0f, 1f);
-
-            var viewportImage = viewport.GetComponent<Image>();
-            viewportImage.color = new Color(0f, 0f, 0f, 0f);
-            viewport.GetComponent<Mask>().showMaskGraphic = false;
-
-            var content = new GameObject("Content", typeof(RectTransform));
-            content.transform.SetParent(viewport.transform, false);
-            var contentRect = (RectTransform)content.transform;
-            contentRect.anchorMin = new Vector2(0f, 1f);
-            contentRect.anchorMax = new Vector2(1f, 1f);
-            contentRect.pivot = new Vector2(0f, 1f);
-            contentRect.sizeDelta = new Vector2(0f, 0f);
-
-            var contentLayout = content.AddComponent<VerticalLayoutGroup>();
-            contentLayout.spacing = 4f;
-            contentLayout.childAlignment = TextAnchor.UpperLeft;
-            contentLayout.childControlWidth = true;
-            contentLayout.childControlHeight = true;
-            contentLayout.childForceExpandWidth = true;
-            contentLayout.childForceExpandHeight = false;
-
-            scrollRect.viewport = viewportRect;
-            scrollRect.content = contentRect;
-
-            populationHistoryContent = contentRect;
-            populationHistoryRows.Clear();
-
-            return contentRect;
-        }
-
-        private RectTransform CreateChild(string name, Transform parent)
-        {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
             rect.sizeDelta = Vector2.zero;
-            return rect;
-        }
 
-        private void UpdatePopulationHistory(IReadOnlyList<string> entries)
-        {
-            if (populationHistoryContent == null)
-                return;
+            var label = textObject.GetComponent<TextMeshProUGUI>();
+            label.text = string.Empty;
+            label.fontSize = 18f;
+            label.fontStyle = style;
+            label.color = new Color(0.85f, 0.9f, 1f, 0.95f);
+            label.alignment = TextAlignmentOptions.Left;
+            label.enableWordWrapping = true;
+            label.raycastTarget = false;
 
-            int desired = entries?.Count ?? 0;
-            EnsurePopulationHistoryCapacity(desired);
-
-            for (int i = 0; i < populationHistoryRows.Count; i++)
-            {
-                var row = populationHistoryRows[i];
-                bool active = i < desired;
-                row.gameObject.SetActive(active);
-
-                if (active)
-                    row.text = entries[i];
-                else
-                    row.text = string.Empty;
-            }
-
-            if (populationHistoryScroll != null && desired > 0)
-            {
-                populationHistoryScroll.verticalNormalizedPosition = 0f;
-            }
-        }
-
-        private void EnsurePopulationHistoryCapacity(int desired)
-        {
-            while (populationHistoryRows.Count < desired)
-            {
-                var entry = CreateText(populationHistoryContent, FontStyles.Normal);
-                entry.fontSize = 15f;
-                entry.lineSpacing = 1.5f;
-                populationHistoryRows.Add(entry);
-            }
+            return label;
         }
 
         private static string BuildMultilineText(IReadOnlyList<string> lines, string fallback)
