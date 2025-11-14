@@ -2,10 +2,8 @@ using System;
 using UnityEngine;
 using Game.Core;
 using Game.Systems.Time;
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
-#endif
+using System.Collections.Generic;
+using System.Reflection;
 
 public class GameController : MonoBehaviour
 {
@@ -209,242 +207,132 @@ public class GameController : MonoBehaviour
     }
 
 #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
+    private static readonly Type KeyboardType = Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
+    private static readonly Type KeyEnumType = Type.GetType("UnityEngine.InputSystem.Key, Unity.InputSystem");
+    private static readonly Type KeyControlType = Type.GetType("UnityEngine.InputSystem.Controls.KeyControl, Unity.InputSystem");
+    private static readonly PropertyInfo KeyboardCurrentProperty = KeyboardType?.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
+    private static readonly PropertyInfo KeyboardItemProperty = KeyboardType?.GetProperty("Item", BindingFlags.Public | BindingFlags.Instance, null, KeyControlType, new[] { KeyEnumType }, null);
+    private static readonly PropertyInfo KeyWasPressedThisFrameProperty = KeyControlType?.GetProperty("wasPressedThisFrame", BindingFlags.Public | BindingFlags.Instance);
+    private static readonly Dictionary<KeyCode, string> KeyboardPropertyMap = new Dictionary<KeyCode, string>
+    {
+        { KeyCode.Return, "enterKey" },
+        { KeyCode.KeypadEnter, "numpadEnterKey" },
+        { KeyCode.LeftArrow, "leftArrowKey" },
+        { KeyCode.RightArrow, "rightArrowKey" },
+        { KeyCode.UpArrow, "upArrowKey" },
+        { KeyCode.DownArrow, "downArrowKey" },
+        { KeyCode.LeftControl, "leftCtrlKey" },
+        { KeyCode.RightControl, "rightCtrlKey" },
+        { KeyCode.LeftShift, "leftShiftKey" },
+        { KeyCode.RightShift, "rightShiftKey" },
+        { KeyCode.LeftAlt, "leftAltKey" },
+        { KeyCode.RightAlt, "rightAltKey" },
+        { KeyCode.Space, "spaceKey" },
+        { KeyCode.Alpha0, "digit0Key" },
+        { KeyCode.Alpha1, "digit1Key" },
+        { KeyCode.Alpha2, "digit2Key" },
+        { KeyCode.Alpha3, "digit3Key" },
+        { KeyCode.Alpha4, "digit4Key" },
+        { KeyCode.Alpha5, "digit5Key" },
+        { KeyCode.Alpha6, "digit6Key" },
+        { KeyCode.Alpha7, "digit7Key" },
+        { KeyCode.Alpha8, "digit8Key" },
+        { KeyCode.Alpha9, "digit9Key" },
+        { KeyCode.Backspace, "backspaceKey" },
+        { KeyCode.Delete, "deleteKey" },
+        { KeyCode.Insert, "insertKey" },
+        { KeyCode.Tab, "tabKey" },
+        { KeyCode.Escape, "escapeKey" },
+        { KeyCode.CapsLock, "capsLockKey" },
+        { KeyCode.Numlock, "numLockKey" },
+        { KeyCode.ScrollLock, "scrollLockKey" },
+        { KeyCode.Print, "printScreenKey" },
+        { KeyCode.Pause, "pauseKey" },
+        { KeyCode.Home, "homeKey" },
+        { KeyCode.End, "endKey" },
+        { KeyCode.PageUp, "pageUpKey" },
+        { KeyCode.PageDown, "pageDownKey" },
+        { KeyCode.BackQuote, "backquoteKey" },
+        { KeyCode.Minus, "minusKey" },
+        { KeyCode.Equals, "equalsKey" },
+        { KeyCode.LeftBracket, "leftBracketKey" },
+        { KeyCode.RightBracket, "rightBracketKey" },
+        { KeyCode.Semicolon, "semicolonKey" },
+        { KeyCode.Quote, "quoteKey" },
+        { KeyCode.Comma, "commaKey" },
+        { KeyCode.Period, "periodKey" },
+        { KeyCode.Slash, "slashKey" },
+        { KeyCode.Backslash, "backslashKey" },
+        { KeyCode.LeftWindows, "leftWindowsKey" },
+        { KeyCode.LeftCommand, "leftWindowsKey" },
+        { KeyCode.LeftApple, "leftWindowsKey" },
+        { KeyCode.RightWindows, "rightWindowsKey" },
+        { KeyCode.RightCommand, "rightWindowsKey" },
+        { KeyCode.RightApple, "rightWindowsKey" },
+        { KeyCode.Menu, "contextMenuKey" },
+        { KeyCode.Keypad0, "numpad0Key" },
+        { KeyCode.Keypad1, "numpad1Key" },
+        { KeyCode.Keypad2, "numpad2Key" },
+        { KeyCode.Keypad3, "numpad3Key" },
+        { KeyCode.Keypad4, "numpad4Key" },
+        { KeyCode.Keypad5, "numpad5Key" },
+        { KeyCode.Keypad6, "numpad6Key" },
+        { KeyCode.Keypad7, "numpad7Key" },
+        { KeyCode.Keypad8, "numpad8Key" },
+        { KeyCode.Keypad9, "numpad9Key" },
+        { KeyCode.KeypadDivide, "numpadDivideKey" },
+        { KeyCode.KeypadMultiply, "numpadMultiplyKey" },
+        { KeyCode.KeypadMinus, "numpadMinusKey" },
+        { KeyCode.KeypadPlus, "numpadPlusKey" },
+        { KeyCode.KeypadPeriod, "numpadPeriodKey" },
+        { KeyCode.KeypadEquals, "numpadEqualsKey" }
+    };
+
     private bool WasKeyPressedThisFrame(KeyCode keyCode)
     {
         if (keyCode == KeyCode.None)
             return false;
 
-        var keyboard = Keyboard.current;
+        if (KeyboardType == null || KeyControlType == null || KeyEnumType == null)
+            return Input.GetKeyDown(keyCode);
+
+        var keyboard = KeyboardCurrentProperty?.GetValue(null);
         if (keyboard == null)
             return false;
 
-        return TryGetKeyControl(keyboard, keyCode, out var keyControl) && keyControl.wasPressedThisFrame;
-    }
-
-    private bool TryGetKeyControl(Keyboard keyboard, KeyCode keyCode, out KeyControl keyControl)
-    {
-        keyControl = null;
-        if (keyboard == null || keyCode == KeyCode.None)
+        if (!TryGetKeyControl(keyboard, keyCode, out var keyControl))
             return false;
 
-        if (Enum.TryParse<Key>(keyCode.ToString(), out var parsedKey))
+        var wasPressed = KeyWasPressedThisFrameProperty?.GetValue(keyControl);
+        return wasPressed is bool pressed && pressed;
+    }
+
+    private bool TryGetKeyControl(object keyboard, KeyCode keyCode, out object keyControl)
+    {
+        keyControl = null;
+        if (keyboard == null)
+            return false;
+
+        if (KeyboardItemProperty != null)
         {
-            keyControl = keyboard[parsedKey];
-            if (keyControl != null)
-                return true;
+            try
+            {
+                var parsedKey = Enum.Parse(KeyEnumType, keyCode.ToString());
+                keyControl = KeyboardItemProperty.GetValue(keyboard, new[] { parsedKey });
+                if (keyControl != null)
+                    return true;
+            }
+            catch
+            {
+                // Ignored - will attempt mapped properties instead.
+            }
         }
 
-        switch (keyCode)
-        {
-            case KeyCode.Return:
-                keyControl = keyboard.enterKey;
-                break;
-            case KeyCode.KeypadEnter:
-                keyControl = keyboard.numpadEnterKey;
-                break;
-            case KeyCode.LeftArrow:
-                keyControl = keyboard.leftArrowKey;
-                break;
-            case KeyCode.RightArrow:
-                keyControl = keyboard.rightArrowKey;
-                break;
-            case KeyCode.UpArrow:
-                keyControl = keyboard.upArrowKey;
-                break;
-            case KeyCode.DownArrow:
-                keyControl = keyboard.downArrowKey;
-                break;
-            case KeyCode.LeftControl:
-                keyControl = keyboard.leftCtrlKey;
-                break;
-            case KeyCode.RightControl:
-                keyControl = keyboard.rightCtrlKey;
-                break;
-            case KeyCode.LeftShift:
-                keyControl = keyboard.leftShiftKey;
-                break;
-            case KeyCode.RightShift:
-                keyControl = keyboard.rightShiftKey;
-                break;
-            case KeyCode.LeftAlt:
-                keyControl = keyboard.leftAltKey;
-                break;
-            case KeyCode.RightAlt:
-                keyControl = keyboard.rightAltKey;
-                break;
-            case KeyCode.Space:
-                keyControl = keyboard.spaceKey;
-                break;
-            case KeyCode.Alpha0:
-                keyControl = keyboard.digit0Key;
-                break;
-            case KeyCode.Alpha1:
-                keyControl = keyboard.digit1Key;
-                break;
-            case KeyCode.Alpha2:
-                keyControl = keyboard.digit2Key;
-                break;
-            case KeyCode.Alpha3:
-                keyControl = keyboard.digit3Key;
-                break;
-            case KeyCode.Alpha4:
-                keyControl = keyboard.digit4Key;
-                break;
-            case KeyCode.Alpha5:
-                keyControl = keyboard.digit5Key;
-                break;
-            case KeyCode.Alpha6:
-                keyControl = keyboard.digit6Key;
-                break;
-            case KeyCode.Alpha7:
-                keyControl = keyboard.digit7Key;
-                break;
-            case KeyCode.Alpha8:
-                keyControl = keyboard.digit8Key;
-                break;
-            case KeyCode.Alpha9:
-                keyControl = keyboard.digit9Key;
-                break;
-            case KeyCode.Backspace:
-                keyControl = keyboard.backspaceKey;
-                break;
-            case KeyCode.Delete:
-                keyControl = keyboard.deleteKey;
-                break;
-            case KeyCode.Insert:
-                keyControl = keyboard.insertKey;
-                break;
-            case KeyCode.Tab:
-                keyControl = keyboard.tabKey;
-                break;
-            case KeyCode.Escape:
-                keyControl = keyboard.escapeKey;
-                break;
-            case KeyCode.CapsLock:
-                keyControl = keyboard.capsLockKey;
-                break;
-            case KeyCode.Numlock:
-                keyControl = keyboard.numLockKey;
-                break;
-            case KeyCode.ScrollLock:
-                keyControl = keyboard.scrollLockKey;
-                break;
-            case KeyCode.Print:
-                keyControl = keyboard.printScreenKey;
-                break;
-            case KeyCode.Pause:
-                keyControl = keyboard.pauseKey;
-                break;
-            case KeyCode.Home:
-                keyControl = keyboard.homeKey;
-                break;
-            case KeyCode.End:
-                keyControl = keyboard.endKey;
-                break;
-            case KeyCode.PageUp:
-                keyControl = keyboard.pageUpKey;
-                break;
-            case KeyCode.PageDown:
-                keyControl = keyboard.pageDownKey;
-                break;
-            case KeyCode.BackQuote:
-                keyControl = keyboard.backquoteKey;
-                break;
-            case KeyCode.Minus:
-                keyControl = keyboard.minusKey;
-                break;
-            case KeyCode.Equals:
-                keyControl = keyboard.equalsKey;
-                break;
-            case KeyCode.LeftBracket:
-                keyControl = keyboard.leftBracketKey;
-                break;
-            case KeyCode.RightBracket:
-                keyControl = keyboard.rightBracketKey;
-                break;
-            case KeyCode.Semicolon:
-                keyControl = keyboard.semicolonKey;
-                break;
-            case KeyCode.Quote:
-                keyControl = keyboard.quoteKey;
-                break;
-            case KeyCode.Comma:
-                keyControl = keyboard.commaKey;
-                break;
-            case KeyCode.Period:
-                keyControl = keyboard.periodKey;
-                break;
-            case KeyCode.Slash:
-                keyControl = keyboard.slashKey;
-                break;
-            case KeyCode.Backslash:
-                keyControl = keyboard.backslashKey;
-                break;
-            case KeyCode.LeftWindows:
-            case KeyCode.LeftCommand:
-            case KeyCode.LeftApple:
-                keyControl = keyboard.leftWindowsKey;
-                break;
-            case KeyCode.RightWindows:
-            case KeyCode.RightCommand:
-            case KeyCode.RightApple:
-                keyControl = keyboard.rightWindowsKey;
-                break;
-            case KeyCode.Menu:
-                keyControl = keyboard.contextMenuKey;
-                break;
-            case KeyCode.Keypad0:
-                keyControl = keyboard.numpad0Key;
-                break;
-            case KeyCode.Keypad1:
-                keyControl = keyboard.numpad1Key;
-                break;
-            case KeyCode.Keypad2:
-                keyControl = keyboard.numpad2Key;
-                break;
-            case KeyCode.Keypad3:
-                keyControl = keyboard.numpad3Key;
-                break;
-            case KeyCode.Keypad4:
-                keyControl = keyboard.numpad4Key;
-                break;
-            case KeyCode.Keypad5:
-                keyControl = keyboard.numpad5Key;
-                break;
-            case KeyCode.Keypad6:
-                keyControl = keyboard.numpad6Key;
-                break;
-            case KeyCode.Keypad7:
-                keyControl = keyboard.numpad7Key;
-                break;
-            case KeyCode.Keypad8:
-                keyControl = keyboard.numpad8Key;
-                break;
-            case KeyCode.Keypad9:
-                keyControl = keyboard.numpad9Key;
-                break;
-            case KeyCode.KeypadDivide:
-                keyControl = keyboard.numpadDivideKey;
-                break;
-            case KeyCode.KeypadMultiply:
-                keyControl = keyboard.numpadMultiplyKey;
-                break;
-            case KeyCode.KeypadMinus:
-                keyControl = keyboard.numpadMinusKey;
-                break;
-            case KeyCode.KeypadPlus:
-                keyControl = keyboard.numpadPlusKey;
-                break;
-            case KeyCode.KeypadPeriod:
-                keyControl = keyboard.numpadPeriodKey;
-                break;
-            case KeyCode.KeypadEquals:
-                keyControl = keyboard.numpadEqualsKey;
-                break;
-            default:
-                return false;
-        }
+        if (!KeyboardPropertyMap.TryGetValue(keyCode, out var propertyName))
+            return false;
 
+        var property = KeyboardType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+        keyControl = property?.GetValue(keyboard);
         return keyControl != null;
     }
 #endif
