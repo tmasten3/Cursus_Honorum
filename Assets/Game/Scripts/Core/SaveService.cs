@@ -1,521 +1,357 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
-using UnityEngine;
+using Game.Core.Save;
+using Game.Systems.EventBus;
+using Game.Systems.Time;
 
 namespace Game.Core
 {
     /// <summary>
-    /// Handles serialization of the aggregated game state returned by <see cref="GameState.SaveGame"/>.
-    /// Saves and loads JSON files inside Unity's persistent data path by default.
+    /// Orchestrates persistence by delegating serialization to <see cref="SaveSerializer"/> and file I/O to <see cref="SaveRepository"/>.
     /// </summary>
     public class SaveService
     {
-        public const string DefaultFileName = "autosave.json";
+        public const string DefaultFileName = SaveRepository.DefaultFileName;
 
-        private readonly string saveDirectory;
-        private readonly string defaultFileName;
+        private readonly SaveRepository repository;
+        private readonly SaveSerializer serializer;
+        private GameState boundState;
 
-        public SaveService(string saveDirectory = null, string defaultFileName = DefaultFileName)
+        public SaveService() : this(null, null, null)
         {
-            this.saveDirectory = string.IsNullOrWhiteSpace(saveDirectory)
-                ? Application.persistentDataPath
-                : saveDirectory;
-            this.defaultFileName = string.IsNullOrWhiteSpace(defaultFileName)
-                ? DefaultFileName
-                : defaultFileName.Trim();
         }
 
-        public string Save(GameState state, string fileName = null)
+        public SaveService(string saveDirectory, string defaultFileName = DefaultFileName)
+            : this(null, new SaveRepository(saveDirectory, defaultFileName), new SaveSerializer())
         {
-            if (state == null)
-                throw new ArgumentNullException(nameof(state));
+        }
 
-            var payload = state.SaveGame();
-            if (payload is not Dictionary<string, object> data)
-            {
-                Logger.Warn("SaveService", "GameState.SaveGame() did not return a Dictionary<string, object>.");
-                return null;
-            }
+        public SaveService(GameState state = null, SaveRepository repository = null, SaveSerializer serializer = null)
+        {
+            boundState = state;
+            this.repository = repository ?? new SaveRepository();
+            this.serializer = serializer ?? new SaveSerializer();
+        }
 
-            string target = ResolvePath(fileName);
+        public GameState BoundState => boundState;
+        public SaveRepository Repository => repository;
+        public SaveSerializer Serializer => serializer;
 
+        public void BindGameState(GameState state)
+        {
+            boundState = state;
+        }
+
+        public SaveOperationResult SaveGame(string slotName = null)
+        {
+            var state = EnsureState();
+            string label = slotName ?? repository.DefaultSlotName;
+            Logger.Info("SaveService", $"Save began for slot '{label}'.");
+
+            SaveData data;
             try
             {
-                if (string.IsNullOrWhiteSpace(saveDirectory))
-                {
-                    Logger.Warn("SaveService", "Persistent data path unavailable; cannot write save file.");
-                    return null;
-                }
+                data = serializer.CreateSaveData(state);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("SaveService", $"Failed to capture game state: {ex.Message}");
+                return SaveOperationResult.Failed(ex.Message);
+            }
 
-                Directory.CreateDirectory(Path.GetDirectoryName(target) ?? saveDirectory);
+            var validation = serializer.Validate(data);
+            LogValidation(validation);
 
-                var blob = new Dictionary<string, object>
-                {
-                    ["version"] = 1,
-                    ["timestamp"] = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
-                    ["state"] = data
-                };
+            if (!validation.IsValid)
+            {
+                Logger.Warn("SaveService", "Save aborted due to validation errors.");
+                return SaveOperationResult.Failed("Validation failed.", validation);
+            }
 
-                string json = MiniJson.Serialize(blob);
-                File.WriteAllText(target, json, Encoding.UTF8);
-                Logger.Info("SaveService", $"Game saved to {target}.");
-                return target;
+            string json;
+            try
+            {
+                json = serializer.Serialize(data);
+            }
+            catch (SaveDataValidationException ex)
+            {
+                Logger.Warn("SaveService", $"Save serialization blocked: {ex.Message}");
+                LogValidation(ex.Result);
+                return SaveOperationResult.Failed(ex.Message, ex.Result);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("SaveService", $"Failed to serialize save data: {ex.Message}");
+                return SaveOperationResult.Failed(ex.Message, validation);
+            }
+
+            SaveFileMetadata metadata;
+            try
+            {
+                metadata = repository.Write(slotName, Encoding.UTF8.GetBytes(json));
             }
             catch (Exception ex)
             {
                 Logger.Error("SaveService", $"Failed to write save file: {ex.Message}");
-                return null;
+                return SaveOperationResult.Failed(ex.Message, validation);
             }
+
+            Logger.Info("SaveService", $"Save completed for slot '{metadata.SlotName}' at {metadata.FullPath}.");
+            PublishSavedEvent(state, metadata, data, validation);
+
+            return SaveOperationResult.Succeeded(metadata, data, validation);
+        }
+
+        public LoadOperationResult LoadGame(string slotName = null)
+        {
+            var state = EnsureState();
+            string label = slotName ?? repository.DefaultSlotName;
+            Logger.Info("SaveService", $"Load began for slot '{label}'.");
+
+            SaveFileReadResult readResult;
+            try
+            {
+                readResult = repository.Read(slotName);
+            }
+            catch (FileNotFoundException)
+            {
+                Logger.Warn("SaveService", $"Save file not found for slot '{label}'.");
+                return LoadOperationResult.Failed("Save file not found.");
+            }
+            catch (InvalidDataException ex)
+            {
+                Logger.Warn("SaveService", $"Save file '{label}' was corrupt: {ex.Message}");
+                return LoadOperationResult.Failed(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("SaveService", $"Failed to read save file: {ex.Message}");
+                return LoadOperationResult.Failed(ex.Message);
+            }
+
+            string json;
+            try
+            {
+                json = Encoding.UTF8.GetString(readResult.Data);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("SaveService", $"Save file '{label}' could not be decoded: {ex.Message}");
+                return LoadOperationResult.Failed(ex.Message, metadata: readResult.Metadata);
+            }
+
+            SaveData data;
+            try
+            {
+                data = serializer.Deserialize(json);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("SaveService", $"Save file '{label}' was invalid: {ex.Message}");
+                return LoadOperationResult.Failed(ex.Message, metadata: readResult.Metadata);
+            }
+
+            var validation = serializer.Validate(data);
+            LogValidation(validation);
+
+            if (!validation.IsValid)
+            {
+                Logger.Warn("SaveService", $"Load aborted due to validation errors for slot '{label}'.");
+                return LoadOperationResult.Failed("Validation failed.", validation, readResult.Metadata, data);
+            }
+
+            try
+            {
+                serializer.ApplyToGameState(state, data);
+            }
+            catch (SaveDataValidationException ex)
+            {
+                Logger.Warn("SaveService", $"Save data rejected: {ex.Message}");
+                LogValidation(ex.Result);
+                return LoadOperationResult.Failed(ex.Message, ex.Result, readResult.Metadata, data);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("SaveService", $"Failed to apply save data: {ex.Message}");
+                return LoadOperationResult.Failed(ex.Message, validation, readResult.Metadata, data);
+            }
+
+            Logger.Info("SaveService", $"Load completed for slot '{readResult.Metadata.SlotName}'.");
+            PublishLoadedEvent(state, readResult.Metadata, data, validation);
+
+            return LoadOperationResult.Succeeded(readResult.Metadata, data, validation);
+        }
+
+        public IReadOnlyList<SaveFileMetadata> ListSaves()
+        {
+            return repository.ListSaves();
+        }
+
+        public bool DeleteSave(string slotName = null)
+        {
+            return repository.Delete(slotName);
+        }
+
+        public bool HasSave(string slotName = null)
+        {
+            return repository.SaveExists(slotName);
+        }
+
+        public string Save(GameState state, string fileName = null)
+        {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            BindGameState(state);
+            var result = SaveGame(fileName);
+            return result.Success ? result.Metadata.FullPath : null;
         }
 
         public bool LoadInto(GameState state, string fileName = null)
         {
-            if (state == null)
-                throw new ArgumentNullException(nameof(state));
-
-            string target = ResolvePath(fileName);
-            if (!File.Exists(target))
-            {
-                Logger.Warn("SaveService", $"Save file not found: {target}.");
-                return false;
-            }
-
-            try
-            {
-                string json = File.ReadAllText(target, Encoding.UTF8);
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    Logger.Warn("SaveService", "Save file was empty.");
-                    return false;
-                }
-
-                if (MiniJson.Deserialize(json) is not Dictionary<string, object> blob)
-                {
-                    Logger.Warn("SaveService", "Save file root was not a dictionary.");
-                    return false;
-                }
-
-                if (!blob.TryGetValue("state", out var stateObj) || stateObj is not Dictionary<string, object> stateData)
-                {
-                    Logger.Warn("SaveService", "Save file did not contain expected 'state' section.");
-                    return false;
-                }
-
-                state.LoadGame(stateData);
-                Logger.Info("SaveService", $"Game loaded from {target}.");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("SaveService", $"Failed to load save file: {ex.Message}");
-                return false;
-            }
-        }
-
-        public bool HasSave(string fileName = null)
-        {
-            string target = ResolvePath(fileName);
-            return File.Exists(target);
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            BindGameState(state);
+            var result = LoadGame(fileName);
+            return result.Success;
         }
 
         public bool Delete(string fileName = null)
         {
-            string target = ResolvePath(fileName);
-            if (!File.Exists(target))
-                return false;
-            try
-            {
-                File.Delete(target);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("SaveService", $"Failed to delete save file: {ex.Message}");
-                return false;
-            }
+            return DeleteSave(fileName);
         }
 
-        private string ResolvePath(string fileName)
+        private GameState EnsureState()
         {
-            string name = string.IsNullOrWhiteSpace(fileName) ? defaultFileName : fileName.Trim();
-            if (Path.IsPathRooted(name))
-                return name;
-            if (string.IsNullOrWhiteSpace(saveDirectory))
-                return name;
-            return Path.Combine(saveDirectory, name);
+            if (boundState == null)
+                throw new InvalidOperationException("SaveService requires an initialized GameState instance.");
+            return boundState;
         }
 
-        private static class MiniJson
+        private void PublishSavedEvent(GameState state, SaveFileMetadata metadata, SaveData data, SaveValidationResult validation)
         {
-            public static object Deserialize(string json)
-            {
-                if (string.IsNullOrWhiteSpace(json))
-                    return null;
-                return Parser.Parse(json);
-            }
+            if (state == null)
+                return;
 
-            public static string Serialize(object obj)
-            {
-                return Serializer.Serialize(obj);
-            }
+            var bus = state.GetSystem<EventBus>();
+            if (bus == null)
+                return;
 
-            private sealed class Parser : IDisposable
-            {
-                private readonly StringReader reader;
+            var date = GetCurrentDate(state);
+            var warnings = (validation?.Warnings ?? Array.Empty<string>()).ToArray();
+            bus.Publish(new Game.Core.Save.OnGameSavedEvent(
+                metadata?.SlotName ?? repository.DefaultSlotName,
+                metadata?.FullPath ?? string.Empty,
+                metadata?.LastModifiedUtc ?? data.TimestampUtc,
+                metadata?.SizeInBytes ?? 0L,
+                data.Version,
+                data.TimestampUtc,
+                warnings,
+                date.year,
+                date.month,
+                date.day));
+        }
 
-                private Parser(string json)
-                {
-                    reader = new StringReader(json);
-                }
+        private void PublishLoadedEvent(GameState state, SaveFileMetadata metadata, SaveData data, SaveValidationResult validation)
+        {
+            if (state == null)
+                return;
 
-                public static object Parse(string json)
-                {
-                    using var parser = new Parser(json);
-                    return parser.ParseValue();
-                }
+            var bus = state.GetSystem<EventBus>();
+            if (bus == null)
+                return;
 
-                public void Dispose()
-                {
-                    reader.Dispose();
-                }
+            var date = GetCurrentDate(state);
+            var warnings = (validation?.Warnings ?? Array.Empty<string>()).ToArray();
+            bus.Publish(new Game.Core.Save.OnGameLoadedEvent(
+                metadata?.SlotName ?? repository.DefaultSlotName,
+                metadata?.FullPath ?? string.Empty,
+                metadata?.LastModifiedUtc ?? data.TimestampUtc,
+                DateTime.UtcNow,
+                data.Version,
+                data.TimestampUtc,
+                warnings,
+                date.year,
+                date.month,
+                date.day));
+        }
 
-                private object ParseValue()
-                {
-                    EatWhitespace();
-                    if (reader.Peek() == -1)
-                        return null;
+        private static (int year, int month, int day) GetCurrentDate(GameState state)
+        {
+            if (state == null)
+                return (0, 0, 0);
 
-                    char c = (char)reader.Peek();
-                    return c switch
-                    {
-                        '{' => ParseObject(),
-                        '[' => ParseArray(),
-                        '"' => ParseString(),
-                        '-' or >= '0' and <= '9' => ParseNumber(),
-                        _ => ParseLiteral(),
-                    };
-                }
+            var timeSystem = state.GetSystem<TimeSystem>();
+            return timeSystem != null ? timeSystem.GetCurrentDate() : (0, 0, 0);
+        }
 
-                private Dictionary<string, object> ParseObject()
-                {
-                    var dict = new Dictionary<string, object>();
+        private static void LogValidation(SaveValidationResult validation)
+        {
+            if (validation == null)
+                return;
 
-                    reader.Read(); // consume {
-                    while (true)
-                    {
-                        EatWhitespace();
-                        if (reader.Peek() == -1)
-                            break;
-                        if ((char)reader.Peek() == '}')
-                        {
-                            reader.Read();
-                            break;
-                        }
+            foreach (var warning in validation.Warnings ?? Array.Empty<string>())
+                Logger.Warn("SaveService", $"Validation warning: {warning}");
 
-                        string key = ParseString();
-                        EatWhitespace();
-                        reader.Read(); // consume :
-                        object value = ParseValue();
-                        dict[key] = value;
-                        EatWhitespace();
-                        int next = reader.Peek();
-                        if (next == ',')
-                        {
-                            reader.Read();
-                            continue;
-                        }
-                        if (next == '}')
-                        {
-                            reader.Read();
-                            break;
-                        }
-                    }
+            foreach (var error in validation.Errors ?? Array.Empty<string>())
+                Logger.Warn("SaveService", $"Validation error: {error}");
+        }
+    }
 
-                    return dict;
-                }
+    public sealed class SaveOperationResult
+    {
+        private SaveOperationResult(bool success, SaveFileMetadata metadata, SaveData data, SaveValidationResult validation, string error)
+        {
+            Success = success;
+            Metadata = metadata;
+            Data = data;
+            Validation = validation;
+            ErrorMessage = error;
+        }
 
-                private List<object> ParseArray()
-                {
-                    var list = new List<object>();
-                    reader.Read(); // [
-                    bool done = false;
-                    while (!done)
-                    {
-                        EatWhitespace();
-                        if (reader.Peek() == -1)
-                            break;
-                        char c = (char)reader.Peek();
-                        if (c == ']')
-                        {
-                            reader.Read();
-                            break;
-                        }
-                        list.Add(ParseValue());
-                        EatWhitespace();
-                        int next = reader.Peek();
-                        if (next == ',')
-                        {
-                            reader.Read();
-                        }
-                        else if (next == ']')
-                        {
-                            reader.Read();
-                            done = true;
-                        }
-                    }
-                    return list;
-                }
+        public bool Success { get; }
+        public SaveFileMetadata Metadata { get; }
+        public SaveData Data { get; }
+        public SaveValidationResult Validation { get; }
+        public string ErrorMessage { get; }
 
-                private string ParseString()
-                {
-                    var sb = new StringBuilder();
-                    reader.Read(); // "
-                    while (true)
-                    {
-                        if (reader.Peek() == -1)
-                            break;
-                        char c = (char)reader.Read();
-                        if (c == '"')
-                            break;
-                        if (c == '\\')
-                        {
-                            if (reader.Peek() == -1)
-                                break;
-                            c = (char)reader.Read();
-                            c = c switch
-                            {
-                                '"' => '"',
-                                '\\' => '\\',
-                                '/' => '/',
-                                'b' => '\b',
-                                'f' => '\f',
-                                'n' => '\n',
-                                'r' => '\r',
-                                't' => '\t',
-                                'u' => ParseUnicode(),
-                                _ => c
-                            };
-                        }
-                        sb.Append(c);
-                    }
-                    return sb.ToString();
-                }
+        public static SaveOperationResult Succeeded(SaveFileMetadata metadata, SaveData data, SaveValidationResult validation)
+        {
+            return new SaveOperationResult(true, metadata, data, validation, null);
+        }
 
-                private char ParseUnicode()
-                {
-                    Span<char> buffer = stackalloc char[4];
-                    for (int i = 0; i < 4; i++)
-                    {
-                        int next = reader.Read();
-                        if (next == -1)
-                            return '\0';
-                        buffer[i] = (char)next;
-                    }
-                    if (int.TryParse(buffer, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int code))
-                        return (char)code;
-                    return '\0';
-                }
+        public static SaveOperationResult Failed(string error, SaveValidationResult validation = null)
+        {
+            return new SaveOperationResult(false, null, null, validation, error);
+        }
 
-                private object ParseNumber()
-                {
-                    var sb = new StringBuilder();
-                    bool hasDecimal = false;
-                    while (reader.Peek() != -1)
-                    {
-                        char c = (char)reader.Peek();
-                        if ((c >= '0' && c <= '9') || c == '-' || c == '+')
-                        {
-                            sb.Append(c);
-                            reader.Read();
-                        }
-                        else if (c == '.' || c == 'e' || c == 'E')
-                        {
-                            hasDecimal = true;
-                            sb.Append(c);
-                            reader.Read();
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
+    }
 
-                    string number = sb.ToString();
-                    if (!hasDecimal && long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out long l))
-                        return l;
-                    if (double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out double d))
-                        return d;
-                    return 0d;
-                }
+    public sealed class LoadOperationResult
+    {
+        private LoadOperationResult(bool success, SaveFileMetadata metadata, SaveData data, SaveValidationResult validation, string error)
+        {
+            Success = success;
+            Metadata = metadata;
+            Data = data;
+            Validation = validation;
+            ErrorMessage = error;
+        }
 
-                private object ParseLiteral()
-                {
-                    var sb = new StringBuilder();
-                    while (reader.Peek() != -1)
-                    {
-                        char c = (char)reader.Peek();
-                        if (char.IsLetter(c))
-                        {
-                            sb.Append(c);
-                            reader.Read();
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
+        public bool Success { get; }
+        public SaveFileMetadata Metadata { get; }
+        public SaveData Data { get; }
+        public SaveValidationResult Validation { get; }
+        public string ErrorMessage { get; }
 
-                    string literal = sb.ToString();
-                    return literal switch
-                    {
-                        "true" => true,
-                        "false" => false,
-                        "null" => null,
-                        _ => literal
-                    };
-                }
+        public static LoadOperationResult Succeeded(SaveFileMetadata metadata, SaveData data, SaveValidationResult validation)
+        {
+            return new LoadOperationResult(true, metadata, data, validation, null);
+        }
 
-                private void EatWhitespace()
-                {
-                    while (reader.Peek() != -1)
-                    {
-                        if (!char.IsWhiteSpace((char)reader.Peek()))
-                            break;
-                        reader.Read();
-                    }
-                }
-            }
-
-            private sealed class Serializer
-            {
-                private readonly StringBuilder builder = new();
-
-                public static string Serialize(object obj)
-                {
-                    var serializer = new Serializer();
-                    serializer.SerializeValue(obj);
-                    return serializer.builder.ToString();
-                }
-
-                private void SerializeValue(object value)
-                {
-                    switch (value)
-                    {
-                        case null:
-                            builder.Append("null");
-                            break;
-                        case string s:
-                            SerializeString(s);
-                            break;
-                        case bool b:
-                            builder.Append(b ? "true" : "false");
-                            break;
-                        case IDictionary<string, object> dict:
-                            SerializeObject(dict);
-                            break;
-                        case IDictionary dictionary:
-                            SerializeDictionary(dictionary);
-                            break;
-                        case IEnumerable enumerable when value is not string:
-                            SerializeArray(enumerable);
-                            break;
-                        case char ch:
-                            SerializeString(ch.ToString());
-                            break;
-                        case sbyte or byte or short or ushort or int or uint or long or ulong:
-                            builder.Append(Convert.ToString(value, CultureInfo.InvariantCulture));
-                            break;
-                        case float or double or decimal:
-                            builder.Append(Convert.ToString(value, CultureInfo.InvariantCulture));
-                            break;
-                        default:
-                            SerializeString(value.ToString() ?? string.Empty);
-                            break;
-                    }
-                }
-
-                private void SerializeObject(IDictionary<string, object> dict)
-                {
-                    builder.Append('{');
-                    bool first = true;
-                    foreach (var kvp in dict)
-                    {
-                        if (!first)
-                            builder.Append(',');
-                        SerializeString(kvp.Key);
-                        builder.Append(':');
-                        SerializeValue(kvp.Value);
-                        first = false;
-                    }
-                    builder.Append('}');
-                }
-
-                private void SerializeDictionary(IDictionary dict)
-                {
-                    builder.Append('{');
-                    bool first = true;
-                    foreach (DictionaryEntry entry in dict)
-                    {
-                        if (entry.Key is not string key)
-                            continue;
-                        if (!first)
-                            builder.Append(',');
-                        SerializeString(key);
-                        builder.Append(':');
-                        SerializeValue(entry.Value);
-                        first = false;
-                    }
-                    builder.Append('}');
-                }
-
-                private void SerializeArray(IEnumerable array)
-                {
-                    builder.Append('[');
-                    bool first = true;
-                    foreach (var element in array)
-                    {
-                        if (!first)
-                            builder.Append(',');
-                        SerializeValue(element);
-                        first = false;
-                    }
-                    builder.Append(']');
-                }
-
-                private void SerializeString(string str)
-                {
-                    builder.Append('"');
-                    foreach (var c in str)
-                    {
-                        switch (c)
-                        {
-                            case '"': builder.Append("\\\""); break;
-                            case '\\': builder.Append("\\\\"); break;
-                            case '\b': builder.Append("\\b"); break;
-                            case '\f': builder.Append("\\f"); break;
-                            case '\n': builder.Append("\\n"); break;
-                            case '\r': builder.Append("\\r"); break;
-                            case '\t': builder.Append("\\t"); break;
-                            default:
-                                if (c < ' ')
-                                {
-                                    builder.Append("\\u");
-                                    builder.Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
-                                }
-                                else
-                                {
-                                    builder.Append(c);
-                                }
-                                break;
-                        }
-                    }
-                    builder.Append('"');
-                }
-            }
+        public static LoadOperationResult Failed(string error, SaveValidationResult validation = null, SaveFileMetadata metadata = null, SaveData data = null)
+        {
+            return new LoadOperationResult(false, metadata, data, validation, error);
         }
     }
 }

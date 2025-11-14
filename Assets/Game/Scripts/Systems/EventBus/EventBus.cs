@@ -24,7 +24,9 @@ namespace Game.Systems.EventBus
             typeof(OnPopulationTick),
             typeof(OnNewMonthEvent),
             typeof(ElectionSeasonOpenedEvent),
-            typeof(ElectionSeasonCompletedEvent)
+            typeof(ElectionSeasonCompletedEvent),
+            typeof(Game.Core.Save.OnGameSavedEvent),
+            typeof(Game.Core.Save.OnGameLoadedEvent)
         };
 
         private readonly EventRegistry registry = new();
