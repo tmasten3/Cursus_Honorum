@@ -209,6 +209,11 @@ namespace Game.Data.Characters
                 }
             }
 
+            CharacterDataValidator.Validate(characters, sourcePath, issue =>
+            {
+                LastValidationResult.Issues.Add(issue);
+            });
+
             LastValidationResult.Success = LastValidationResult.Issues.Count == 0;
         }
 
