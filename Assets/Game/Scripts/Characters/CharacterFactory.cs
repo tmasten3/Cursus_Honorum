@@ -317,7 +317,7 @@ namespace Game.Data.Characters
                 || correction.IndexOf("family", StringComparison.OrdinalIgnoreCase) >= 0)
                 return "Family";
 
-            return "RomanName";
+            return string.Empty;
         }
 
         private static void ResetValidationResult()

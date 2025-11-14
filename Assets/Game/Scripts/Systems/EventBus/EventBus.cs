@@ -32,6 +32,7 @@ namespace Game.Systems.EventBus
         private readonly EventRegistry registry = new();
         private readonly EventInvoker invoker = new();
         private int historyCapacity = DefaultHistoryCapacity;
+        private bool isFlushing;
 
         public int HistoryCapacity
         {
@@ -76,6 +77,9 @@ namespace Game.Systems.EventBus
                 throw new ArgumentNullException(nameof(e));
 
             nextQueue.Enqueue(e);
+
+            if (!isFlushing)
+                FlushEvents();
         }
 
         public void Subscribe<T>(Action<T> handler) where T : GameEvent
@@ -106,31 +110,43 @@ namespace Game.Systems.EventBus
 
         private void FlushEvents()
         {
-            if (currentQueue.Count == 0 && nextQueue.Count == 0)
+            if (isFlushing)
                 return;
 
-            while (nextQueue.Count > 0)
-                currentQueue.Enqueue(nextQueue.Dequeue());
+            isFlushing = true;
 
-            while (currentQueue.Count > 0)
+            try
             {
-                var e = currentQueue.Dequeue();
-                AddToHistory(e);
-
-                var eventType = e.GetType();
-                var handlers = registry.GetHandlers(eventType);
-
-                if (handlers.Count > 0)
+                while (currentQueue.Count > 0 || nextQueue.Count > 0)
                 {
-                    invoker.Invoke(e, handlers, ex => LogError($"Error handling event {e.Name}: {ex.Message}"));
+                    while (nextQueue.Count > 0)
+                        currentQueue.Enqueue(nextQueue.Dequeue());
+
+                    while (currentQueue.Count > 0)
+                    {
+                        var e = currentQueue.Dequeue();
+                        AddToHistory(e);
+
+                        var eventType = e.GetType();
+                        var handlers = registry.GetHandlers(eventType);
+
+                        if (handlers.Count > 0)
+                        {
+                            invoker.Invoke(e, handlers, ex => LogError($"Error handling event {e.Name}: {ex.Message}"));
+                        }
+                        else if (unhandledTypesLogged.Add(eventType))
+                        {
+                            if (optionalEventTypes.Contains(eventType))
+                                LogInfo($"No subscribers for {e.Name} (optional event)");
+                            else
+                                LogWarn($"No subscribers for {e.Name}");
+                        }
+                    }
                 }
-                else if (unhandledTypesLogged.Add(eventType))
-                {
-                    if (optionalEventTypes.Contains(eventType))
-                        LogInfo($"No subscribers for {e.Name} (optional event)");
-                    else
-                        LogWarn($"No subscribers for {e.Name}");
-                }
+            }
+            finally
+            {
+                isFlushing = false;
             }
         }
 

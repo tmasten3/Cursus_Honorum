@@ -76,9 +76,16 @@ namespace Game.Data.Characters
         {
             if (character.RomanName == null)
             {
-                var message = $"{sourceLabel}: Character #{character.ID} is missing a RomanName definition.";
-                Logger.Warn(LogCategory, message);
-                ReportIssue(issueReporter, index, "RomanName", message);
+                if (character.Gender == Gender.Male)
+                {
+                    ReportMissingMaleNameComponents(character, sourceLabel, index, issueReporter);
+                }
+                else if (character.Gender == Gender.Female)
+                {
+                    var message = $"{sourceLabel}: Character #{character.ID} is missing a nomen.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, "RomanName.Nomen", message);
+                }
                 return;
             }
 
@@ -88,14 +95,6 @@ namespace Game.Data.Characters
                     $"{sourceLabel}: Character #{character.ID} RomanName gender mismatch (data {character.RomanName.Gender} vs character {character.Gender}).";
                 Logger.Warn(LogCategory, message);
                 ReportIssue(issueReporter, index, "RomanName.Gender", message);
-            }
-
-            var fullName = character.RomanName.GetFullName();
-            if (string.IsNullOrWhiteSpace(fullName))
-            {
-                var message = $"{sourceLabel}: Character #{character.ID} has an empty name.";
-                Logger.Warn(LogCategory, message);
-                ReportIssue(issueReporter, index, "RomanName", message);
             }
 
             if (character.Gender == Gender.Male)
@@ -122,23 +121,59 @@ namespace Game.Data.Characters
             Action<CharacterValidationIssue> issueReporter)
         {
             var name = character.RomanName;
-            if (string.IsNullOrWhiteSpace(name.Praenomen) || string.IsNullOrWhiteSpace(name.Nomen) || string.IsNullOrWhiteSpace(name.Cognomen))
+            if (name == null)
             {
-                var message = $"{sourceLabel}: Male character #{character.ID} has incomplete name data.";
-                Logger.Warn(LogCategory, message);
-                ReportIssue(issueReporter, index, "RomanName", message);
+                ReportMissingMaleNameComponents(character, sourceLabel, index, issueReporter);
+                return;
             }
 
-            var parts = new[] { name.Praenomen, name.Nomen, name.Cognomen }
-                .Where(p => !string.IsNullOrWhiteSpace(p))
-                .Select(p => p.Trim())
-                .ToArray();
+            bool hasPraenomen = !string.IsNullOrWhiteSpace(name.Praenomen);
+            bool hasNomen = !string.IsNullOrWhiteSpace(name.Nomen);
+            bool hasCognomen = !string.IsNullOrWhiteSpace(name.Cognomen);
 
-            if (parts.Length != parts.Distinct(StringComparer.OrdinalIgnoreCase).Count())
+            if (!hasPraenomen)
             {
-                var message = $"{sourceLabel}: Male character #{character.ID} has duplicate name components.";
+                var message = $"{sourceLabel}: Male character #{character.ID} is missing a praenomen.";
                 Logger.Warn(LogCategory, message);
-                ReportIssue(issueReporter, index, "RomanName", message);
+                ReportIssue(issueReporter, index, "RomanName.Praenomen", message);
+            }
+
+            if (!hasNomen)
+            {
+                var message = $"{sourceLabel}: Male character #{character.ID} is missing a nomen.";
+                Logger.Warn(LogCategory, message);
+                ReportIssue(issueReporter, index, "RomanName.Nomen", message);
+            }
+
+            if (!hasCognomen)
+            {
+                var message = $"{sourceLabel}: Male character #{character.ID} is missing a cognomen.";
+                Logger.Warn(LogCategory, message);
+                ReportIssue(issueReporter, index, "RomanName.Cognomen", message);
+            }
+
+            var parts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (hasPraenomen)
+                parts["RomanName.Praenomen"] = name.Praenomen.Trim();
+            if (hasNomen)
+                parts["RomanName.Nomen"] = name.Nomen.Trim();
+            if (hasCognomen)
+                parts["RomanName.Cognomen"] = name.Cognomen.Trim();
+
+            foreach (var group in parts
+                .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+                .GroupBy(kv => kv.Value, StringComparer.OrdinalIgnoreCase))
+            {
+                if (group.Count() <= 1)
+                    continue;
+
+                foreach (var entry in group)
+                {
+                    var message =
+                        $"{sourceLabel}: Male character #{character.ID} has duplicate name component '{entry.Value}'.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, entry.Key, message);
+                }
             }
         }
 
@@ -162,6 +197,25 @@ namespace Game.Data.Characters
                 Logger.Warn(LogCategory, message);
                 ReportIssue(issueReporter, index, "RomanName.Nomen", message);
             }
+        }
+
+        private static void ReportMissingMaleNameComponents(
+            Character character,
+            string sourceLabel,
+            int index,
+            Action<CharacterValidationIssue> issueReporter)
+        {
+            var messagePraenomen = $"{sourceLabel}: Male character #{character?.ID ?? 0} is missing a praenomen.";
+            Logger.Warn(LogCategory, messagePraenomen);
+            ReportIssue(issueReporter, index, "RomanName.Praenomen", messagePraenomen);
+
+            var messageNomen = $"{sourceLabel}: Male character #{character?.ID ?? 0} is missing a nomen.";
+            Logger.Warn(LogCategory, messageNomen);
+            ReportIssue(issueReporter, index, "RomanName.Nomen", messageNomen);
+
+            var messageCognomen = $"{sourceLabel}: Male character #{character?.ID ?? 0} is missing a cognomen.";
+            Logger.Warn(LogCategory, messageCognomen);
+            ReportIssue(issueReporter, index, "RomanName.Cognomen", messageCognomen);
         }
 
         private static void ReportIssue(

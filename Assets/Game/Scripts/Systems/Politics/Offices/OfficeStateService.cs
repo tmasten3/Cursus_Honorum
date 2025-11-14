@@ -397,7 +397,7 @@ namespace Game.Systems.Politics.Offices
             {
                 foreach (var seat in kvp.Value)
                 {
-                    if (seat.HolderId == characterId)
+                    if (seat.HolderId == characterId || seat.PendingHolderId == characterId)
                     {
                         result.Add(new OfficeSeatDescriptor
                         {
