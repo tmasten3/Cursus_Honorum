@@ -209,80 +209,94 @@ public class GameController : MonoBehaviour
     private static readonly PropertyInfo KeyboardCurrentProperty = KeyboardType?.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
     private static readonly PropertyInfo KeyboardItemProperty = KeyboardType?.GetProperty("Item", BindingFlags.Public | BindingFlags.Instance, null, KeyControlType, new[] { KeyEnumType }, null);
     private static readonly PropertyInfo KeyWasPressedThisFrameProperty = KeyControlType?.GetProperty("wasPressedThisFrame", BindingFlags.Public | BindingFlags.Instance);
-    private static readonly Dictionary<KeyCode, string> KeyboardPropertyMap = new Dictionary<KeyCode, string>
+    private static readonly Dictionary<KeyCode, string> KeyboardPropertyMap;
+
+    static GameController()
     {
-        { KeyCode.Return, "enterKey" },
-        { KeyCode.KeypadEnter, "numpadEnterKey" },
-        { KeyCode.LeftArrow, "leftArrowKey" },
-        { KeyCode.RightArrow, "rightArrowKey" },
-        { KeyCode.UpArrow, "upArrowKey" },
-        { KeyCode.DownArrow, "downArrowKey" },
-        { KeyCode.LeftControl, "leftCtrlKey" },
-        { KeyCode.RightControl, "rightCtrlKey" },
-        { KeyCode.LeftShift, "leftShiftKey" },
-        { KeyCode.RightShift, "rightShiftKey" },
-        { KeyCode.LeftAlt, "leftAltKey" },
-        { KeyCode.RightAlt, "rightAltKey" },
-        { KeyCode.Space, "spaceKey" },
-        { KeyCode.Alpha0, "digit0Key" },
-        { KeyCode.Alpha1, "digit1Key" },
-        { KeyCode.Alpha2, "digit2Key" },
-        { KeyCode.Alpha3, "digit3Key" },
-        { KeyCode.Alpha4, "digit4Key" },
-        { KeyCode.Alpha5, "digit5Key" },
-        { KeyCode.Alpha6, "digit6Key" },
-        { KeyCode.Alpha7, "digit7Key" },
-        { KeyCode.Alpha8, "digit8Key" },
-        { KeyCode.Alpha9, "digit9Key" },
-        { KeyCode.Backspace, "backspaceKey" },
-        { KeyCode.Delete, "deleteKey" },
-        { KeyCode.Insert, "insertKey" },
-        { KeyCode.Tab, "tabKey" },
-        { KeyCode.Escape, "escapeKey" },
-        { KeyCode.CapsLock, "capsLockKey" },
-        { KeyCode.Numlock, "numLockKey" },
-        { KeyCode.ScrollLock, "scrollLockKey" },
-        { KeyCode.Print, "printScreenKey" },
-        { KeyCode.Pause, "pauseKey" },
-        { KeyCode.Home, "homeKey" },
-        { KeyCode.End, "endKey" },
-        { KeyCode.PageUp, "pageUpKey" },
-        { KeyCode.PageDown, "pageDownKey" },
-        { KeyCode.BackQuote, "backquoteKey" },
-        { KeyCode.Minus, "minusKey" },
-        { KeyCode.Equals, "equalsKey" },
-        { KeyCode.LeftBracket, "leftBracketKey" },
-        { KeyCode.RightBracket, "rightBracketKey" },
-        { KeyCode.Semicolon, "semicolonKey" },
-        { KeyCode.Quote, "quoteKey" },
-        { KeyCode.Comma, "commaKey" },
-        { KeyCode.Period, "periodKey" },
-        { KeyCode.Slash, "slashKey" },
-        { KeyCode.Backslash, "backslashKey" },
-        { KeyCode.LeftWindows, "leftWindowsKey" },
-        { KeyCode.LeftCommand, "leftWindowsKey" },
-        { KeyCode.LeftApple, "leftWindowsKey" },
-        { KeyCode.RightWindows, "rightWindowsKey" },
-        { KeyCode.RightCommand, "rightWindowsKey" },
-        { KeyCode.RightApple, "rightWindowsKey" },
-        { KeyCode.Menu, "contextMenuKey" },
-        { KeyCode.Keypad0, "numpad0Key" },
-        { KeyCode.Keypad1, "numpad1Key" },
-        { KeyCode.Keypad2, "numpad2Key" },
-        { KeyCode.Keypad3, "numpad3Key" },
-        { KeyCode.Keypad4, "numpad4Key" },
-        { KeyCode.Keypad5, "numpad5Key" },
-        { KeyCode.Keypad6, "numpad6Key" },
-        { KeyCode.Keypad7, "numpad7Key" },
-        { KeyCode.Keypad8, "numpad8Key" },
-        { KeyCode.Keypad9, "numpad9Key" },
-        { KeyCode.KeypadDivide, "numpadDivideKey" },
-        { KeyCode.KeypadMultiply, "numpadMultiplyKey" },
-        { KeyCode.KeypadMinus, "numpadMinusKey" },
-        { KeyCode.KeypadPlus, "numpadPlusKey" },
-        { KeyCode.KeypadPeriod, "numpadPeriodKey" },
-        { KeyCode.KeypadEquals, "numpadEqualsKey" }
-    };
+        KeyboardPropertyMap = new Dictionary<KeyCode, string>();
+
+        void Add(KeyCode key, string propertyName)
+        {
+            if (!KeyboardPropertyMap.ContainsKey(key))
+                KeyboardPropertyMap.Add(key, propertyName);
+        }
+
+        Add(KeyCode.Return, "enterKey");
+        Add(KeyCode.KeypadEnter, "numpadEnterKey");
+        Add(KeyCode.LeftArrow, "leftArrowKey");
+        Add(KeyCode.RightArrow, "rightArrowKey");
+        Add(KeyCode.UpArrow, "upArrowKey");
+        Add(KeyCode.DownArrow, "downArrowKey");
+        Add(KeyCode.LeftControl, "leftCtrlKey");
+        Add(KeyCode.RightControl, "rightCtrlKey");
+        Add(KeyCode.LeftShift, "leftShiftKey");
+        Add(KeyCode.RightShift, "rightShiftKey");
+        Add(KeyCode.LeftAlt, "leftAltKey");
+        Add(KeyCode.RightAlt, "rightAltKey");
+        Add(KeyCode.Space, "spaceKey");
+        Add(KeyCode.Alpha0, "digit0Key");
+        Add(KeyCode.Alpha1, "digit1Key");
+        Add(KeyCode.Alpha2, "digit2Key");
+        Add(KeyCode.Alpha3, "digit3Key");
+        Add(KeyCode.Alpha4, "digit4Key");
+        Add(KeyCode.Alpha5, "digit5Key");
+        Add(KeyCode.Alpha6, "digit6Key");
+        Add(KeyCode.Alpha7, "digit7Key");
+        Add(KeyCode.Alpha8, "digit8Key");
+        Add(KeyCode.Alpha9, "digit9Key");
+        Add(KeyCode.Backspace, "backspaceKey");
+        Add(KeyCode.Delete, "deleteKey");
+        Add(KeyCode.Insert, "insertKey");
+        Add(KeyCode.Tab, "tabKey");
+        Add(KeyCode.Escape, "escapeKey");
+        Add(KeyCode.CapsLock, "capsLockKey");
+        Add(KeyCode.Numlock, "numLockKey");
+        Add(KeyCode.ScrollLock, "scrollLockKey");
+        Add(KeyCode.Print, "printScreenKey");
+        Add(KeyCode.Pause, "pauseKey");
+        Add(KeyCode.Home, "homeKey");
+        Add(KeyCode.End, "endKey");
+        Add(KeyCode.PageUp, "pageUpKey");
+        Add(KeyCode.PageDown, "pageDownKey");
+        Add(KeyCode.BackQuote, "backquoteKey");
+        Add(KeyCode.Minus, "minusKey");
+        Add(KeyCode.Equals, "equalsKey");
+        Add(KeyCode.LeftBracket, "leftBracketKey");
+        Add(KeyCode.RightBracket, "rightBracketKey");
+        Add(KeyCode.Semicolon, "semicolonKey");
+        Add(KeyCode.Quote, "quoteKey");
+        Add(KeyCode.Comma, "commaKey");
+        Add(KeyCode.Period, "periodKey");
+        Add(KeyCode.Slash, "slashKey");
+        Add(KeyCode.Backslash, "backslashKey");
+
+        // Multiple enum aliases (platform-specific) may map to the same underlying value.
+        // Attempt to add all known aliases but tolerate duplicates by skipping them.
+        Add(KeyCode.LeftWindows, "leftWindowsKey");
+        Add(KeyCode.LeftCommand, "leftWindowsKey");
+        Add(KeyCode.LeftApple, "leftWindowsKey");
+        Add(KeyCode.RightWindows, "rightWindowsKey");
+        Add(KeyCode.RightCommand, "rightWindowsKey");
+        Add(KeyCode.RightApple, "rightWindowsKey");
+
+        Add(KeyCode.Menu, "contextMenuKey");
+        Add(KeyCode.Keypad0, "numpad0Key");
+        Add(KeyCode.Keypad1, "numpad1Key");
+        Add(KeyCode.Keypad2, "numpad2Key");
+        Add(KeyCode.Keypad3, "numpad3Key");
+        Add(KeyCode.Keypad4, "numpad4Key");
+        Add(KeyCode.Keypad5, "numpad5Key");
+        Add(KeyCode.Keypad6, "numpad6Key");
+        Add(KeyCode.Keypad7, "numpad7Key");
+        Add(KeyCode.Keypad8, "numpad8Key");
+        Add(KeyCode.Keypad9, "numpad9Key");
+        Add(KeyCode.KeypadDivide, "numpadDivideKey");
+        Add(KeyCode.KeypadMultiply, "numpadMultiplyKey");
+        Add(KeyCode.KeypadMinus, "numpadMinusKey");
+        Add(KeyCode.KeypadPlus, "numpadPlusKey");
+        Add(KeyCode.KeypadPeriod, "numpadPeriodKey");
+        Add(KeyCode.KeypadEquals, "numpadEqualsKey");
+    }
 
     private static bool IsNewInputSystemAvailable =>
         KeyboardType != null &&
