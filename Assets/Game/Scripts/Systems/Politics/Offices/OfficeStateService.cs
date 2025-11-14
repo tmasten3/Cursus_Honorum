@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Game.Systems.Politics.Offices
 {
-    public class OfficeState
+    public class OfficeStateService
     {
         private readonly Dictionary<string, List<OfficeSeat>> seatsByOffice = new();
         private readonly Dictionary<int, List<ActiveOfficeRecord>> activeByCharacter = new();
@@ -14,7 +14,7 @@ namespace Game.Systems.Politics.Offices
 
         private readonly Action<string> logWarn;
 
-        public OfficeState(Action<string> logWarn)
+        public OfficeStateService(Action<string> logWarn)
         {
             this.logWarn = logWarn;
         }

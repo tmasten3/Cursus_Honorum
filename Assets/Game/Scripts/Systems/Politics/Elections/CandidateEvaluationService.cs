@@ -7,14 +7,14 @@ using UnityEngine;
 
 namespace Game.Systems.Politics.Elections
 {
-    public class CandidateEvaluation
+    public class CandidateEvaluationService
     {
-        private readonly OfficeSystem officeSystem;
+        private readonly OfficeEligibilityService eligibilityService;
         private readonly System.Random rng;
 
-        public CandidateEvaluation(OfficeSystem officeSystem, System.Random rng)
+        public CandidateEvaluationService(OfficeEligibilityService eligibilityService, System.Random rng)
         {
-            this.officeSystem = officeSystem ?? throw new ArgumentNullException(nameof(officeSystem));
+            this.eligibilityService = eligibilityService ?? throw new ArgumentNullException(nameof(eligibilityService));
             this.rng = rng ?? throw new ArgumentNullException(nameof(rng));
         }
 
@@ -64,7 +64,7 @@ namespace Game.Systems.Politics.Elections
             if (character == null || office == null)
                 return false;
 
-            return officeSystem.IsEligible(character, office, year, out _);
+            return eligibilityService.IsEligible(character, office, year, out _);
         }
 
         private (OfficeDefinition def, float score, Dictionary<string, float> breakdown) WeightedPick(

@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace Game.Systems.Politics.Elections
 {
-    public class AssemblyVoteSimulator
+    public class ElectionVoteSimulator
     {
         private readonly System.Random rng;
 
-        public AssemblyVoteSimulator(System.Random rng)
+        public ElectionVoteSimulator(System.Random rng)
         {
             this.rng = rng ?? throw new ArgumentNullException(nameof(rng));
         }
