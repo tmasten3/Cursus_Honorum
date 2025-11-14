@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Game.Core;
 using Game.Systems.Time;
+using Game.Core.Save;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -41,6 +42,8 @@ public class GameController : MonoBehaviour
     private TimeSystem timeSystem;
     private bool isInitialized;
     private SaveService saveService;
+    private SaveRepository saveRepository;
+    private SaveSerializer saveSerializer;
 
     public GameState GameState => gameState;
     public bool IsInitialized => isInitialized;
@@ -50,7 +53,9 @@ public class GameController : MonoBehaviour
 
     void Awake()
     {
-        saveService = new SaveService();
+        saveRepository = new SaveRepository();
+        saveSerializer = new SaveSerializer();
+        saveService = new SaveService(null, saveRepository, saveSerializer);
     }
 
     void Start()
@@ -63,6 +68,8 @@ public class GameController : MonoBehaviour
             gameState = new GameState();
             gameState.Initialize();
 
+            saveService.BindGameState(gameState);
+
             timeSystem = gameState.GetSystem<TimeSystem>();
             if (timeSystem == null)
                 throw new InvalidOperationException("TimeSystem failed to initialize.");
@@ -74,7 +81,8 @@ public class GameController : MonoBehaviour
 
             if (autoLoadOnStart && saveService != null && saveService.HasSave(saveFileName))
             {
-                if (!saveService.LoadInto(gameState, saveFileName))
+                var loadResult = saveService.LoadGame(saveFileName);
+                if (!loadResult.Success)
                 {
                     Game.Core.Logger.Warn("GameController", "Auto-load failed; continuing with freshly initialized state.");
                 }
@@ -167,8 +175,8 @@ public class GameController : MonoBehaviour
             return;
         }
 
-        var path = saveService.Save(gameState, saveFileName);
-        if (string.IsNullOrEmpty(path))
+        var result = saveService.SaveGame(saveFileName);
+        if (!result.Success)
         {
             Game.Core.Logger.Error("GameController", "Save operation failed.");
         }
@@ -188,7 +196,8 @@ public class GameController : MonoBehaviour
             return;
         }
 
-        if (!saveService.LoadInto(gameState, saveFileName))
+        var result = saveService.LoadGame(saveFileName);
+        if (!result.Success)
         {
             Game.Core.Logger.Warn("GameController", "Load operation failed.");
         }
