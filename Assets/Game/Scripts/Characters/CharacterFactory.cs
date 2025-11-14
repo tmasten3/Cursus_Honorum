@@ -10,12 +10,34 @@ namespace Game.Data.Characters
     /// Handles character creation, loading, and validation.
     /// Uses structured RomanName generation.
     /// </summary>
+    public enum CharacterLoadMode
+    {
+        Normal,
+        Strict
+    }
+
+    public struct CharacterValidationIssue
+    {
+        public int CharacterIndex;
+        public string Field;
+        public string Message;
+    }
+
+    public class CharacterValidationResult
+    {
+        public bool Success;
+        public List<CharacterValidationIssue> Issues;
+    }
+
     public static class CharacterFactory
     {
         private const string LogCategory = "CharacterData";
 
         private static LogBatch _normalizationBatch =
             new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
+
+        public static CharacterValidationResult LastValidationResult { get; private set; } =
+            new CharacterValidationResult { Success = true, Issues = new List<CharacterValidationIssue>() };
 
         private static readonly System.Random rng = new();
         private static int nextID = 1000;
@@ -30,14 +52,21 @@ namespace Game.Data.Characters
         // ------------------------------------------------------------------
         // Loading
         // ------------------------------------------------------------------
-        public static List<Character> LoadBaseCharacters(string path)
+        public static List<Character> LoadBaseCharacters(string path, CharacterLoadMode mode = CharacterLoadMode.Normal)
         {
-            _normalizationBatch =
-                new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
+            ResetValidationResult();
+
+            if (mode == CharacterLoadMode.Normal)
+            {
+                _normalizationBatch =
+                    new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
+            }
 
             if (!File.Exists(path))
             {
-                Game.Core.Logger.Warn(LogCategory, $"Base character file not found at '{path}'.");
+                var message = $"Base character file not found at '{path}'.";
+                Game.Core.Logger.Warn(LogCategory, message);
+                AddGlobalIssue("File", message);
                 return new List<Character>();
             }
 
@@ -48,7 +77,9 @@ namespace Game.Data.Characters
             }
             catch (Exception ex)
             {
-                Game.Core.Logger.Error(LogCategory, $"Failed to read base character file '{path}': {ex.Message}");
+                var message = $"Failed to read base character file '{path}': {ex.Message}";
+                Game.Core.Logger.Error(LogCategory, message);
+                AddGlobalIssue("File", message);
                 return new List<Character>();
             }
 
@@ -59,14 +90,24 @@ namespace Game.Data.Characters
             }
             catch (Exception ex)
             {
-                Game.Core.Logger.Error(LogCategory, $"Failed to parse base character JSON from '{path}': {ex.Message}");
+                var message = $"Failed to parse base character JSON from '{path}': {ex.Message}";
+                Game.Core.Logger.Error(LogCategory, message);
+                AddGlobalIssue("File", message);
                 return new List<Character>();
             }
 
             if (wrapper == null || wrapper.Characters == null)
             {
-                Game.Core.Logger.Error(LogCategory, $"Failed to parse base character JSON from '{path}'.");
+                var message = $"Failed to parse base character JSON from '{path}'.";
+                Game.Core.Logger.Error(LogCategory, message);
+                AddGlobalIssue("File", message);
                 return new List<Character>();
+            }
+
+            if (mode == CharacterLoadMode.Strict)
+            {
+                CollectStrictValidationIssues(wrapper.Characters, path);
+                return wrapper.Characters;
             }
 
             foreach (var character in wrapper.Characters)
@@ -77,6 +118,7 @@ namespace Game.Data.Characters
             ValidateCharacters(wrapper.Characters, path);
             UpdateNextID(wrapper.Characters);
             _normalizationBatch.Flush();
+            LastValidationResult.Success = true;
             return wrapper.Characters;
         }
 
@@ -85,27 +127,16 @@ namespace Game.Data.Characters
             if (character == null)
                 return;
 
-            var corrections = new List<string>();
+            var analysis = AnalyzeCharacter(character);
 
-            var normalizedName = RomanNamingRules.NormalizeOrGenerateName(
-                character.Gender,
-                character.Class,
-                character.Family,
-                character.RomanName,
-                corrections);
-
-            character.RomanName = normalizedName;
+            character.RomanName = analysis.NormalizedName;
             if (character.RomanName != null)
                 character.RomanName.Gender = character.Gender;
 
             var normalizedNomen = character.RomanName?.Nomen ?? "(unknown)";
 
-            string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, character.RomanName);
-            if (!string.IsNullOrEmpty(resolvedFamily) && !string.Equals(character.Family, resolvedFamily, StringComparison.Ordinal))
-                corrections.Add($"normalized gens to '{resolvedFamily}'");
-
-            if (!string.IsNullOrEmpty(resolvedFamily))
-                character.Family = resolvedFamily;
+            if (!string.IsNullOrEmpty(analysis.ResolvedFamily))
+                character.Family = analysis.ResolvedFamily;
 
             EnsureLifecycleState(character, character.BirthYear + character.Age);
 
@@ -119,12 +150,12 @@ namespace Game.Data.Characters
             else if (string.IsNullOrWhiteSpace(character.Ambition.CurrentGoal))
                 character.Ambition.CurrentGoal = AmbitionProfile.InferDefaultGoal(character);
 
-            if (corrections.Count > 0)
+            if (analysis.Corrections.Count > 0)
             {
                 var infoCorrections = new List<string>();
                 var warningCorrections = new List<string>();
 
-                foreach (var correction in corrections)
+                foreach (var correction in analysis.Corrections)
                 {
                     if (IsRoutineNormalization(correction))
                         infoCorrections.Add(correction);
@@ -149,24 +180,71 @@ namespace Game.Data.Characters
             }
         }
 
+        private static void CollectStrictValidationIssues(List<Character> characters, string sourcePath)
+        {
+            if (characters == null)
+            {
+                LastValidationResult.Success = true;
+                return;
+            }
+
+            var deterministicRandom = new System.Random(0);
+
+            var deduplicationKeys = new HashSet<string>(StringComparer.Ordinal);
+
+            bool TryAddIssue(CharacterValidationIssue issue)
+            {
+                var field = issue.Field ?? string.Empty;
+                var key = $"{issue.CharacterIndex}:{field}";
+                if (!deduplicationKeys.Add(key))
+                    return false;
+
+                LastValidationResult.Issues.Add(issue);
+                return true;
+            }
+
+            for (int i = 0; i < characters.Count; i++)
+            {
+                var character = characters[i];
+                if (character == null)
+                    continue;
+
+                var analysis = AnalyzeCharacter(character, deterministicRandom);
+                if (analysis.Corrections == null || analysis.Corrections.Count == 0)
+                    continue;
+
+                foreach (var correction in analysis.Corrections)
+                {
+                    TryAddIssue(new CharacterValidationIssue
+                    {
+                        CharacterIndex = i,
+                        Field = DetermineFieldFromCorrection(correction),
+                        Message = $"{sourcePath}: Character #{character.ID} - {correction}"
+                    });
+                }
+            }
+
+            CharacterDataValidator.Validate(characters, sourcePath, issue =>
+            {
+                TryAddIssue(issue);
+            });
+
+            foreach (var issue in EnumerateStructuralRelationshipIssues(characters, sourcePath))
+            {
+                Game.Core.Logger.Warn(LogCategory, issue.Message);
+                TryAddIssue(issue);
+            }
+
+            LastValidationResult.Success = LastValidationResult.Issues.Count == 0;
+        }
+
         private static void ValidateCharacters(List<Character> characters, string sourcePath)
         {
             CharacterDataValidator.Validate(characters, sourcePath);
 
-            foreach (var c in characters)
+            foreach (var issue in EnumerateStructuralRelationshipIssues(characters, sourcePath))
             {
-                if (c == null)
-                    continue;
-
-                if (c.FatherID == c.ID || c.MotherID == c.ID)
-                {
-                    Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is listed as their own parent.");
-                }
-
-                if (c.SpouseID == c.ID)
-                {
-                    Game.Core.Logger.Warn(LogCategory, $"{sourcePath}: Character #{c.ID} '{c.RomanName?.GetFullName()}' is married to themselves.");
-                }
+                Game.Core.Logger.Warn(LogCategory, issue.Message);
             }
         }
 
@@ -176,6 +254,129 @@ namespace Game.Data.Characters
             {
                 if (c != null && c.ID >= nextID)
                     nextID = c.ID + 1;
+            }
+        }
+
+        private class CharacterNormalizationAnalysis
+        {
+            public RomanName NormalizedName;
+            public string ResolvedFamily;
+            public List<string> Corrections;
+        }
+
+        private static CharacterNormalizationAnalysis AnalyzeCharacter(Character character, System.Random randomOverride = null)
+        {
+            if (character == null)
+            {
+                return new CharacterNormalizationAnalysis
+                {
+                    Corrections = new List<string>()
+                };
+            }
+
+            var corrections = new List<string>();
+
+            var normalizedName = RomanNamingRules.NormalizeOrGenerateName(
+                character.Gender,
+                character.Class,
+                character.Family,
+                character.RomanName,
+                corrections,
+                randomOverride);
+
+            string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, normalizedName);
+            if (!string.IsNullOrEmpty(resolvedFamily)
+                && !string.Equals(character.Family, resolvedFamily, StringComparison.Ordinal))
+            {
+                corrections.Add($"normalized gens to '{resolvedFamily}'");
+            }
+
+            return new CharacterNormalizationAnalysis
+            {
+                NormalizedName = normalizedName,
+                ResolvedFamily = resolvedFamily,
+                Corrections = corrections
+            };
+        }
+
+        private static string DetermineFieldFromCorrection(string correction)
+        {
+            if (string.IsNullOrEmpty(correction))
+                return string.Empty;
+
+            if (correction.IndexOf("praenomen", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "RomanName.Praenomen";
+
+            if (correction.IndexOf("nomen", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "RomanName.Nomen";
+
+            if (correction.IndexOf("cognomen", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "RomanName.Cognomen";
+
+            if (correction.IndexOf("gens", StringComparison.OrdinalIgnoreCase) >= 0
+                || correction.IndexOf("family", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "Family";
+
+            return "RomanName";
+        }
+
+        private static void ResetValidationResult()
+        {
+            LastValidationResult = new CharacterValidationResult
+            {
+                Success = true,
+                Issues = new List<CharacterValidationIssue>()
+            };
+        }
+
+        private static void AddGlobalIssue(string field, string message)
+        {
+            if (LastValidationResult?.Issues == null)
+                ResetValidationResult();
+
+            LastValidationResult.Success = false;
+            LastValidationResult.Issues.Add(new CharacterValidationIssue
+            {
+                CharacterIndex = -1,
+                Field = field,
+                Message = message
+            });
+        }
+
+        private static IEnumerable<CharacterValidationIssue> EnumerateStructuralRelationshipIssues(
+            List<Character> characters,
+            string sourcePath)
+        {
+            if (characters == null)
+                yield break;
+
+            for (int i = 0; i < characters.Count; i++)
+            {
+                var character = characters[i];
+                if (character == null)
+                    continue;
+
+                string displayName = character.RomanName?.GetFullName() ?? "(unknown)";
+
+                if (character.FatherID == character.ID || character.MotherID == character.ID)
+                {
+                    yield return new CharacterValidationIssue
+                    {
+                        CharacterIndex = i,
+                        Field = "Relationships.Parent",
+                        Message = $"{sourcePath}: Character #{character.ID} '{displayName}' is listed as their own parent."
+                    };
+                }
+
+                if (character.SpouseID == character.ID)
+                {
+                    yield return new CharacterValidationIssue
+                    {
+                        CharacterIndex = i,
+                        Field = "Relationships.Spouse",
+                        Message = $"{sourcePath}: Character #{character.ID} '{displayName}' is married to themselves."
+                    };
+                }
             }
         }
 
