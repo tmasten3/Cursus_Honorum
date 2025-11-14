@@ -80,6 +80,11 @@ namespace Game.Data.Characters
             return SenatorialInfluence + PopularInfluence + MilitaryInfluence + FamilyInfluence;
         }
 
+        public PoliticalProfile GetPoliticalProfile()
+        {
+            return PoliticalProfile.FromCharacter(this);
+        }
+
         public bool IsAlignedWith(FactionType faction)
         {
             return Faction == faction;
