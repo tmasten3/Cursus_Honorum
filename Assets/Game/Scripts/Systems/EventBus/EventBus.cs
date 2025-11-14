@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Game.Core;
 
@@ -15,7 +16,7 @@ namespace Game.Systems.EventBus
 
         private readonly Queue<GameEvent> currentQueue = new();
         private readonly Queue<GameEvent> nextQueue = new();
-        private readonly List<GameEvent> history = new();
+        private readonly EventHistory history;
         private readonly HashSet<Type> unhandledTypesLogged = new();
         private static readonly HashSet<Type> optionalEventTypes = new()
         {
@@ -44,6 +45,7 @@ namespace Game.Systems.EventBus
 
         public EventBus(int historyCapacity = DefaultHistoryCapacity)
         {
+            history = new EventHistory(Math.Max(0, historyCapacity));
             HistoryCapacity = historyCapacity;
         }
 
@@ -154,24 +156,121 @@ namespace Game.Systems.EventBus
             if (historyCapacity == 0 || e == null)
                 return;
 
-            if (history.Count == historyCapacity)
-                history.RemoveAt(0);
-
             history.Add(e);
         }
 
         private void EnforceHistoryCapacity()
         {
-            if (historyCapacity <= 0)
+            history.SetCapacity(historyCapacity);
+        }
+
+        private sealed class EventHistory : IReadOnlyList<GameEvent>
+        {
+            private GameEvent[] buffer;
+            private int start;
+            private int count;
+
+            public EventHistory(int capacity)
             {
-                if (history.Count > 0)
-                    history.Clear();
-                return;
+                if (capacity < 0)
+                    capacity = 0;
+
+                buffer = capacity == 0 ? Array.Empty<GameEvent>() : new GameEvent[capacity];
+                start = 0;
+                count = 0;
+                Capacity = capacity;
             }
 
-            int overflow = history.Count - historyCapacity;
-            if (overflow > 0)
-                history.RemoveRange(0, overflow);
+            public int Capacity { get; private set; }
+
+            public int Count => count;
+
+            public GameEvent this[int index]
+            {
+                get
+                {
+                    if ((uint)index >= (uint)count)
+                        throw new ArgumentOutOfRangeException(nameof(index));
+
+                    int actualIndex = (start + index) % buffer.Length;
+                    return buffer[actualIndex];
+                }
+            }
+
+            public void Add(GameEvent e)
+            {
+                if (Capacity == 0)
+                    return;
+
+                if (buffer.Length != Capacity)
+                    buffer = new GameEvent[Capacity];
+
+                if (count < Capacity)
+                {
+                    int index = (start + count) % Capacity;
+                    buffer[index] = e;
+                    count++;
+                }
+                else
+                {
+                    buffer[start] = e;
+                    start = (start + 1) % Capacity;
+                }
+            }
+
+            public void SetCapacity(int capacity)
+            {
+                if (capacity < 0)
+                    capacity = 0;
+
+                if (capacity == Capacity)
+                    return;
+
+                if (capacity == 0)
+                {
+                    buffer = Array.Empty<GameEvent>();
+                    Capacity = 0;
+                    start = 0;
+                    count = 0;
+                    return;
+                }
+
+                var newBuffer = new GameEvent[capacity];
+                int itemsToCopy = Math.Min(count, capacity);
+
+                for (int i = 0; i < itemsToCopy; i++)
+                {
+                    newBuffer[i] = this[count - itemsToCopy + i];
+                }
+
+                buffer = newBuffer;
+                Capacity = capacity;
+                start = 0;
+                count = itemsToCopy;
+            }
+
+            public GameEvent[] ToArray()
+            {
+                if (count == 0)
+                    return Array.Empty<GameEvent>();
+
+                var result = new GameEvent[count];
+                for (int i = 0; i < count; i++)
+                    result[i] = this[i];
+
+                return result;
+            }
+
+            public IEnumerator<GameEvent> GetEnumerator()
+            {
+                for (int i = 0; i < count; i++)
+                    yield return this[i];
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
         }
     }
 }
