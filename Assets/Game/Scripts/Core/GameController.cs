@@ -4,7 +4,8 @@ using Game.Core;
 using Game.Systems.Time;
 using Game.Core.Save;
 using System.Collections.Generic;
-using System.Reflection;
+
+
 
 public class GameController : MonoBehaviour
 {
@@ -30,13 +31,6 @@ public class GameController : MonoBehaviour
     [SerializeField]
     private bool autoLoadOnStart = false;
 
-    [Tooltip("Hotkey used for saving the current game state.")]
-    [SerializeField]
-    private KeyCode quickSaveKey = KeyCode.F5;
-
-    [Tooltip("Hotkey used for loading the saved game state.")]
-    [SerializeField]
-    private KeyCode quickLoadKey = KeyCode.F9;
 
     private GameState gameState;
     private TimeSystem timeSystem;
@@ -114,15 +108,7 @@ public class GameController : MonoBehaviour
         if (!isInitialized || gameState == null)
             return;
 
-        if (quickSaveKey != KeyCode.None && IsKeyActivationTriggered(quickSaveKey))
-        {
-            SaveGameToDisk();
-        }
-
-        if (quickLoadKey != KeyCode.None && IsKeyActivationTriggered(quickLoadKey))
-        {
-            LoadGameFromDisk();
-        }
+        
 
         gameState.Update();
 
@@ -201,172 +187,5 @@ public class GameController : MonoBehaviour
         {
             Game.Core.Logger.Warn("GameController", "Load operation failed.");
         }
-    }
-
-    private static readonly Type KeyboardType = Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
-    private static readonly Type KeyEnumType = Type.GetType("UnityEngine.InputSystem.Key, Unity.InputSystem");
-    private static readonly Type KeyControlType = Type.GetType("UnityEngine.InputSystem.Controls.KeyControl, Unity.InputSystem");
-    private static readonly PropertyInfo KeyboardCurrentProperty = KeyboardType?.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
-    private static readonly PropertyInfo KeyboardItemProperty = KeyboardType?.GetProperty("Item", BindingFlags.Public | BindingFlags.Instance, null, KeyControlType, new[] { KeyEnumType }, null);
-    private static readonly PropertyInfo KeyWasPressedThisFrameProperty = KeyControlType?.GetProperty("wasPressedThisFrame", BindingFlags.Public | BindingFlags.Instance);
-    private static readonly Dictionary<KeyCode, string> KeyboardPropertyMap;
-
-    static GameController()
-    {
-        KeyboardPropertyMap = new Dictionary<KeyCode, string>();
-
-        void Add(KeyCode key, string propertyName)
-        {
-            if (!KeyboardPropertyMap.ContainsKey(key))
-                KeyboardPropertyMap.Add(key, propertyName);
-        }
-
-        Add(KeyCode.Return, "enterKey");
-        Add(KeyCode.KeypadEnter, "numpadEnterKey");
-        Add(KeyCode.LeftArrow, "leftArrowKey");
-        Add(KeyCode.RightArrow, "rightArrowKey");
-        Add(KeyCode.UpArrow, "upArrowKey");
-        Add(KeyCode.DownArrow, "downArrowKey");
-        Add(KeyCode.LeftControl, "leftCtrlKey");
-        Add(KeyCode.RightControl, "rightCtrlKey");
-        Add(KeyCode.LeftShift, "leftShiftKey");
-        Add(KeyCode.RightShift, "rightShiftKey");
-        Add(KeyCode.LeftAlt, "leftAltKey");
-        Add(KeyCode.RightAlt, "rightAltKey");
-        Add(KeyCode.Space, "spaceKey");
-        Add(KeyCode.Alpha0, "digit0Key");
-        Add(KeyCode.Alpha1, "digit1Key");
-        Add(KeyCode.Alpha2, "digit2Key");
-        Add(KeyCode.Alpha3, "digit3Key");
-        Add(KeyCode.Alpha4, "digit4Key");
-        Add(KeyCode.Alpha5, "digit5Key");
-        Add(KeyCode.Alpha6, "digit6Key");
-        Add(KeyCode.Alpha7, "digit7Key");
-        Add(KeyCode.Alpha8, "digit8Key");
-        Add(KeyCode.Alpha9, "digit9Key");
-        Add(KeyCode.Backspace, "backspaceKey");
-        Add(KeyCode.Delete, "deleteKey");
-        Add(KeyCode.Insert, "insertKey");
-        Add(KeyCode.Tab, "tabKey");
-        Add(KeyCode.Escape, "escapeKey");
-        Add(KeyCode.CapsLock, "capsLockKey");
-        Add(KeyCode.Numlock, "numLockKey");
-        Add(KeyCode.ScrollLock, "scrollLockKey");
-        Add(KeyCode.Print, "printScreenKey");
-        Add(KeyCode.Pause, "pauseKey");
-        Add(KeyCode.Home, "homeKey");
-        Add(KeyCode.End, "endKey");
-        Add(KeyCode.PageUp, "pageUpKey");
-        Add(KeyCode.PageDown, "pageDownKey");
-        Add(KeyCode.BackQuote, "backquoteKey");
-        Add(KeyCode.Minus, "minusKey");
-        Add(KeyCode.Equals, "equalsKey");
-        Add(KeyCode.LeftBracket, "leftBracketKey");
-        Add(KeyCode.RightBracket, "rightBracketKey");
-        Add(KeyCode.Semicolon, "semicolonKey");
-        Add(KeyCode.Quote, "quoteKey");
-        Add(KeyCode.Comma, "commaKey");
-        Add(KeyCode.Period, "periodKey");
-        Add(KeyCode.Slash, "slashKey");
-        Add(KeyCode.Backslash, "backslashKey");
-
-        // Multiple enum aliases (platform-specific) may map to the same underlying value.
-        // Attempt to add all known aliases but tolerate duplicates by skipping them.
-        Add(KeyCode.LeftWindows, "leftWindowsKey");
-        Add(KeyCode.LeftCommand, "leftWindowsKey");
-        Add(KeyCode.LeftApple, "leftWindowsKey");
-        Add(KeyCode.RightWindows, "rightWindowsKey");
-        Add(KeyCode.RightCommand, "rightWindowsKey");
-        Add(KeyCode.RightApple, "rightWindowsKey");
-
-        Add(KeyCode.Menu, "contextMenuKey");
-        Add(KeyCode.Keypad0, "numpad0Key");
-        Add(KeyCode.Keypad1, "numpad1Key");
-        Add(KeyCode.Keypad2, "numpad2Key");
-        Add(KeyCode.Keypad3, "numpad3Key");
-        Add(KeyCode.Keypad4, "numpad4Key");
-        Add(KeyCode.Keypad5, "numpad5Key");
-        Add(KeyCode.Keypad6, "numpad6Key");
-        Add(KeyCode.Keypad7, "numpad7Key");
-        Add(KeyCode.Keypad8, "numpad8Key");
-        Add(KeyCode.Keypad9, "numpad9Key");
-        Add(KeyCode.KeypadDivide, "numpadDivideKey");
-        Add(KeyCode.KeypadMultiply, "numpadMultiplyKey");
-        Add(KeyCode.KeypadMinus, "numpadMinusKey");
-        Add(KeyCode.KeypadPlus, "numpadPlusKey");
-        Add(KeyCode.KeypadPeriod, "numpadPeriodKey");
-        Add(KeyCode.KeypadEquals, "numpadEqualsKey");
-    }
-
-    private static bool IsNewInputSystemAvailable =>
-        KeyboardType != null &&
-        KeyEnumType != null &&
-        KeyControlType != null &&
-        KeyboardCurrentProperty != null &&
-        KeyWasPressedThisFrameProperty != null;
-
-    private bool IsKeyActivationTriggered(KeyCode keyCode)
-    {
-        if (keyCode == KeyCode.None)
-            return false;
-
-        if (TryGetNewInputSystemKeyState(keyCode, out var pressed) && pressed)
-            return true;
-
-        return Input.GetKeyDown(keyCode);
-    }
-
-    private bool TryGetNewInputSystemKeyState(KeyCode keyCode, out bool wasPressed)
-    {
-        wasPressed = false;
-
-        if (!IsNewInputSystemAvailable)
-            return false;
-
-        var keyboard = KeyboardCurrentProperty?.GetValue(null);
-        if (keyboard == null)
-            return false;
-
-        if (!TryGetKeyControl(keyboard, keyCode, out var keyControl))
-            return false;
-
-        var pressedValue = KeyWasPressedThisFrameProperty?.GetValue(keyControl);
-        if (pressedValue is bool pressed)
-        {
-            wasPressed = pressed;
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool TryGetKeyControl(object keyboard, KeyCode keyCode, out object keyControl)
-    {
-        keyControl = null;
-        if (keyboard == null)
-            return false;
-
-        if (KeyboardItemProperty != null && KeyEnumType != null)
-        {
-            try
-            {
-                var parsedKey = Enum.Parse(KeyEnumType, keyCode.ToString());
-                keyControl = KeyboardItemProperty.GetValue(keyboard, new[] { parsedKey });
-                if (keyControl != null)
-                    return true;
-            }
-            catch
-            {
-                // Ignored - will attempt mapped properties instead.
-            }
-        }
-
-        if (!KeyboardPropertyMap.TryGetValue(keyCode, out var propertyName) || KeyboardType == null)
-            return false;
-
-        var property = KeyboardType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-        keyControl = property?.GetValue(keyboard);
-        return keyControl != null;
-    }
+    }   
 }
-
