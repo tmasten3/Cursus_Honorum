@@ -26,9 +26,9 @@ namespace Game.Systems.Politics.Elections
         private readonly OfficeSystem officeSystem;
 
         private readonly ElectionCalendar calendar;
-        private readonly CandidateEvaluation candidateEvaluation;
-        private readonly AssemblyVoteSimulator voteSimulator;
-        private readonly ElectionResultsApplier resultsApplier;
+        private readonly CandidateEvaluationService candidateEvaluation;
+        private readonly ElectionVoteSimulator voteSimulator;
+        private readonly ElectionResultService resultsApplier;
 
         private readonly Dictionary<string, List<CandidateDeclaration>> declarationsByOffice = new();
         private readonly Dictionary<int, List<CandidateDeclaration>> declarationsByYear = new();
@@ -52,9 +52,9 @@ namespace Game.Systems.Politics.Elections
             this.officeSystem = officeSystem ?? throw new ArgumentNullException(nameof(officeSystem));
 
             calendar = new ElectionCalendar(eventBus, timeSystem);
-            candidateEvaluation = new CandidateEvaluation(officeSystem, rng);
-            voteSimulator = new AssemblyVoteSimulator(rng);
-            resultsApplier = new ElectionResultsApplier(officeSystem, eventBus);
+            candidateEvaluation = new CandidateEvaluationService(officeSystem.EligibilityService, rng);
+            voteSimulator = new ElectionVoteSimulator(rng);
+            resultsApplier = new ElectionResultService(officeSystem.AssignOffice, eventBus);
         }
 
         public override void Initialize(GameState state)

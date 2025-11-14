@@ -20,7 +20,7 @@ namespace Game.Systems.Politics.Offices
         private readonly Game.Systems.CharacterSystem.CharacterSystem characterSystem;
 
         private readonly OfficeDefinitions definitions;
-        private readonly OfficeState state;
+        private readonly OfficeStateService state;
         private readonly OfficeEligibilityService eligibility;
         private readonly IMagistrateOfficeRepository repository;
 
@@ -35,6 +35,12 @@ namespace Game.Systems.Politics.Offices
 
         public int TotalOfficesCount => definitions.Count;
 
+        public OfficeDefinitions Definitions => definitions;
+
+        public OfficeStateService StateService => state;
+
+        public OfficeEligibilityService EligibilityService => eligibility;
+
         public OfficeSystem(EventBus.EventBus eventBus, Game.Systems.CharacterSystem.CharacterSystem characterSystem,
             IMagistrateOfficeRepository repository = null)
         {
@@ -44,7 +50,7 @@ namespace Game.Systems.Politics.Offices
             this.repository = repository ?? new JsonMagistrateOfficeRepository(defaultPath, LogWarn, LogError);
 
             definitions = new OfficeDefinitions(LogInfo, LogWarn, LogError);
-            state = new OfficeState(LogWarn);
+            state = new OfficeStateService(LogWarn);
             eligibility = new OfficeEligibilityService(state);
         }
 

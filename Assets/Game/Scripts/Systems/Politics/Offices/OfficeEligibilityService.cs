@@ -7,9 +7,9 @@ namespace Game.Systems.Politics.Offices
 {
     public class OfficeEligibilityService
     {
-        private readonly OfficeState state;
+        private readonly OfficeStateService state;
 
-        public OfficeEligibilityService(OfficeState state)
+        public OfficeEligibilityService(OfficeStateService state)
         {
             this.state = state ?? throw new ArgumentNullException(nameof(state));
         }

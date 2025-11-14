@@ -8,14 +8,14 @@ using UnityEngine;
 
 namespace Game.Systems.Politics.Elections
 {
-    public class ElectionResultsApplier
+    public class ElectionResultService
     {
-        private readonly OfficeSystem officeSystem;
+        private readonly Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice;
         private readonly EventBus eventBus;
 
-        public ElectionResultsApplier(OfficeSystem officeSystem, EventBus eventBus)
+        public ElectionResultService(Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice, EventBus eventBus)
         {
-            this.officeSystem = officeSystem ?? throw new ArgumentNullException(nameof(officeSystem));
+            this.assignOffice = assignOffice ?? throw new ArgumentNullException(nameof(assignOffice));
             this.eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         }
 
@@ -43,7 +43,7 @@ namespace Game.Systems.Politics.Elections
 
             foreach (var winner in winners)
             {
-                var seat = officeSystem.AssignOffice(office.Id, winner.Character.ID, year);
+                var seat = assignOffice(office.Id, winner.Character.ID, year, true);
                 if (seat.SeatIndex < 0)
                 {
                     logWarn?.Invoke($"{office.Name}: failed to assign seat for {winner.Character.FullName}.");
