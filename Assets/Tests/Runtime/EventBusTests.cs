@@ -1,8 +1,9 @@
 using Game.Core;
+using Game.Data.Characters;
 using Game.Systems.EventBus;
 using NUnit.Framework;
 
-namespace CursusHonorum.Tests.EventBus
+namespace CursusHonorum.Tests.Runtime
 {
     public class EventBusTests
     {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Game.Core;
+using Game.Data.Characters;
 using Game.Systems.EventBus;
 using Game.Systems.Time;
 using Game.Systems.CharacterSystem;
@@ -12,7 +13,7 @@ using Game.Systems.Politics.Offices;
 using Game.Systems.Politics.Elections;
 using UnityEngine;
 
-namespace CursusHonorum.Tests.Simulation
+namespace CursusHonorum.Tests.Runtime
 {
     public class PoliticsSimulationTests
     {

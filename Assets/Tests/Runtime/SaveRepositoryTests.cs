@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Text;
 using Game.Core.Save;
+using Game.Data.Characters;
 using NUnit.Framework;
 
-namespace CursusHonorum.Tests.Save
+namespace CursusHonorum.Tests.Runtime
 {
     public class SaveRepositoryTests
     {

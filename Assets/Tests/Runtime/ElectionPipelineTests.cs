@@ -9,7 +9,7 @@ using Game.Systems.Politics.Offices;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace Game.Tests.Politics
+namespace CursusHonorum.Tests.Runtime
 {
     public class ElectionPipelineTests
     {

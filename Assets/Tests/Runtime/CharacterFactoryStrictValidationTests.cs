@@ -6,7 +6,7 @@ using Game.Data.Characters;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace CursusHonorum.Tests.Simulation
+namespace CursusHonorum.Tests.Runtime
 {
     public class CharacterFactoryStrictValidationTests
     {

@@ -2,17 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using NUnit.Framework;
 using Game.Core;
-using Game.Systems.Time;
+using Game.Data.Characters;
 using Game.Systems.CharacterSystem;
-using Game.Systems.Politics.Offices;
 using Game.Systems.Politics.Elections;
+using Game.Systems.Politics.Offices;
+using Game.Systems.Time;
+using NUnit.Framework;
 using UnityEngine;
 
-namespace CursusHonorum.Tests.Core
+namespace CursusHonorum.Tests.Runtime
 {
-    public class SaveServiceTests
+    public class SaveServiceIntegrationTests
     {
         [Test]
         public void SaveAndLoadRestoresStateAndElectionProgression()

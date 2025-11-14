@@ -6,10 +6,11 @@ using System.Linq;
 using System.Text;
 using Game.Core;
 using Game.Core.Save;
+using Game.Data.Characters;
 using Game.Systems.EventBus;
 using NUnit.Framework;
 
-namespace CursusHonorum.Tests.Save
+namespace CursusHonorum.Tests.Runtime
 {
     public class SaveServiceTests
     {

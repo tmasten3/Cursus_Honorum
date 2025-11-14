@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Game.Core;
+using Game.Data.Characters;
 
-namespace CursusHonorum.Tests.Core
+namespace CursusHonorum.Tests.Runtime
 {
     public class SystemRegistryTests
     {

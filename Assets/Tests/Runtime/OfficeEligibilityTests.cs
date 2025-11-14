@@ -3,7 +3,7 @@ using Game.Data.Characters;
 using Game.Systems.Politics.Offices;
 using NUnit.Framework;
 
-namespace Game.Tests.Politics
+namespace CursusHonorum.Tests.Runtime
 {
     public class OfficeEligibilityTests
     {

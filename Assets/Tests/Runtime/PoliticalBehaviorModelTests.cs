@@ -1,7 +1,7 @@
 using Game.Data.Characters;
 using NUnit.Framework;
 
-namespace CursusHonorum.Tests.Simulation
+namespace CursusHonorum.Tests.Runtime
 {
     public class PoliticalBehaviorModelTests
     {

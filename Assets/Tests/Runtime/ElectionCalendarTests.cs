@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using Game.Data.Characters;
 using Game.Systems.EventBus;
 using Game.Systems.Politics.Elections;
 using Game.Systems.Time;
 using NUnit.Framework;
 
-namespace Game.Tests.Politics
+namespace CursusHonorum.Tests.Runtime
 {
     public class ElectionCalendarTests
     {

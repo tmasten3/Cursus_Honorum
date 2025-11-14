@@ -1,7 +1,7 @@
 using Game.Data.Characters;
 using NUnit.Framework;
 
-namespace CursusHonorum.Tests.Simulation
+namespace CursusHonorum.Tests.Runtime
 {
     public class PoliticalProfileTests
     {
@@ -14,14 +14,12 @@ namespace CursusHonorum.Tests.Simulation
                 PopularInfluence = 5f,
                 MilitaryInfluence = 2f,
                 FamilyInfluence = 3f,
-                Oratory = 14,
+                Civic = 14,
                 AmbitionScore = 12,
                 Courage = 9,
                 Dignitas = 11,
                 Administration = 8,
-                Judgment = 7,
-                Strategy = 6,
-                Civic = 10,
+                Judgment = 6,
                 Faction = FactionType.Optimates
             };
 
@@ -32,14 +30,12 @@ namespace CursusHonorum.Tests.Simulation
             Assert.That(profile.MilitaryInfluence, Is.EqualTo(2f));
             Assert.That(profile.FamilyInfluence, Is.EqualTo(3f));
             Assert.That(profile.TotalInfluence, Is.EqualTo(20f));
-            Assert.That(profile.Oratory, Is.EqualTo(14));
+            Assert.That(profile.Civic, Is.EqualTo(14));
             Assert.That(profile.AmbitionScore, Is.EqualTo(12));
             Assert.That(profile.Courage, Is.EqualTo(9));
             Assert.That(profile.Dignitas, Is.EqualTo(11));
             Assert.That(profile.Administration, Is.EqualTo(8));
-            Assert.That(profile.Judgment, Is.EqualTo(7));
-            Assert.That(profile.Strategy, Is.EqualTo(6));
-            Assert.That(profile.Civic, Is.EqualTo(10));
+            Assert.That(profile.Judgment, Is.EqualTo(6));
             Assert.That(profile.Faction, Is.EqualTo(FactionType.Optimates));
             Assert.That(profile.PrimaryFaction, Is.EqualTo(FactionType.Optimates));
             Assert.That(profile.SenateLean, Is.EqualTo(10f / (10f + 5f)).Within(0.0001f));

@@ -6,7 +6,7 @@ using Game.Data.Characters;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace CursusHonorum.Tests.Simulation
+namespace CursusHonorum.Tests.Runtime
 {
     public class CharacterDataIntegrationTests
     {
@@ -49,14 +49,12 @@ namespace CursusHonorum.Tests.Simulation
                 PopularInfluence = 9.5f,
                 MilitaryInfluence = 3.1f,
                 FamilyInfluence = 4.2f,
-                Oratory = 17,
+                Civic = 17,
                 AmbitionScore = 12,
                 Courage = 15,
                 Dignitas = 18,
                 Administration = 11,
-                Judgment = 10,
-                Strategy = 16,
-                Civic = 7,
+                Judgment = 16,
                 Faction = FactionType.Optimates,
                 CurrentOffice = new OfficeAssignment
                 {
@@ -87,14 +85,12 @@ namespace CursusHonorum.Tests.Simulation
             Assert.That(character.PopularInfluence, Is.EqualTo(9.5f));
             Assert.That(character.MilitaryInfluence, Is.EqualTo(3.1f));
             Assert.That(character.FamilyInfluence, Is.EqualTo(4.2f));
-            Assert.That(character.Oratory, Is.EqualTo(17));
+            Assert.That(character.Civic, Is.EqualTo(17));
             Assert.That(character.AmbitionScore, Is.EqualTo(12));
             Assert.That(character.Courage, Is.EqualTo(15));
             Assert.That(character.Dignitas, Is.EqualTo(18));
             Assert.That(character.Administration, Is.EqualTo(11));
-            Assert.That(character.Judgment, Is.EqualTo(10));
-            Assert.That(character.Strategy, Is.EqualTo(16));
-            Assert.That(character.Civic, Is.EqualTo(7));
+            Assert.That(character.Judgment, Is.EqualTo(16));
             Assert.That(character.Faction, Is.EqualTo(FactionType.Optimates));
 
             Assert.That(character.CurrentOffice.OfficeId, Is.EqualTo("Consul"));
@@ -135,13 +131,11 @@ namespace CursusHonorum.Tests.Simulation
             Assert.That(character.PopularInfluence, Is.EqualTo(0f));
             Assert.That(character.MilitaryInfluence, Is.EqualTo(0f));
             Assert.That(character.FamilyInfluence, Is.EqualTo(0f));
-            Assert.That(character.Oratory, Is.EqualTo(5));
             Assert.That(character.AmbitionScore, Is.EqualTo(5));
             Assert.That(character.Courage, Is.EqualTo(5));
             Assert.That(character.Dignitas, Is.EqualTo(5));
             Assert.That(character.Administration, Is.EqualTo(5));
             Assert.That(character.Judgment, Is.EqualTo(5));
-            Assert.That(character.Strategy, Is.EqualTo(5));
             Assert.That(character.Civic, Is.EqualTo(5));
             Assert.That(character.Faction, Is.EqualTo(FactionType.Neutral));
             Assert.That(character.OfficeHistory, Is.Not.Null);
@@ -167,14 +161,12 @@ namespace CursusHonorum.Tests.Simulation
                 PopularInfluence = -5f,
                 MilitaryInfluence = float.PositiveInfinity,
                 FamilyInfluence = 2f,
-                Oratory = 25,
+                Civic = 25,
                 AmbitionScore = -3,
                 Courage = 21,
                 Dignitas = 0,
                 Administration = -1,
                 Judgment = 30,
-                Strategy = 5,
-                Civic = 40,
                 Faction = (FactionType)999,
                 CurrentOffice = new OfficeAssignment
                 {
@@ -201,12 +193,11 @@ namespace CursusHonorum.Tests.Simulation
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.SenatorialInfluence)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.PopularInfluence)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.MilitaryInfluence)));
-            Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.Oratory)));
+            Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.Civic)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.AmbitionScore)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.Courage)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.Administration)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.Judgment)));
-            Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.Civic)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(Character.Faction)));
             Assert.That(issues.Select(i => i.Field), Does.Contain(nameof(OfficeAssignment.SeatIndex)));
             Assert.That(issues.Select(i => i.Field), Does.Contain("OfficeHistory[1].SeatIndex"));
@@ -231,14 +222,12 @@ namespace CursusHonorum.Tests.Simulation
                 PopularInfluence = float.NaN,
                 MilitaryInfluence = float.PositiveInfinity,
                 FamilyInfluence = 3f,
-                Oratory = 30,
+                Civic = 30,
                 AmbitionScore = -10,
                 Courage = 50,
                 Dignitas = 5,
                 Administration = 25,
                 Judgment = -5,
-                Strategy = 18,
-                Civic = 99,
                 Faction = (FactionType)(-1),
                 CurrentOffice = new OfficeAssignment
                 {
@@ -266,13 +255,11 @@ namespace CursusHonorum.Tests.Simulation
             Assert.That(character.MilitaryInfluence, Is.EqualTo(0f));
             Assert.That(character.FamilyInfluence, Is.EqualTo(3f));
 
-            Assert.That(character.Oratory, Is.EqualTo(20));
             Assert.That(character.AmbitionScore, Is.EqualTo(0));
             Assert.That(character.Courage, Is.EqualTo(20));
             Assert.That(character.Dignitas, Is.EqualTo(5));
             Assert.That(character.Administration, Is.EqualTo(20));
             Assert.That(character.Judgment, Is.EqualTo(0));
-            Assert.That(character.Strategy, Is.EqualTo(18));
             Assert.That(character.Civic, Is.EqualTo(20));
 
             Assert.That(character.Faction, Is.EqualTo(FactionType.Neutral));

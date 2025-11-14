@@ -2,6 +2,15 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Game.Data.Characters;
+using NUnit.Framework;
+
+namespace CursusHonorum.Tests.Runtime
+{
+    internal static class UnityStubsNamespaceMarker
+    {
+    }
+}
 
 namespace UnityEngine
 {

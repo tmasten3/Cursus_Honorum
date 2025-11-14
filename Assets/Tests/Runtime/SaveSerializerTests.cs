@@ -4,9 +4,10 @@ using System.Globalization;
 using System.Linq;
 using Game.Core;
 using Game.Core.Save;
+using Game.Data.Characters;
 using NUnit.Framework;
 
-namespace CursusHonorum.Tests.Save
+namespace CursusHonorum.Tests.Runtime
 {
     public class SaveSerializerTests
     {

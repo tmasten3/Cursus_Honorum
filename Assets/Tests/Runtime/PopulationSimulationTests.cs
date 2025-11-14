@@ -1,5 +1,6 @@
 using System.IO;
 using Game.Core;
+using Game.Data.Characters;
 using NUnit.Framework;
 using Game.Systems.EventBus;
 using Game.Systems.Time;
@@ -9,7 +10,7 @@ using Game.Systems.BirthSystem;
 using UnityEngine;
 using Game.Systems.Population;
 
-namespace CursusHonorum.Tests.Simulation
+namespace CursusHonorum.Tests.Runtime
 {
     public class PopulationSimulationTests
     {
