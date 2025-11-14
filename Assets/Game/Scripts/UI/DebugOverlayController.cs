@@ -80,7 +80,6 @@ namespace Game.UI
 
         private static GameController cachedController;
         private static bool loggedMissingController;
-        private static bool attemptedControllerLookup;
         private bool controllerSubscribed;
 
         private void Awake()
@@ -110,13 +109,7 @@ namespace Game.UI
 
         private void OnEnable()
         {
-            LocateGameController();
-            SubscribeToController();
-
-            if (gameController != null && gameController.IsInitialized && gameController.GameState != null)
-            {
-                BindToGameState(gameController.GameState);
-            }
+            EnsureControllerReady();
         }
 
         private void OnDisable()
@@ -127,6 +120,8 @@ namespace Game.UI
 
         private void Update()
         {
+            EnsureControllerReady();
+
             if (CheckVisibilityChanges())
                 ApplySectionVisibility();
 
@@ -166,16 +161,38 @@ namespace Game.UI
                 lookback);
         }
 
+        private void EnsureControllerReady()
+        {
+            if (gameController != null)
+            {
+                SubscribeToController();
+
+                if (gameController.IsInitialized && gameController.GameState != null)
+                {
+                    BindToGameState(gameController.GameState);
+                }
+
+                return;
+            }
+
+            LocateGameController();
+            SubscribeToController();
+
+            if (gameController != null && gameController.IsInitialized && gameController.GameState != null)
+            {
+                BindToGameState(gameController.GameState);
+            }
+        }
+
         private void LocateGameController()
         {
             if (controllerOverride != null)
             {
                 cachedController = controllerOverride;
             }
-            else if (!attemptedControllerLookup)
+            else if (cachedController == null)
             {
                 cachedController = FindFirstObjectByType<GameController>();
-                attemptedControllerLookup = true;
 
                 if (cachedController == null)
                 {
@@ -187,6 +204,8 @@ namespace Game.UI
 
                     return;
                 }
+
+                loggedMissingController = false;
             }
 
             gameController = cachedController;
