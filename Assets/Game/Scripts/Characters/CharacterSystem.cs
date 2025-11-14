@@ -89,6 +89,15 @@ namespace Game.Systems.CharacterSystem
             LogInfo($"Initialized with {repository.AliveCount} living characters across {repository.FamilyCount} families (time source: {timeSystem.Name}).");
         }
 
+        public CharacterValidationResult ValidateBaseCharactersOnly()
+        {
+            if (settings == null)
+                throw new InvalidOperationException("Character settings are not configured.");
+
+            CharacterFactory.LoadBaseCharacters(settings.BaseDataPath, CharacterLoadMode.Strict);
+            return CharacterFactory.LastValidationResult;
+        }
+
         public override void Update(GameState state) { }
 
         public override void Shutdown()
