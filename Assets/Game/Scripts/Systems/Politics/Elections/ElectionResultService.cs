@@ -11,9 +11,10 @@ namespace Game.Systems.Politics.Elections
     public class ElectionResultService
     {
         private readonly Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice;
-        private readonly EventBus eventBus;
+        private readonly EventBus.EventBus eventBus;
 
-        public ElectionResultService(Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice, EventBus eventBus)
+        public ElectionResultService(Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice,
+            EventBus.EventBus eventBus)
         {
             this.assignOffice = assignOffice ?? throw new ArgumentNullException(nameof(assignOffice));
             this.eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));

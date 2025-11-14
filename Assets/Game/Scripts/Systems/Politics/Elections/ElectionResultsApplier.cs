@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Game.Core;
 using Game.Systems.EventBus;
 using Game.Systems.Politics.Offices;
 
@@ -9,13 +10,15 @@ namespace Game.Systems.Politics.Elections
     {
         private readonly ElectionResultService service;
 
-        public ElectionResultsApplier(Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice, EventBus eventBus)
-        private readonly OfficeSystem officeSystem;
-        private readonly EventBus.EventBus eventBus;
-
-        public ElectionResultsApplier(OfficeSystem officeSystem, EventBus.EventBus eventBus)
+        public ElectionResultsApplier(Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice,
+            EventBus.EventBus eventBus)
         {
             service = new ElectionResultService(assignOffice, eventBus);
+        }
+
+        public ElectionResultsApplier(OfficeSystem officeSystem, EventBus.EventBus eventBus)
+            : this(officeSystem.AssignOffice, eventBus)
+        {
         }
 
         public (ElectionResultSummary summary, ElectionResultRecord record) ApplyOfficeResults(
