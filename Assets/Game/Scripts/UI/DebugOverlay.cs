@@ -27,7 +27,7 @@ namespace Game.UI
         private DebugOverlayBuilder builder;
         private DebugOverlayDataAdapter dataAdapter;
 
-        private GameController controller;
+        private Game.Core.GameController controller;
         private GameState gameState;
         private TimeSystem timeSystem;
         private CharacterSystem characterSystem;
@@ -133,7 +133,7 @@ namespace Game.UI
             if (adapterInitialized && dataAdapter != null)
                 return true;
 
-            controller = controller != null ? controller : UnityEngine.Object.FindFirstObjectByType<GameController>();
+            controller = controller != null ? controller : UnityEngine.Object.FindFirstObjectByType<Game.Core.GameController>();
             if (controller == null || !controller.IsInitialized)
                 return false;
 

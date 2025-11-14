@@ -96,7 +96,7 @@ public class CharacterLedgerSimple : MonoBehaviour
         // Wait one frame for GameController initialization
         yield return null;
 
-        var controller = FindFirstObjectByType<GameController>();
+        var controller = FindFirstObjectByType<Game.Core.GameController>();
         if (controller == null)
         {
             Game.Core.Logger.Warn("Safety", "[CharacterLedger] No GameController found in scene.");
