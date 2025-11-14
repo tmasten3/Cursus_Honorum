@@ -206,7 +206,7 @@ namespace Game.UI
                 {
                     if (!loggedMissingController)
                     {
-                        Logger.Warn("UI", "[DebugOverlay] GameController not found during initialization.");
+                        Game.Core.Logger.Warn("UI", "[DebugOverlay] GameController not found during initialization.");
                         loggedMissingController = true;
                     }
 
@@ -262,14 +262,14 @@ namespace Game.UI
             var resolvedTimeSystem = state.GetSystem<TimeSystem>();
             if (resolvedTimeSystem == null)
             {
-                Logger.Error("Safety", "[DebugOverlay] TimeSystem unavailable during binding.");
+                Game.Core.Logger.Error("Safety", "[DebugOverlay] TimeSystem unavailable during binding.");
                 return;
             }
 
             var resolvedCharacterSystem = state.GetSystem<CharacterSystem>();
             if (resolvedCharacterSystem == null)
             {
-                Logger.Error("Safety", "[DebugOverlay] CharacterSystem unavailable during binding.");
+                Game.Core.Logger.Error("Safety", "[DebugOverlay] CharacterSystem unavailable during binding.");
                 return;
             }
 
@@ -280,7 +280,7 @@ namespace Game.UI
             }
             else
             {
-                Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
+                Game.Core.Logger.Warn("Safety", "[DebugOverlay] Character repository unavailable.");
             }
 
             var resolvedOfficeSystem = state.GetSystem<OfficeSystem>();
@@ -288,7 +288,7 @@ namespace Game.UI
             var resolvedEventBus = state.GetSystem<EventBusSystem>();
             if (resolvedEventBus == null)
             {
-                Logger.Error("Safety", "[DebugOverlay] EventBus unavailable during binding.");
+                Game.Core.Logger.Error("Safety", "[DebugOverlay] EventBus unavailable during binding.");
                 return;
             }
 
@@ -479,7 +479,7 @@ namespace Game.UI
             {
                 if (lastSeasonValidationKey != int.MinValue && current.month == 1 && lastSeasonOfficeHash == lastOfficeDisplayHash)
                 {
-                    Logger.Warn("UI", "[DebugOverlay] Office section did not update at the new year. Verify bindings.");
+                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Office section did not update at the new year. Verify bindings.");
                 }
 
                 lastSeasonOfficeHash = lastOfficeDisplayHash;
@@ -490,12 +490,12 @@ namespace Game.UI
                 bool inElectionSeason = current.month >= 6 && current.month <= 7;
                 if (inElectionSeason && view != null && !view.HasElectionEntries)
                 {
-                    Logger.Warn("UI", "[DebugOverlay] Election section empty during election season.");
+                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Election section empty during election season.");
                 }
 
                 if (lastSeasonValidationKey != int.MinValue && current.month == 7 && lastSeasonElectionHash == lastElectionDisplayHash)
                 {
-                    Logger.Warn("UI", "[DebugOverlay] Election results section did not refresh after elections.");
+                    Game.Core.Logger.Warn("UI", "[DebugOverlay] Election results section did not refresh after elections.");
                 }
 
                 lastSeasonElectionHash = lastElectionDisplayHash;

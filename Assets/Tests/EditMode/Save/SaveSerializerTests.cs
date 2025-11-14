@@ -191,6 +191,12 @@ namespace CursusHonorum.Tests.Save
                 if (data.TryGetValue("value", out var raw))
                     value = Convert.ToInt32(raw, CultureInfo.InvariantCulture);
             }
+
+            // Fix: Implement the abstract Update method from GameSystemBase
+            public override void Update(GameState state)
+            {
+                // No-op for stub systems in tests
+            }
         }
 
         private sealed class StubTimeSystem : StubValueSystem

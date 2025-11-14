@@ -10,7 +10,12 @@ namespace Game.Systems.Politics.Elections
     {
         private readonly ElectionResultService service;
 
-        public ElectionResultsApplier(Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice, EventBus.EventBus eventBus);
+        public ElectionResultsApplier(Func<string, int, int, bool, OfficeSeatDescriptor> assignOffice, EventBus.EventBus eventBus)
+        {
+            this.officeSystem = null; // or assign as needed
+            this.eventBus = eventBus;
+            this.service = new ElectionResultService(assignOffice, eventBus);
+        }
         private readonly OfficeSystem officeSystem;
         private readonly EventBus.EventBus eventBus;
 

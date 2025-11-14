@@ -21,7 +21,7 @@ namespace Game.Core.Save
                 .Distinct(StringComparer.Ordinal)
                 .ToArray();
 
-            this.requiredSystemKeys = Array.AsReadOnly(requiredSystemKeys);
+            this.requiredSystemKeys = Array.AsReadOnly(requiredSystemKeys.ToArray());
         }
 
         public IReadOnlyList<string> RequiredSystemKeys => requiredSystemKeys;
