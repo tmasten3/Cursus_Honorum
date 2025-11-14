@@ -57,13 +57,11 @@ namespace Game.Data.Characters
             var dignitas = NormalizeStat(profile.Dignitas);
             var administration = NormalizeStat(profile.Administration);
             var militaryLean = Mathf.Clamp01(profile.MilitaryLean);
-            var senateLean = Mathf.Clamp01(profile.SenateLean);
-            var popularLean = Mathf.Clamp01(profile.PopularLean);
 
             var assertiveness = BlendWithNeutral((courage + ambition) * 0.5f);
             var stability = BlendWithNeutral((judgment + civic) * 0.5f);
-            var ideologyConservatism = ComputeIdeologyValue(profile.TotalInfluence, senateLean, popularLean);
-            var ideologyPopulism = ComputeIdeologyValue(profile.TotalInfluence, popularLean, senateLean);
+            var ideologyConservatism = ComputeIdeologyValue(profile.SenatorialInfluence, profile.PopularInfluence);
+            var ideologyPopulism = ComputeIdeologyValue(profile.PopularInfluence, profile.SenatorialInfluence);
             var militaryAssertiveness = BlendWithNeutral((militaryLean + courage) * 0.5f);
             var honorInclination = BlendWithNeutral((dignitas + civic) * 0.5f);
             var corruptionRisk = Mathf.Clamp01(1f - honorInclination);
@@ -71,10 +69,9 @@ namespace Game.Data.Characters
             var shortTermOpportunism = BlendWithNeutral(ambition);
 
             var (powerBaseSenate, powerBasePopular, powerBaseMilitary) = ComputePowerBases(
-                profile.TotalInfluence,
-                senateLean,
-                popularLean,
-                militaryLean);
+                profile.SenatorialInfluence,
+                profile.PopularInfluence,
+                profile.MilitaryInfluence);
 
             return new PoliticalBehaviorModel(
                 assertiveness,
@@ -105,27 +102,27 @@ namespace Game.Data.Characters
             return Mathf.Clamp01(0.5f + Mathf.Clamp01(normalized) * 0.5f);
         }
 
-        private static float ComputeIdeologyValue(float totalInfluence, float primaryLean, float opposingLean)
+        private static float ComputeIdeologyValue(float primaryInfluence, float opposingInfluence)
         {
-            if (totalInfluence <= 0f)
+            var primary = Mathf.Max(0f, primaryInfluence);
+            var opposing = Mathf.Max(0f, opposingInfluence);
+
+            var combined = primary + opposing;
+            if (combined <= 0f)
                 return 0.5f;
 
-            var delta = Mathf.Clamp(primaryLean - opposingLean, -1f, 1f);
+            var delta = Mathf.Clamp((primary - opposing) / combined, -1f, 1f);
             return Mathf.Clamp01(0.5f + delta * 0.5f);
         }
 
         private static (float senate, float popular, float military) ComputePowerBases(
-            float totalInfluence,
-            float senateLean,
-            float popularLean,
-            float militaryLean)
+            float senatorialInfluence,
+            float popularInfluence,
+            float militaryInfluence)
         {
-            if (totalInfluence <= 0f)
-                return (1f / 3f, 1f / 3f, 1f / 3f);
-
-            var senate = Mathf.Clamp01(senateLean);
-            var popular = Mathf.Clamp01(popularLean);
-            var military = Mathf.Clamp01(militaryLean);
+            var senate = Mathf.Max(0f, senatorialInfluence);
+            var popular = Mathf.Max(0f, popularInfluence);
+            var military = Mathf.Max(0f, militaryInfluence);
 
             var total = senate + popular + military;
             if (total <= 0f)
