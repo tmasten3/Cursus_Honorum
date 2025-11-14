@@ -6,7 +6,7 @@ namespace Game.Systems.Politics.Elections
 {
     public class ElectionCalendar
     {
-        private readonly EventBus eventBus;
+        private readonly EventBus.EventBus eventBus;
         private bool subscriptionsActive;
 
         public int CurrentYear { get; private set; }
@@ -17,7 +17,7 @@ namespace Game.Systems.Politics.Elections
         public event Action<OnNewDayEvent> DeclarationWindowOpened;
         public event Action<OnNewDayEvent> ElectionDayArrived;
 
-        public ElectionCalendar(EventBus eventBus, TimeSystem timeSystem)
+        public ElectionCalendar(EventBus.EventBus eventBus, TimeSystem timeSystem)
         {
             this.eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _ = timeSystem ?? throw new ArgumentNullException(nameof(timeSystem));

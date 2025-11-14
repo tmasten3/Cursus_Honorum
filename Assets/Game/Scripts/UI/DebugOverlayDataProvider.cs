@@ -417,7 +417,7 @@ namespace Game.UI
 
         private (string Text, int Count, DateTime LatestTimestamp) BuildLogsSection()
         {
-            IReadOnlyList<Logger.LogEntry> entries = Logger.GetRecentEntries();
+            IReadOnlyList<Game.Core.Logger.LogEntry> entries = Game.Core.Logger.GetRecentEntries();
             if (entries == null || entries.Count == 0)
             {
                 return (string.Empty, 0, DateTime.MinValue);

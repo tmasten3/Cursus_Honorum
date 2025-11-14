@@ -11,9 +11,9 @@ namespace Game.Systems.Politics.Elections
     public class ElectionResultsApplier
     {
         private readonly OfficeSystem officeSystem;
-        private readonly EventBus eventBus;
+        private readonly EventBus.EventBus eventBus;
 
-        public ElectionResultsApplier(OfficeSystem officeSystem, EventBus eventBus)
+        public ElectionResultsApplier(OfficeSystem officeSystem, EventBus.EventBus eventBus)
         {
             this.officeSystem = officeSystem ?? throw new ArgumentNullException(nameof(officeSystem));
             this.eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
