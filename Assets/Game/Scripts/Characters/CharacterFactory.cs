@@ -188,13 +188,15 @@ namespace Game.Data.Characters
                 return;
             }
 
+            var deterministicRandom = new System.Random(0);
+
             for (int i = 0; i < characters.Count; i++)
             {
                 var character = characters[i];
                 if (character == null)
                     continue;
 
-                var analysis = AnalyzeCharacter(character);
+                var analysis = AnalyzeCharacter(character, deterministicRandom);
                 if (analysis.Corrections == null || analysis.Corrections.Count == 0)
                     continue;
 
@@ -254,7 +256,7 @@ namespace Game.Data.Characters
             public List<string> Corrections;
         }
 
-        private static CharacterNormalizationAnalysis AnalyzeCharacter(Character character)
+        private static CharacterNormalizationAnalysis AnalyzeCharacter(Character character, System.Random randomOverride = null)
         {
             if (character == null)
             {
@@ -271,7 +273,8 @@ namespace Game.Data.Characters
                 character.Class,
                 character.Family,
                 character.RomanName,
-                corrections);
+                corrections,
+                randomOverride);
 
             string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, normalizedName);
             if (!string.IsNullOrEmpty(resolvedFamily)

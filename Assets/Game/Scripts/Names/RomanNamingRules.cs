@@ -49,8 +49,11 @@ namespace Game.Data.Characters
             SocialClass socialClass,
             string gens,
             RomanName template,
-            List<string> corrections = null)
+            List<string> corrections = null,
+            System.Random randomOverride = null)
         {
+            var random = randomOverride ?? rng;
+
             string canonicalGens = NormalizeComponent(gens);
             if (!string.IsNullOrEmpty(canonicalGens))
                 canonicalGens = GetMasculineForm(canonicalGens);
@@ -63,7 +66,7 @@ namespace Game.Data.Characters
             {
                 if (string.IsNullOrEmpty(nomen))
                 {
-                    nomen = canonicalGens ?? GetNomen(socialClass);
+                    nomen = canonicalGens ?? GetNomen(socialClass, random);
                     corrections?.Add($"assigned nomen '{nomen}'");
                 }
                 else
@@ -78,19 +81,19 @@ namespace Game.Data.Characters
 
                 if (string.IsNullOrEmpty(praenomen))
                 {
-                    praenomen = GetPraenomenDistinct(nomen);
+                    praenomen = GetPraenomenDistinct(nomen, random);
                     corrections?.Add($"generated praenomen '{praenomen}'");
                 }
 
                 if (string.IsNullOrEmpty(cognomen))
                 {
-                    cognomen = GetDistinctCognomen(praenomen, nomen);
+                    cognomen = GetDistinctCognomen(praenomen, nomen, random);
                     corrections?.Add($"generated cognomen '{cognomen}'");
                 }
 
                 if (string.Equals(praenomen, nomen, StringComparison.OrdinalIgnoreCase))
                 {
-                    var adjusted = GetPraenomenDistinct(nomen);
+                    var adjusted = GetPraenomenDistinct(nomen, random);
                     if (!string.Equals(adjusted, praenomen, StringComparison.Ordinal))
                     {
                         corrections?.Add($"adjusted praenomen to '{adjusted}' to avoid duplication");
@@ -101,7 +104,7 @@ namespace Game.Data.Characters
                 if (string.Equals(cognomen, nomen, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(cognomen, praenomen, StringComparison.OrdinalIgnoreCase))
                 {
-                    var adjusted = GetDistinctCognomen(praenomen, nomen);
+                    var adjusted = GetDistinctCognomen(praenomen, nomen, random);
                     if (!string.Equals(adjusted, cognomen, StringComparison.Ordinal))
                     {
                         corrections?.Add($"adjusted cognomen to '{adjusted}' to avoid duplication");
@@ -124,7 +127,7 @@ namespace Game.Data.Characters
 
                 if (string.IsNullOrEmpty(baseGens))
                 {
-                    baseGens = GetNomen(socialClass);
+                    baseGens = GetNomen(socialClass, random);
                     corrections?.Add($"assigned gens '{baseGens}'");
                 }
 
@@ -213,11 +216,15 @@ namespace Game.Data.Characters
             return null;
         }
 
-        public static string GetPraenomen() =>
-            MalePraenomina[rng.Next(MalePraenomina.Length)];
-
-        public static string GetNomen(SocialClass socialClass)
+        public static string GetPraenomen(System.Random random = null)
         {
+            var source = random ?? rng;
+            return MalePraenomina[source.Next(MalePraenomina.Length)];
+        }
+
+        public static string GetNomen(SocialClass socialClass, System.Random random = null)
+        {
+            var source = random ?? rng;
             string[] pool = socialClass switch
             {
                 SocialClass.Patrician => PatricianNomina,
@@ -225,30 +232,33 @@ namespace Game.Data.Characters
                 SocialClass.Equestrian => EquestrianNomina,
                 _ => PatricianNomina
             };
-            return pool[rng.Next(pool.Length)];
+            return pool[source.Next(pool.Length)];
         }
 
-        public static string GetCognomen() =>
-            Cognomina[rng.Next(Cognomina.Length)];
+        public static string GetCognomen(System.Random random = null)
+        {
+            var source = random ?? rng;
+            return Cognomina[source.Next(Cognomina.Length)];
+        }
 
-        private static string GetPraenomenDistinct(string nomen)
+        private static string GetPraenomenDistinct(string nomen, System.Random random)
         {
             var guard = 0;
-            var praenomen = GetPraenomen();
+            var praenomen = GetPraenomen(random);
             while (string.Equals(praenomen, nomen, StringComparison.OrdinalIgnoreCase) && guard++ < 10)
-                praenomen = GetPraenomen();
+                praenomen = GetPraenomen(random);
             return praenomen;
         }
 
-        private static string GetDistinctCognomen(string praenomen, string nomen)
+        private static string GetDistinctCognomen(string praenomen, string nomen, System.Random random)
         {
             var guard = 0;
-            var cognomen = GetCognomen();
+            var cognomen = GetCognomen(random);
             while ((string.Equals(cognomen, nomen, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(cognomen, praenomen, StringComparison.OrdinalIgnoreCase))
                    && guard++ < 10)
             {
-                cognomen = GetCognomen();
+                cognomen = GetCognomen(random);
             }
             return cognomen;
         }
