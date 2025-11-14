@@ -4,7 +4,10 @@ using Game.Core;
 using Game.Systems.Time;
 using Game.Core.Save;
 using System.Collections.Generic;
-using System.Reflection;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+#endif
 
 public class GameController : MonoBehaviour
 {
@@ -203,170 +206,152 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private static readonly Type KeyboardType = Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
-    private static readonly Type KeyEnumType = Type.GetType("UnityEngine.InputSystem.Key, Unity.InputSystem");
-    private static readonly Type KeyControlType = Type.GetType("UnityEngine.InputSystem.Controls.KeyControl, Unity.InputSystem");
-    private static readonly PropertyInfo KeyboardCurrentProperty = KeyboardType?.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
-    private static readonly PropertyInfo KeyboardItemProperty = KeyboardType?.GetProperty("Item", BindingFlags.Public | BindingFlags.Instance, null, KeyControlType, new[] { KeyEnumType }, null);
-    private static readonly PropertyInfo KeyWasPressedThisFrameProperty = KeyControlType?.GetProperty("wasPressedThisFrame", BindingFlags.Public | BindingFlags.Instance);
-    private static readonly Dictionary<KeyCode, string> KeyboardPropertyMap;
+#if ENABLE_INPUT_SYSTEM
+    private static readonly Dictionary<KeyCode, Func<Keyboard, KeyControl>> KeyboardControlResolvers;
 
     static GameController()
     {
-        KeyboardPropertyMap = new Dictionary<KeyCode, string>();
+        KeyboardControlResolvers = new Dictionary<KeyCode, Func<Keyboard, KeyControl>>();
 
-        void Add(KeyCode key, string propertyName)
+        void Map(KeyCode key, Func<Keyboard, KeyControl> resolver)
         {
-            if (!KeyboardPropertyMap.ContainsKey(key))
-                KeyboardPropertyMap.Add(key, propertyName);
+            if (!KeyboardControlResolvers.ContainsKey(key))
+                KeyboardControlResolvers.Add(key, resolver);
         }
 
-        Add(KeyCode.Return, "enterKey");
-        Add(KeyCode.KeypadEnter, "numpadEnterKey");
-        Add(KeyCode.LeftArrow, "leftArrowKey");
-        Add(KeyCode.RightArrow, "rightArrowKey");
-        Add(KeyCode.UpArrow, "upArrowKey");
-        Add(KeyCode.DownArrow, "downArrowKey");
-        Add(KeyCode.LeftControl, "leftCtrlKey");
-        Add(KeyCode.RightControl, "rightCtrlKey");
-        Add(KeyCode.LeftShift, "leftShiftKey");
-        Add(KeyCode.RightShift, "rightShiftKey");
-        Add(KeyCode.LeftAlt, "leftAltKey");
-        Add(KeyCode.RightAlt, "rightAltKey");
-        Add(KeyCode.Space, "spaceKey");
-        Add(KeyCode.Alpha0, "digit0Key");
-        Add(KeyCode.Alpha1, "digit1Key");
-        Add(KeyCode.Alpha2, "digit2Key");
-        Add(KeyCode.Alpha3, "digit3Key");
-        Add(KeyCode.Alpha4, "digit4Key");
-        Add(KeyCode.Alpha5, "digit5Key");
-        Add(KeyCode.Alpha6, "digit6Key");
-        Add(KeyCode.Alpha7, "digit7Key");
-        Add(KeyCode.Alpha8, "digit8Key");
-        Add(KeyCode.Alpha9, "digit9Key");
-        Add(KeyCode.Backspace, "backspaceKey");
-        Add(KeyCode.Delete, "deleteKey");
-        Add(KeyCode.Insert, "insertKey");
-        Add(KeyCode.Tab, "tabKey");
-        Add(KeyCode.Escape, "escapeKey");
-        Add(KeyCode.CapsLock, "capsLockKey");
-        Add(KeyCode.Numlock, "numLockKey");
-        Add(KeyCode.ScrollLock, "scrollLockKey");
-        Add(KeyCode.Print, "printScreenKey");
-        Add(KeyCode.Pause, "pauseKey");
-        Add(KeyCode.Home, "homeKey");
-        Add(KeyCode.End, "endKey");
-        Add(KeyCode.PageUp, "pageUpKey");
-        Add(KeyCode.PageDown, "pageDownKey");
-        Add(KeyCode.BackQuote, "backquoteKey");
-        Add(KeyCode.Minus, "minusKey");
-        Add(KeyCode.Equals, "equalsKey");
-        Add(KeyCode.LeftBracket, "leftBracketKey");
-        Add(KeyCode.RightBracket, "rightBracketKey");
-        Add(KeyCode.Semicolon, "semicolonKey");
-        Add(KeyCode.Quote, "quoteKey");
-        Add(KeyCode.Comma, "commaKey");
-        Add(KeyCode.Period, "periodKey");
-        Add(KeyCode.Slash, "slashKey");
-        Add(KeyCode.Backslash, "backslashKey");
+        Map(KeyCode.Return, keyboard => keyboard.enterKey);
+        Map(KeyCode.KeypadEnter, keyboard => keyboard.numpadEnterKey);
+        Map(KeyCode.LeftArrow, keyboard => keyboard.leftArrowKey);
+        Map(KeyCode.RightArrow, keyboard => keyboard.rightArrowKey);
+        Map(KeyCode.UpArrow, keyboard => keyboard.upArrowKey);
+        Map(KeyCode.DownArrow, keyboard => keyboard.downArrowKey);
+        Map(KeyCode.LeftControl, keyboard => keyboard.leftCtrlKey);
+        Map(KeyCode.RightControl, keyboard => keyboard.rightCtrlKey);
+        Map(KeyCode.LeftShift, keyboard => keyboard.leftShiftKey);
+        Map(KeyCode.RightShift, keyboard => keyboard.rightShiftKey);
+        Map(KeyCode.LeftAlt, keyboard => keyboard.leftAltKey);
+        Map(KeyCode.RightAlt, keyboard => keyboard.rightAltKey);
+        Map(KeyCode.Space, keyboard => keyboard.spaceKey);
+        Map(KeyCode.Alpha0, keyboard => keyboard.digit0Key);
+        Map(KeyCode.Alpha1, keyboard => keyboard.digit1Key);
+        Map(KeyCode.Alpha2, keyboard => keyboard.digit2Key);
+        Map(KeyCode.Alpha3, keyboard => keyboard.digit3Key);
+        Map(KeyCode.Alpha4, keyboard => keyboard.digit4Key);
+        Map(KeyCode.Alpha5, keyboard => keyboard.digit5Key);
+        Map(KeyCode.Alpha6, keyboard => keyboard.digit6Key);
+        Map(KeyCode.Alpha7, keyboard => keyboard.digit7Key);
+        Map(KeyCode.Alpha8, keyboard => keyboard.digit8Key);
+        Map(KeyCode.Alpha9, keyboard => keyboard.digit9Key);
+        Map(KeyCode.Backspace, keyboard => keyboard.backspaceKey);
+        Map(KeyCode.Delete, keyboard => keyboard.deleteKey);
+        Map(KeyCode.Insert, keyboard => keyboard.insertKey);
+        Map(KeyCode.Tab, keyboard => keyboard.tabKey);
+        Map(KeyCode.Escape, keyboard => keyboard.escapeKey);
+        Map(KeyCode.CapsLock, keyboard => keyboard.capsLockKey);
+        Map(KeyCode.Numlock, keyboard => keyboard.numLockKey);
+        Map(KeyCode.ScrollLock, keyboard => keyboard.scrollLockKey);
+        Map(KeyCode.Print, keyboard => keyboard.printScreenKey);
+        Map(KeyCode.Pause, keyboard => keyboard.pauseKey);
+        Map(KeyCode.Home, keyboard => keyboard.homeKey);
+        Map(KeyCode.End, keyboard => keyboard.endKey);
+        Map(KeyCode.PageUp, keyboard => keyboard.pageUpKey);
+        Map(KeyCode.PageDown, keyboard => keyboard.pageDownKey);
+        Map(KeyCode.BackQuote, keyboard => keyboard.backquoteKey);
+        Map(KeyCode.Minus, keyboard => keyboard.minusKey);
+        Map(KeyCode.Equals, keyboard => keyboard.equalsKey);
+        Map(KeyCode.LeftBracket, keyboard => keyboard.leftBracketKey);
+        Map(KeyCode.RightBracket, keyboard => keyboard.rightBracketKey);
+        Map(KeyCode.Semicolon, keyboard => keyboard.semicolonKey);
+        Map(KeyCode.Quote, keyboard => keyboard.quoteKey);
+        Map(KeyCode.Comma, keyboard => keyboard.commaKey);
+        Map(KeyCode.Period, keyboard => keyboard.periodKey);
+        Map(KeyCode.Slash, keyboard => keyboard.slashKey);
+        Map(KeyCode.Backslash, keyboard => keyboard.backslashKey);
 
         // Multiple enum aliases (platform-specific) may map to the same underlying value.
         // Attempt to add all known aliases but tolerate duplicates by skipping them.
-        Add(KeyCode.LeftWindows, "leftWindowsKey");
-        Add(KeyCode.LeftCommand, "leftWindowsKey");
-        Add(KeyCode.LeftApple, "leftWindowsKey");
-        Add(KeyCode.RightWindows, "rightWindowsKey");
-        Add(KeyCode.RightCommand, "rightWindowsKey");
-        Add(KeyCode.RightApple, "rightWindowsKey");
+        Map(KeyCode.LeftWindows, keyboard => keyboard.leftWindowsKey);
+        Map(KeyCode.LeftCommand, keyboard => keyboard.leftWindowsKey);
+        Map(KeyCode.LeftApple, keyboard => keyboard.leftWindowsKey);
+        Map(KeyCode.RightWindows, keyboard => keyboard.rightWindowsKey);
+        Map(KeyCode.RightCommand, keyboard => keyboard.rightWindowsKey);
+        Map(KeyCode.RightApple, keyboard => keyboard.rightWindowsKey);
 
-        Add(KeyCode.Menu, "contextMenuKey");
-        Add(KeyCode.Keypad0, "numpad0Key");
-        Add(KeyCode.Keypad1, "numpad1Key");
-        Add(KeyCode.Keypad2, "numpad2Key");
-        Add(KeyCode.Keypad3, "numpad3Key");
-        Add(KeyCode.Keypad4, "numpad4Key");
-        Add(KeyCode.Keypad5, "numpad5Key");
-        Add(KeyCode.Keypad6, "numpad6Key");
-        Add(KeyCode.Keypad7, "numpad7Key");
-        Add(KeyCode.Keypad8, "numpad8Key");
-        Add(KeyCode.Keypad9, "numpad9Key");
-        Add(KeyCode.KeypadDivide, "numpadDivideKey");
-        Add(KeyCode.KeypadMultiply, "numpadMultiplyKey");
-        Add(KeyCode.KeypadMinus, "numpadMinusKey");
-        Add(KeyCode.KeypadPlus, "numpadPlusKey");
-        Add(KeyCode.KeypadPeriod, "numpadPeriodKey");
-        Add(KeyCode.KeypadEquals, "numpadEqualsKey");
-    }
-
-    private static bool IsNewInputSystemAvailable =>
-        KeyboardType != null &&
-        KeyEnumType != null &&
-        KeyControlType != null &&
-        KeyboardCurrentProperty != null &&
-        KeyWasPressedThisFrameProperty != null;
-
-    private bool IsKeyActivationTriggered(KeyCode keyCode)
-    {
-        if (keyCode == KeyCode.None)
-            return false;
-
-        if (TryGetNewInputSystemKeyState(keyCode, out var pressed) && pressed)
-            return true;
-
-        return Input.GetKeyDown(keyCode);
+        Map(KeyCode.Menu, keyboard => keyboard.contextMenuKey);
+        Map(KeyCode.Keypad0, keyboard => keyboard.numpad0Key);
+        Map(KeyCode.Keypad1, keyboard => keyboard.numpad1Key);
+        Map(KeyCode.Keypad2, keyboard => keyboard.numpad2Key);
+        Map(KeyCode.Keypad3, keyboard => keyboard.numpad3Key);
+        Map(KeyCode.Keypad4, keyboard => keyboard.numpad4Key);
+        Map(KeyCode.Keypad5, keyboard => keyboard.numpad5Key);
+        Map(KeyCode.Keypad6, keyboard => keyboard.numpad6Key);
+        Map(KeyCode.Keypad7, keyboard => keyboard.numpad7Key);
+        Map(KeyCode.Keypad8, keyboard => keyboard.numpad8Key);
+        Map(KeyCode.Keypad9, keyboard => keyboard.numpad9Key);
+        Map(KeyCode.KeypadDivide, keyboard => keyboard.numpadDivideKey);
+        Map(KeyCode.KeypadMultiply, keyboard => keyboard.numpadMultiplyKey);
+        Map(KeyCode.KeypadMinus, keyboard => keyboard.numpadMinusKey);
+        Map(KeyCode.KeypadPlus, keyboard => keyboard.numpadPlusKey);
+        Map(KeyCode.KeypadPeriod, keyboard => keyboard.numpadPeriodKey);
+        Map(KeyCode.KeypadEquals, keyboard => keyboard.numpadEqualsKey);
     }
 
     private bool TryGetNewInputSystemKeyState(KeyCode keyCode, out bool wasPressed)
     {
         wasPressed = false;
 
-        if (!IsNewInputSystemAvailable)
-            return false;
-
-        var keyboard = KeyboardCurrentProperty?.GetValue(null);
+        var keyboard = Keyboard.current;
         if (keyboard == null)
             return false;
 
-        if (!TryGetKeyControl(keyboard, keyCode, out var keyControl))
+        if (!TryGetKeyControl(keyboard, keyCode, out var keyControl) || keyControl == null)
             return false;
 
-        var pressedValue = KeyWasPressedThisFrameProperty?.GetValue(keyControl);
-        if (pressedValue is bool pressed)
+        wasPressed = keyControl.wasPressedThisFrame;
+        return true;
+    }
+
+    private bool TryGetKeyControl(Keyboard keyboard, KeyCode keyCode, out KeyControl keyControl)
+    {
+        keyControl = null;
+
+        if (keyboard == null)
+            return false;
+
+        if (KeyboardControlResolvers.TryGetValue(keyCode, out var resolver) && resolver != null)
         {
-            wasPressed = pressed;
-            return true;
+            keyControl = resolver.Invoke(keyboard);
+            if (keyControl != null)
+                return true;
+        }
+
+        if (Enum.TryParse<Key>(keyCode.ToString(), true, out var parsedKey))
+        {
+            keyControl = keyboard[parsedKey];
+            if (keyControl != null)
+                return true;
         }
 
         return false;
     }
+#endif
 
-    private bool TryGetKeyControl(object keyboard, KeyCode keyCode, out object keyControl)
+    private bool IsKeyActivationTriggered(KeyCode keyCode)
     {
-        keyControl = null;
-        if (keyboard == null)
+        if (keyCode == KeyCode.None)
             return false;
 
-        if (KeyboardItemProperty != null && KeyEnumType != null)
-        {
-            try
-            {
-                var parsedKey = Enum.Parse(KeyEnumType, keyCode.ToString());
-                keyControl = KeyboardItemProperty.GetValue(keyboard, new[] { parsedKey });
-                if (keyControl != null)
-                    return true;
-            }
-            catch
-            {
-                // Ignored - will attempt mapped properties instead.
-            }
-        }
+#if ENABLE_INPUT_SYSTEM
+        if (TryGetNewInputSystemKeyState(keyCode, out var pressed))
+            return pressed;
 
-        if (!KeyboardPropertyMap.TryGetValue(keyCode, out var propertyName) || KeyboardType == null)
-            return false;
-
-        var property = KeyboardType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-        keyControl = property?.GetValue(keyboard);
-        return keyControl != null;
+#if ENABLE_LEGACY_INPUT_MANAGER
+        return Input.GetKeyDown(keyCode);
+#else
+        return false;
+#endif
+#else
+        return Input.GetKeyDown(keyCode);
+#endif
     }
 }
-
