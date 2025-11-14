@@ -19,9 +19,6 @@ namespace Game.UI
     {
         private const float MinimumRefreshInterval = 0.1f;
 
-        [SerializeField]
-        private KeyCode toggleKey = KeyCode.F1;
-
         [SerializeField, Range(MinimumRefreshInterval, 5f)]
         private float refreshInterval = 0.5f;
 
@@ -40,7 +37,6 @@ namespace Game.UI
         private EventBus eventBus;
 
         private float refreshTimer;
-        private bool isVisible = true;
         private bool adapterInitialized;
 
         private void Awake()
@@ -58,6 +54,16 @@ namespace Game.UI
         private void OnEnable()
         {
             refreshTimer = refreshInterval;
+
+            if (canvas != null)
+                canvas.enabled = true;
+
+            if (raycaster != null)
+                raycaster.enabled = true;
+
+            if (builder != null)
+                builder.SetRootActive(true);
+
             EnsureSystemsBound();
         }
 
@@ -88,11 +94,6 @@ namespace Game.UI
 
         private void Update()
         {
-            HandleToggle();
-
-            if (!isVisible)
-                return;
-
             if (!EnsureSystemsBound())
                 return;
 
@@ -102,43 +103,6 @@ namespace Game.UI
 
             refreshTimer = 0f;
             RefreshOverlay();
-        }
-
-        private void HandleToggle()
-        {
-            if (toggleKey == KeyCode.None)
-                return;
-
-            if (Input.GetKeyDown(toggleKey))
-            {
-                SetVisible(!isVisible);
-            }
-        }
-
-        private void SetVisible(bool visible)
-        {
-            if (isVisible == visible)
-                return;
-
-            isVisible = visible;
-
-            if (canvas != null)
-                canvas.enabled = visible;
-
-            if (raycaster != null)
-                raycaster.enabled = visible;
-
-            if (builder != null)
-                builder.SetRootActive(visible);
-
-            if (visible)
-            {
-                refreshTimer = refreshInterval;
-                if (EnsureSystemsBound())
-                {
-                    RefreshOverlay();
-                }
-            }
         }
 
         private void ConfigureCanvas()
