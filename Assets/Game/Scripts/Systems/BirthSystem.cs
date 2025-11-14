@@ -74,8 +74,6 @@ namespace Game.Systems.BirthSystem
             LogInfo("Initialized and subscribed to OnNewDayEvent.");
         }
 
-        public override void Update(GameState state) { }
-
         public override void Shutdown()
         {
             newDaySubscription.Dispose();

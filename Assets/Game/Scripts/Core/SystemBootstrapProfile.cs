@@ -95,7 +95,7 @@ namespace Game.Core
         }
 
         public void AddSystem<TSystem>(Func<SystemResolver, TSystem> factory, params Type[] dependencies)
-            where TSystem : class, IGameSystem
+            where TSystem : GameSystemBase
         {
             if (factory == null) throw new ArgumentNullException(nameof(factory));
             descriptors.Add(SystemDescriptor.For(factory, dependencies));
@@ -107,12 +107,12 @@ namespace Game.Core
     /// </summary>
     public sealed class SystemDescriptor
     {
-        private readonly Func<SystemResolver, IGameSystem> factory;
+        private readonly Func<SystemResolver, GameSystemBase> factory;
 
         public Type SystemType { get; }
         public IReadOnlyCollection<Type> Dependencies { get; }
 
-        public SystemDescriptor(Type systemType, Func<SystemResolver, IGameSystem> factory, IEnumerable<Type> dependencies = null)
+        public SystemDescriptor(Type systemType, Func<SystemResolver, GameSystemBase> factory, IEnumerable<Type> dependencies = null)
         {
             SystemType = systemType ?? throw new ArgumentNullException(nameof(systemType));
             this.factory = factory ?? throw new ArgumentNullException(nameof(factory));
@@ -120,13 +120,13 @@ namespace Game.Core
         }
 
         public static SystemDescriptor For<TSystem>(Func<SystemResolver, TSystem> factory, IEnumerable<Type> dependencies = null)
-            where TSystem : class, IGameSystem
+            where TSystem : GameSystemBase
         {
             if (factory == null) throw new ArgumentNullException(nameof(factory));
             return new SystemDescriptor(typeof(TSystem), resolver => factory(resolver), dependencies);
         }
 
-        internal IGameSystem Create(SystemResolver resolver)
+        internal GameSystemBase Create(SystemResolver resolver)
         {
             var system = factory(resolver);
             if (system == null)
@@ -140,15 +140,15 @@ namespace Game.Core
     /// </summary>
     public sealed class SystemResolver
     {
-        private readonly Func<Type, IGameSystem> accessor;
+        private readonly Func<Type, GameSystemBase> accessor;
 
-        internal SystemResolver(Func<Type, IGameSystem> accessor)
+        internal SystemResolver(Func<Type, GameSystemBase> accessor)
         {
             accessor ??= _ => null;
             this.accessor = accessor;
         }
 
-        public T Resolve<T>() where T : class, IGameSystem
+        public T Resolve<T>() where T : GameSystemBase
         {
             var type = typeof(T);
             var system = accessor(type) as T;
@@ -157,7 +157,7 @@ namespace Game.Core
             return system;
         }
 
-        public bool TryResolve<T>(out T system) where T : class, IGameSystem
+        public bool TryResolve<T>(out T system) where T : GameSystemBase
         {
             system = accessor(typeof(T)) as T;
             return system != null;

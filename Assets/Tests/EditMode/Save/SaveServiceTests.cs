@@ -71,7 +71,7 @@ namespace CursusHonorum.Tests.Save
 
                 var saveResult = saveService.SaveGame("slotA");
                 Assert.That(saveResult.Success, Is.True, saveResult.ErrorMessage);
-                original.Update();
+                original.Tick(0f);
 
                 var originalBus = original.GetSystem<EventBus>();
                 Assert.That(originalBus.History.OfType<OnGameSavedEvent>().Any(), Is.True, "Save event was not published.");
@@ -79,7 +79,7 @@ namespace CursusHonorum.Tests.Save
                 var loadService = new SaveService(restored, repository, serializer);
                 var loadResult = loadService.LoadGame("slotA");
                 Assert.That(loadResult.Success, Is.True, loadResult.ErrorMessage);
-                restored.Update();
+                restored.Tick(0f);
 
                 var restoredValues = CaptureValues(restored);
                 CollectionAssert.AreEquivalent(expectedValues, restoredValues);
@@ -110,7 +110,7 @@ namespace CursusHonorum.Tests.Save
                 var result = service.LoadGame("broken");
                 Assert.That(result.Success, Is.False);
 
-                state.Update();
+                state.Tick(0f);
                 var bus = state.GetSystem<EventBus>();
                 Assert.That(bus.History.OfType<OnGameLoadedEvent>().Any(), Is.False);
             }
@@ -202,7 +202,7 @@ namespace CursusHonorum.Tests.Save
                 value = newValue;
             }
 
-            public override void Update(GameState state)
+            protected override void OnTick(GameState state, float deltaTime)
             {
                 // Stub systems do not simulate behaviour during tests.
             }

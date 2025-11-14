@@ -71,8 +71,6 @@ namespace Game.Systems.Politics.Offices
             SeedInitialOfficeHolders();
         }
 
-        public override void Update(GameState state) { }
-
         public override void Shutdown()
         {
             newDaySubscription.Dispose();

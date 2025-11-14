@@ -39,7 +39,7 @@ namespace CursusHonorum.Tests.Core
                 Throws.InvalidOperationException.With.Message.Contains("Cycle detected"));
         }
 
-        private abstract class RecordingSystem : IGameSystem
+        private abstract class RecordingSystem : GameSystemBase
         {
             private readonly List<string> log;
             private readonly string systemName;
@@ -52,31 +52,26 @@ namespace CursusHonorum.Tests.Core
                 this.dependencies = dependencies ?? Array.Empty<Type>();
             }
 
-            public string Name => systemName;
+            public override string Name => systemName;
 
-            public IEnumerable<Type> Dependencies => dependencies;
+            public override IEnumerable<Type> Dependencies => dependencies;
 
-            public void Initialize(GameState state)
+            public override void Initialize(GameState state)
             {
+                base.Initialize(state);
                 log.Add(systemName);
             }
 
-            public void Update(GameState state)
-            {
-            }
+            protected override void OnTick(GameState state, float deltaTime) { }
 
-            public void Shutdown()
-            {
-            }
+            public override void Shutdown() { }
 
-            public Dictionary<string, object> Save()
+            public override Dictionary<string, object> Save()
             {
                 return new Dictionary<string, object>();
             }
 
-            public void Load(Dictionary<string, object> data)
-            {
-            }
+            public override void Load(Dictionary<string, object> data) { }
         }
 
         private sealed class AlphaSystem : RecordingSystem

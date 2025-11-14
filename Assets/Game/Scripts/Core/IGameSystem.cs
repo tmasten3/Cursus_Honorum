@@ -9,7 +9,7 @@ namespace Game.Core
         IEnumerable<Type> Dependencies { get; }
 
         void Initialize(GameState state);
-        void Update(GameState state);
+        void Tick(GameState state, float deltaTime);
 
         void Shutdown();
 

@@ -65,9 +65,8 @@ namespace Game.Systems.EventBus
             LogInfo("Initialized event bus and subscriber registry.");
         }
 
-        public override void Update(GameState state)
+        protected override void OnTick(GameState state, float deltaTime)
         {
-            if (!IsActive) return;
             FlushEvents();
         }
 

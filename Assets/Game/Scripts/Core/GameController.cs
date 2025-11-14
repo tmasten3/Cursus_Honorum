@@ -110,7 +110,7 @@ public class GameController : MonoBehaviour
 
         
 
-        gameState.Update();
+        gameState.Tick(Time.deltaTime);
 
         // Live sync inspector changes
         if (timeSystem != null)
