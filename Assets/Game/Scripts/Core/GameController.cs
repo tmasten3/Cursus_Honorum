@@ -4,6 +4,7 @@ using Game.Core;
 using Game.Systems.Time;
 #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 #endif
 
 public class GameController : MonoBehaviour
