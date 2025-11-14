@@ -120,7 +120,7 @@ namespace Game.UI
             layout.padding = new RectOffset(16, 16, 16, 16);
             layout.childAlignment = TextAnchor.UpperLeft;
             layout.childControlWidth = true;
-            layout.childControlHeight = false;
+            layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
@@ -138,7 +138,7 @@ namespace Game.UI
             layout.spacing = 6f;
             layout.childAlignment = TextAnchor.UpperLeft;
             layout.childControlWidth = true;
-            layout.childControlHeight = false;
+            layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
@@ -197,6 +197,10 @@ namespace Game.UI
         {
             var label = CreateText(parent, FontStyles.Normal);
             label.fontSize = 16f;
+
+            var element = label.gameObject.AddComponent<LayoutElement>();
+            element.minHeight = 20f;
+
             return label;
         }
 
