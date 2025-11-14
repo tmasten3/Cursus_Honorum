@@ -74,11 +74,11 @@ namespace Game.UI.CharacterDetail
             if (eventBus != null)
                 return true;
 
-            var controller = Object.FindFirstObjectByType<GameController>();
+            var controller = UnityEngine.Object.FindFirstObjectByType<GameController>();
             if (controller == null)
             {
                 if (!attemptedResolve)
-                    Logger.Warn("CharacterSelection", "GameController not found when attempting character selection.");
+                    Game.Core.Logger.Warn("CharacterSelection", "GameController not found when attempting character selection.");
                 attemptedResolve = true;
                 return false;
             }
@@ -87,7 +87,7 @@ namespace Game.UI.CharacterDetail
             if (state == null)
             {
                 if (!attemptedResolve)
-                    Logger.Warn("CharacterSelection", "GameState not initialized when attempting character selection.");
+                    Game.Core.Logger.Warn("CharacterSelection", "GameState not initialized when attempting character selection.");
                 attemptedResolve = true;
                 return false;
             }
@@ -96,7 +96,7 @@ namespace Game.UI.CharacterDetail
             timeSystem ??= state.GetSystem<TimeSystem>();
 
             if (eventBus == null && !attemptedResolve)
-                Logger.Warn("CharacterSelection", "EventBus not available when attempting character selection.");
+                Game.Core.Logger.Warn("CharacterSelection", "EventBus not available when attempting character selection.");
 
             attemptedResolve = true;
             return eventBus != null;

@@ -323,7 +323,7 @@ namespace Game.UI.CharacterDetail
             text.fontSize = 18f;
             text.fontStyle = style;
             text.alignment = TextAlignmentOptions.TopLeft;
-            text.enableWordWrapping = true;
+            text.textWrappingMode = TextWrappingModes.Normal; // <-- Use this instead of enableWordWrapping
             text.overflowMode = TextOverflowModes.Overflow;
             text.raycastTarget = false;
             text.margin = new Vector4(0f, 0f, 0f, 0f);
