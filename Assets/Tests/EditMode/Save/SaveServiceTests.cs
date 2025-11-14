@@ -202,6 +202,11 @@ namespace CursusHonorum.Tests.Save
                 value = newValue;
             }
 
+            public override void Update(GameState state)
+            {
+                // Stub systems do not simulate behaviour during tests.
+            }
+
             public override Dictionary<string, object> Save() => new()
             {
                 ["value"] = value
