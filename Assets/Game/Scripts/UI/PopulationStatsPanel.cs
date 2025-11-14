@@ -126,7 +126,7 @@ namespace Game.UI
             text.fontSize = fontSize;
             text.color = new Color(0.9f, 0.95f, 1f, 0.95f);
             text.fontStyle = style;
-            text.enableWordWrapping = true;
+            text.textWrappingMode = TextWrappingModes.Normal;
             text.alignment = TextAlignmentOptions.TopLeft;
 
             return text;

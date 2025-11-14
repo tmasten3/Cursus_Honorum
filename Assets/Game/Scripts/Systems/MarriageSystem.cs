@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Game.Core;
+using UnityEngine;
 using Game.Data.Characters;
 using Game.Systems.EventBus;
 using Game.Systems.Population;
