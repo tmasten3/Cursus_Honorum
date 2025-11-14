@@ -255,27 +255,9 @@ namespace Game.Data.Characters
             }
         }
 
-        private static OfficeAssignment SanitizeOfficeAssignment(
-                       Character character,
-                       OfficeAssignment assignment,
-                       string sourceLabel)
+        private static OfficeAssignment SanitizeOfficeAssignment(Character character, OfficeAssignment assignment,
+            string sourceLabel)
         {
-            if (assignment == null)
-            {
-                LogNormalizationWarning(character,
-                    "CurrentOffice was null; replacing with an empty OfficeAssignment.",
-                    sourceLabel);
-                assignment = new OfficeAssignment
-                {
-                    OfficeId = null,
-                    SeatIndex = 0,
-                    StartYear = 0,
-                    TermEndYear = -1,
-                    Notes = null
-                };
-                return assignment;
-            }
-
             assignment.OfficeId = string.IsNullOrWhiteSpace(assignment.OfficeId)
                 ? null
                 : assignment.OfficeId.Trim();
