@@ -212,6 +212,15 @@ namespace Game.Data.Characters
         {
             void CheckInfluence(float value, string field)
             {
+                if (float.IsNaN(value) || float.IsInfinity(value))
+                {
+                    var message =
+                        $"{sourceLabel}: Character #{character.ID} has non-finite influence value '{value}' for {field}.";
+                    Logger.Warn(LogCategory, message);
+                    ReportIssue(issueReporter, index, field, message);
+                    return;
+                }
+
                 if (value < 0f)
                 {
                     var message =

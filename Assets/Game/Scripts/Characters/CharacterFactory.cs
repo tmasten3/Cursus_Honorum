@@ -155,7 +155,7 @@ namespace Game.Data.Characters
             else if (string.IsNullOrWhiteSpace(character.Ambition.CurrentGoal))
                 character.Ambition.CurrentGoal = AmbitionProfile.InferDefaultGoal(character);
 
-            NormalizePoliticalAttributes(character);
+            NormalizePoliticalAttributes(character, sourcePath);
 
             if (analysis.Corrections.Count > 0)
             {
@@ -187,54 +187,183 @@ namespace Game.Data.Characters
             }
         }
 
-        private static void NormalizePoliticalAttributes(Character character)
+        public static void NormalizeDeserializedCharacter(Character character, string sourceLabel = null)
         {
             if (character == null)
                 return;
 
-            character.SenatorialInfluence = Mathf.Max(0f, character.SenatorialInfluence);
-            character.PopularInfluence = Mathf.Max(0f, character.PopularInfluence);
-            character.MilitaryInfluence = Mathf.Max(0f, character.MilitaryInfluence);
-            character.FamilyInfluence = Mathf.Max(0f, character.FamilyInfluence);
+            NormalizePoliticalAttributes(character, sourceLabel);
+        }
 
-            character.Oratory = Mathf.Clamp(character.Oratory, MinPoliticalStatValue, MaxPoliticalStatValue);
-            character.AmbitionScore = Mathf.Clamp(character.AmbitionScore, MinPoliticalStatValue, MaxPoliticalStatValue);
-            character.Courage = Mathf.Clamp(character.Courage, MinPoliticalStatValue, MaxPoliticalStatValue);
-            character.Dignitas = Mathf.Clamp(character.Dignitas, MinPoliticalStatValue, MaxPoliticalStatValue);
+        private static void NormalizePoliticalAttributes(Character character, string sourceLabel)
+        {
+            if (character == null)
+                return;
 
-            character.Administration = Mathf.Clamp(character.Administration, MinSkillValue, MaxSkillValue);
-            character.Judgment = Mathf.Clamp(character.Judgment, MinSkillValue, MaxSkillValue);
-            character.Strategy = Mathf.Clamp(character.Strategy, MinSkillValue, MaxSkillValue);
-            character.Civic = Mathf.Clamp(character.Civic, MinSkillValue, MaxSkillValue);
+            character.SenatorialInfluence = SanitizeInfluence(character, character.SenatorialInfluence,
+                nameof(Character.SenatorialInfluence), sourceLabel);
+            character.PopularInfluence = SanitizeInfluence(character, character.PopularInfluence,
+                nameof(Character.PopularInfluence), sourceLabel);
+            character.MilitaryInfluence = SanitizeInfluence(character, character.MilitaryInfluence,
+                nameof(Character.MilitaryInfluence), sourceLabel);
+            character.FamilyInfluence = SanitizeInfluence(character, character.FamilyInfluence,
+                nameof(Character.FamilyInfluence), sourceLabel);
+
+            character.Oratory = SanitizeStat(character, character.Oratory, MinPoliticalStatValue, MaxPoliticalStatValue,
+                nameof(Character.Oratory), sourceLabel);
+            character.AmbitionScore = SanitizeStat(character, character.AmbitionScore, MinPoliticalStatValue,
+                MaxPoliticalStatValue, nameof(Character.AmbitionScore), sourceLabel);
+            character.Courage = SanitizeStat(character, character.Courage, MinPoliticalStatValue, MaxPoliticalStatValue,
+                nameof(Character.Courage), sourceLabel);
+            character.Dignitas = SanitizeStat(character, character.Dignitas, MinPoliticalStatValue, MaxPoliticalStatValue,
+                nameof(Character.Dignitas), sourceLabel);
+
+            character.Administration = SanitizeStat(character, character.Administration, MinSkillValue, MaxSkillValue,
+                nameof(Character.Administration), sourceLabel);
+            character.Judgment = SanitizeStat(character, character.Judgment, MinSkillValue, MaxSkillValue,
+                nameof(Character.Judgment), sourceLabel);
+            character.Strategy = SanitizeStat(character, character.Strategy, MinSkillValue, MaxSkillValue,
+                nameof(Character.Strategy), sourceLabel);
+            character.Civic = SanitizeStat(character, character.Civic, MinSkillValue, MaxSkillValue,
+                nameof(Character.Civic), sourceLabel);
 
             if (!Enum.IsDefined(typeof(FactionType), character.Faction))
+            {
+                LogNormalizationWarning(character,
+                    $"Invalid faction value '{character.Faction}' encountered. Defaulting to {FactionType.Neutral}.",
+                    sourceLabel);
                 character.Faction = FactionType.Neutral;
+            }
 
-            var currentOffice = character.CurrentOffice;
-            currentOffice.SeatIndex = Mathf.Max(0, currentOffice.SeatIndex);
-            currentOffice.StartYear = Mathf.Max(0, currentOffice.StartYear);
-            character.CurrentOffice = currentOffice;
+            character.CurrentOffice = SanitizeOfficeAssignment(character, character.CurrentOffice, sourceLabel);
 
-            if (character.OfficeHistory == null)
-                character.OfficeHistory = new List<OfficeHistoryEntry>();
+            character.OfficeHistory ??= new List<OfficeHistoryEntry>();
 
             for (int i = character.OfficeHistory.Count - 1; i >= 0; i--)
             {
                 var entry = character.OfficeHistory[i];
                 if (entry == null)
                 {
+                    LogNormalizationWarning(character,
+                        $"Removed null office history entry at index {i} during normalization.", sourceLabel);
                     character.OfficeHistory.RemoveAt(i);
                     continue;
                 }
 
-                entry.OfficeId = string.IsNullOrWhiteSpace(entry.OfficeId) ? null : entry.OfficeId.Trim();
-                entry.SeatIndex = Mathf.Max(0, entry.SeatIndex);
-                entry.StartYear = Mathf.Max(0, entry.StartYear);
-                if (entry.EndYear.HasValue && entry.EndYear.Value < entry.StartYear)
-                    entry.EndYear = entry.StartYear;
-
-                character.OfficeHistory[i] = entry;
+                var normalizedEntry = SanitizeOfficeHistoryEntry(character, entry, i, sourceLabel);
+                character.OfficeHistory[i] = normalizedEntry;
             }
+        }
+
+        private static OfficeAssignment SanitizeOfficeAssignment(Character character, OfficeAssignment assignment,
+            string sourceLabel)
+        {
+            assignment.OfficeId = string.IsNullOrWhiteSpace(assignment.OfficeId)
+                ? null
+                : assignment.OfficeId.Trim();
+
+            if (!string.IsNullOrEmpty(assignment.OfficeId))
+            {
+                if (assignment.SeatIndex < 0)
+                {
+                    LogNormalizationWarning(character,
+                        $"Seat index {assignment.SeatIndex} for current office '{assignment.OfficeId}' was below zero and will be reset to 0.",
+                        sourceLabel);
+                    assignment.SeatIndex = 0;
+                }
+
+                if (assignment.StartYear < 0)
+                {
+                    LogNormalizationWarning(character,
+                        $"Start year {assignment.StartYear} for current office '{assignment.OfficeId}' was below zero and will be reset to 0.",
+                        sourceLabel);
+                    assignment.StartYear = 0;
+                }
+            }
+            else
+            {
+                assignment.SeatIndex = Mathf.Max(0, assignment.SeatIndex);
+                assignment.StartYear = Mathf.Max(0, assignment.StartYear);
+            }
+
+            return assignment;
+        }
+
+
+        private static OfficeHistoryEntry SanitizeOfficeHistoryEntry(
+            Character character,
+            OfficeHistoryEntry entry,
+            int index,
+            string sourceLabel)
+        {
+            entry.OfficeId = string.IsNullOrWhiteSpace(entry.OfficeId) ? null : entry.OfficeId.Trim();
+
+            if (entry.SeatIndex < 0)
+            {
+                LogNormalizationWarning(character,
+                    $"Office history entry {index} had seat index {entry.SeatIndex} below zero; resetting to 0.",
+                    sourceLabel);
+                entry.SeatIndex = 0;
+            }
+
+            if (entry.StartYear < 0)
+            {
+                LogNormalizationWarning(character,
+                    $"Office history entry {index} had start year {entry.StartYear} below zero; resetting to 0.",
+                    sourceLabel);
+                entry.StartYear = 0;
+            }
+
+            if (entry.EndYear.HasValue && entry.EndYear.Value < entry.StartYear)
+            {
+                LogNormalizationWarning(character,
+                    $"Office history entry {index} had end year {entry.EndYear.Value} earlier than start year {entry.StartYear}; clamping to start year.",
+                    sourceLabel);
+                entry.EndYear = entry.StartYear;
+            }
+
+            return entry;
+        }
+
+        private static float SanitizeInfluence(Character character, float value, string fieldName, string sourceLabel)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                LogNormalizationWarning(character,
+                    $"{fieldName} value '{value}' was not a finite number and has been reset to 0.", sourceLabel);
+                return 0f;
+            }
+
+            if (value < 0f)
+            {
+                LogNormalizationWarning(character,
+                    $"{fieldName} value '{value}' was below zero and has been clamped to 0.", sourceLabel);
+                return 0f;
+            }
+
+            return value;
+        }
+
+        private static int SanitizeStat(Character character, int value, int min, int max, string fieldName,
+            string sourceLabel)
+        {
+            int clamped = Mathf.Clamp(value, min, max);
+            if (clamped != value)
+            {
+                LogNormalizationWarning(character,
+                    $"{fieldName} value '{value}' was outside the allowed range {min}-{max} and has been clamped to {clamped}.",
+                    sourceLabel);
+            }
+
+            return clamped;
+        }
+
+        private static void LogNormalizationWarning(Character character, string message, string sourceLabel)
+        {
+            string prefix = string.IsNullOrEmpty(sourceLabel)
+                ? $"Character #{character?.ID ?? 0}"
+                : $"{sourceLabel}: Character #{character?.ID ?? 0}";
+            Game.Core.Logger.Warn(LogCategory, $"{prefix} - {message}");
         }
 
         private static void CollectStrictValidationIssues(List<Character> characters, string sourcePath)
