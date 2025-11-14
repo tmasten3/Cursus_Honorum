@@ -235,6 +235,8 @@ namespace Game.Data.Characters
                 character.Faction = FactionType.Neutral;
             }
 
+            EnsurePoliticalProfileReadiness(character, sourceLabel);
+
             character.CurrentOffice = SanitizeOfficeAssignment(character, character.CurrentOffice, sourceLabel);
 
             character.OfficeHistory ??= new List<OfficeHistoryEntry>();
@@ -342,6 +344,32 @@ namespace Game.Data.Characters
             }
 
             return value;
+        }
+
+        private static void EnsurePoliticalProfileReadiness(Character character, string sourceLabel)
+        {
+            float totalInfluence = character.SenatorialInfluence + character.PopularInfluence +
+                                   character.MilitaryInfluence + character.FamilyInfluence;
+
+            if (float.IsNaN(totalInfluence) || float.IsInfinity(totalInfluence) || totalInfluence < 0f)
+            {
+                LogNormalizationWarning(character,
+                    $"Computed total influence '{totalInfluence}' was invalid and has been reset along with individual pools.",
+                    sourceLabel);
+
+                character.SenatorialInfluence = Mathf.Max(0f, character.SenatorialInfluence);
+                character.PopularInfluence = Mathf.Max(0f, character.PopularInfluence);
+                character.MilitaryInfluence = Mathf.Max(0f, character.MilitaryInfluence);
+                character.FamilyInfluence = Mathf.Max(0f, character.FamilyInfluence);
+
+                if (float.IsNaN(totalInfluence) || float.IsInfinity(totalInfluence))
+                {
+                    character.SenatorialInfluence = 0f;
+                    character.PopularInfluence = 0f;
+                    character.MilitaryInfluence = 0f;
+                    character.FamilyInfluence = 0f;
+                }
+            }
         }
 
         private static int SanitizeStat(Character character, int value, int min, int max, string fieldName,
