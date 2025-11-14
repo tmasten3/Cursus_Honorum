@@ -118,53 +118,53 @@ public class CharacterFactoryStrictModeTests
     private static string WriteInvalidCharacterFile()
     {
         var json = @"{
-    \"Characters\": [
+    ""Characters"": [
         {
-            \"ID\": 100,
-            \"Gender\": 0,
-            \"BirthYear\": -100,
-            \"BirthMonth\": 1,
-            \"BirthDay\": 1,
-            \"Age\": 30,
-            \"Family\": \"\",
-            \"Class\": 1,
-            \"RomanName\": {
-                \"Praenomen\": \"gaius\",
-                \"Nomen\": \"aurelia\",
-                \"Cognomen\": \"Felix\",
-                \"Gender\": 0
+            ""ID"": 100,
+            ""Gender"": 0,
+            ""BirthYear"": -100,
+            ""BirthMonth"": 1,
+            ""BirthDay"": 1,
+            ""Age"": 30,
+            ""Family"": """",
+            ""Class"": 1,
+            ""RomanName"": {
+                ""Praenomen"": ""gaius"",
+                ""Nomen"": ""aurelia"",
+                ""Cognomen"": ""Felix"",
+                ""Gender"": 0
             }
         },
         {
-            \"ID\": 101,
-            \"Gender\": 1,
-            \"BirthYear\": -102,
-            \"BirthMonth\": 1,
-            \"BirthDay\": 1,
-            \"Age\": 28,
-            \"Family\": \"sempronia\",
-            \"Class\": 1,
-            \"RomanName\": {
-                \"Praenomen\": \"\",
-                \"Nomen\": \"sempronia\",
-                \"Cognomen\": \"Minor\",
-                \"Gender\": 1
+            ""ID"": 101,
+            ""Gender"": 1,
+            ""BirthYear"": -102,
+            ""BirthMonth"": 1,
+            ""BirthDay"": 1,
+            ""Age"": 28,
+            ""Family"": ""sempronia"",
+            ""Class"": 1,
+            ""RomanName"": {
+                ""Praenomen"": """",
+                ""Nomen"": ""sempronia"",
+                ""Cognomen"": ""Minor"",
+                ""Gender"": 1
             }
         },
         {
-            \"ID\": 102,
-            \"Gender\": 0,
-            \"BirthYear\": -98,
-            \"BirthMonth\": 1,
-            \"BirthDay\": 1,
-            \"Age\": 27,
-            \"Family\": \"domitia\",
-            \"Class\": 0,
-            \"RomanName\": {
-                \"Praenomen\": \"\",
-                \"Nomen\": \"\",
-                \"Cognomen\": \"\",
-                \"Gender\": 0
+            ""ID"": 102,
+            ""Gender"": 0,
+            ""BirthYear"": -98,
+            ""BirthMonth"": 1,
+            ""BirthDay"": 1,
+            ""Age"": 27,
+            ""Family"": ""domitia"",
+            ""Class"": 0,
+            ""RomanName"": {
+                ""Praenomen"": """",
+                ""Nomen"": """",
+                ""Cognomen"": """",
+                ""Gender"": 0
             }
         }
     ]
