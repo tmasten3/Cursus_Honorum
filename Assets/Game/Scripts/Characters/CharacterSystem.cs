@@ -219,6 +219,7 @@ namespace Game.Systems.CharacterSystem
                 repository.Reset();
                 foreach (var character in blob.Characters)
                 {
+                    CharacterFactory.NormalizeDeserializedCharacter(character, "SaveLoad");
                     CharacterFactory.EnsureLifecycleState(character, character.BirthYear + character.Age);
                     repository.Add(character, settings.KeepDeadInMemory);
                 }
