@@ -106,24 +106,12 @@ public class GameController : MonoBehaviour
         if (!isInitialized || gameState == null)
             return;
 
-        if (quickSaveKey != KeyCode.None
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            && WasKeyPressedThisFrame(quickSaveKey)
-#else
-            && Input.GetKeyDown(quickSaveKey)
-#endif
-            )
+        if (quickSaveKey != KeyCode.None && IsKeyActivationTriggered(quickSaveKey))
         {
             SaveGameToDisk();
         }
 
-        if (quickLoadKey != KeyCode.None
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            && WasKeyPressedThisFrame(quickLoadKey)
-#else
-            && Input.GetKeyDown(quickLoadKey)
-#endif
-            )
+        if (quickLoadKey != KeyCode.None && IsKeyActivationTriggered(quickLoadKey))
         {
             LoadGameFromDisk();
         }
@@ -206,7 +194,6 @@ public class GameController : MonoBehaviour
         }
     }
 
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
     private static readonly Type KeyboardType = Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
     private static readonly Type KeyEnumType = Type.GetType("UnityEngine.InputSystem.Key, Unity.InputSystem");
     private static readonly Type KeyControlType = Type.GetType("UnityEngine.InputSystem.Controls.KeyControl, Unity.InputSystem");
@@ -288,13 +275,30 @@ public class GameController : MonoBehaviour
         { KeyCode.KeypadEquals, "numpadEqualsKey" }
     };
 
-    private bool WasKeyPressedThisFrame(KeyCode keyCode)
+    private static bool IsNewInputSystemAvailable =>
+        KeyboardType != null &&
+        KeyEnumType != null &&
+        KeyControlType != null &&
+        KeyboardCurrentProperty != null &&
+        KeyWasPressedThisFrameProperty != null;
+
+    private bool IsKeyActivationTriggered(KeyCode keyCode)
     {
         if (keyCode == KeyCode.None)
             return false;
 
-        if (KeyboardType == null || KeyControlType == null || KeyEnumType == null)
-            return Input.GetKeyDown(keyCode);
+        if (TryGetNewInputSystemKeyState(keyCode, out var pressed) && pressed)
+            return true;
+
+        return Input.GetKeyDown(keyCode);
+    }
+
+    private bool TryGetNewInputSystemKeyState(KeyCode keyCode, out bool wasPressed)
+    {
+        wasPressed = false;
+
+        if (!IsNewInputSystemAvailable)
+            return false;
 
         var keyboard = KeyboardCurrentProperty?.GetValue(null);
         if (keyboard == null)
@@ -303,8 +307,14 @@ public class GameController : MonoBehaviour
         if (!TryGetKeyControl(keyboard, keyCode, out var keyControl))
             return false;
 
-        var wasPressed = KeyWasPressedThisFrameProperty?.GetValue(keyControl);
-        return wasPressed is bool pressed && pressed;
+        var pressedValue = KeyWasPressedThisFrameProperty?.GetValue(keyControl);
+        if (pressedValue is bool pressed)
+        {
+            wasPressed = pressed;
+            return true;
+        }
+
+        return false;
     }
 
     private bool TryGetKeyControl(object keyboard, KeyCode keyCode, out object keyControl)
@@ -313,7 +323,7 @@ public class GameController : MonoBehaviour
         if (keyboard == null)
             return false;
 
-        if (KeyboardItemProperty != null)
+        if (KeyboardItemProperty != null && KeyEnumType != null)
         {
             try
             {
@@ -328,13 +338,12 @@ public class GameController : MonoBehaviour
             }
         }
 
-        if (!KeyboardPropertyMap.TryGetValue(keyCode, out var propertyName))
+        if (!KeyboardPropertyMap.TryGetValue(keyCode, out var propertyName) || KeyboardType == null)
             return false;
 
         var property = KeyboardType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
         keyControl = property?.GetValue(keyboard);
         return keyControl != null;
     }
-#endif
 }
 
