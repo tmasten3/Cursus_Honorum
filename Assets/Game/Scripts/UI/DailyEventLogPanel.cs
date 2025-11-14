@@ -4,6 +4,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Game.Core;
 using Game.Systems.EventBus;
 using Game.Systems.CharacterSystem;
 using Game.Systems.Politics.Elections;
