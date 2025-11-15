@@ -59,7 +59,7 @@ namespace Game.Systems.CharacterSystem
                     band.DailyHazard = YearlyToDaily(band.YearlyHazard);
             }
 
-            var baseCharacters = dataLoader.LoadBaseCharacters(settings.BaseDataPath);
+            var baseCharacters = dataLoader.LoadBaseCharacters(settings.BaseDataPath, rngSeed);
             foreach (var character in baseCharacters)
             {
                 if (character == null)
@@ -93,7 +93,7 @@ namespace Game.Systems.CharacterSystem
             if (settings == null)
                 throw new InvalidOperationException("Character settings are not configured.");
 
-            CharacterFactory.LoadBaseCharacters(settings.BaseDataPath, CharacterLoadMode.Strict);
+            dataLoader.LoadBaseCharacters(settings.BaseDataPath, rngSeed, CharacterLoadMode.Strict);
             return CharacterFactory.LastValidationResult;
         }
 

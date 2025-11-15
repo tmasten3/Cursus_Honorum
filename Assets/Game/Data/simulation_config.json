@@ -2,7 +2,7 @@
   "Character": {
     "RngSeed": 1337,
     "KeepDeadInMemory": true,
-    "BaseDataPath": "Assets/Game/Data/base_characters.json",
+    "BaseDataPath": "generated://base_population",
     "Mortality": {
       "UseAgeBandHazards": true,
       "AgeBands": [

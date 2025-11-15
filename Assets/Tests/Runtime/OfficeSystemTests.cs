@@ -1,7 +1,9 @@
-using System.Linq;
 using NUnit.Framework;
 using Game.Core;
 using Game.Systems.Politics.Offices;
+using Game.Systems.CharacterSystem;
+using Game.Data.Characters;
+using System.Collections.Generic;
 
 namespace CursusHonorum.Tests.Runtime
 {
@@ -40,10 +42,48 @@ namespace CursusHonorum.Tests.Runtime
             var state = CreateInitializedState(out var officeSystem);
             try
             {
-                var holdings = officeSystem.GetCurrentHoldings(61);
-                Assert.IsNotNull(holdings);
-                Assert.IsTrue(holdings.Any(), "Seed data should assign at least one office to character #61.");
-                Assert.IsTrue(holdings.Any(h => h.OfficeId == "consul"), "Character #61 should hold a consul seat at start.");
+                var characterSystem = state.GetSystem<CharacterSystem>();
+                Assert.IsNotNull(characterSystem, "CharacterSystem should be available for validation.");
+
+                var missingSeats = new List<string>();
+
+                foreach (var definition in officeSystem.GetAllDefinitions())
+                {
+                    if (definition == null)
+                        continue;
+
+                    var seats = officeSystem.StateService.GetOrCreateSeatList(definition.Id, definition.Seats);
+                    if (seats == null)
+                        continue;
+
+                    for (int i = 0; i < seats.Count; i++)
+                    {
+                        var seat = seats[i];
+                        if (seat == null)
+                            continue;
+
+                        if (!seat.HolderId.HasValue)
+                        {
+                            missingSeats.Add($"{definition.Id} seat {seat.SeatIndex}");
+                            continue;
+                        }
+
+                        var holder = characterSystem.Get(seat.HolderId.Value);
+                        Assert.IsNotNull(holder, $"Seat holder for {definition.Id} seat {seat.SeatIndex} should exist.");
+                        Assert.IsTrue(holder.IsAlive, $"Seat holder for {definition.Id} seat {seat.SeatIndex} should be alive.");
+                        Assert.GreaterOrEqual(holder.Age, definition.MinAge, $"Seat holder for {definition.Id} seat {seat.SeatIndex} should meet minimum age.");
+
+                        if (definition.RequiresPlebeian)
+                            Assert.AreEqual(SocialClass.Plebeian, holder.Class, $"{definition.Id} seat {seat.SeatIndex} requires plebeian class.");
+
+                        if (definition.RequiresPatrician)
+                            Assert.AreEqual(SocialClass.Patrician, holder.Class, $"{definition.Id} seat {seat.SeatIndex} requires patrician class.");
+
+                        Assert.GreaterOrEqual(seat.EndYear, seat.StartYear, $"{definition.Id} seat {seat.SeatIndex} should have a valid term range.");
+                    }
+                }
+
+                Assert.IsEmpty(missingSeats, $"All offices should be filled at start. Missing: {string.Join(", ", missingSeats)}");
             }
             finally
             {

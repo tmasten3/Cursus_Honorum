@@ -15,6 +15,9 @@ namespace Game.Systems.CharacterSystem
         private readonly HashSet<int> dead = new HashSet<int>();
         private readonly Dictionary<(int Month, int Day), List<int>> birthdays = new Dictionary<(int Month, int Day), List<int>>();
         private readonly Dictionary<string, HashSet<int>> byFamily = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, HashSet<int>> byBranch = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, HashSet<int>> byCognomen = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, HashSet<int>> byLineage = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<SocialClass, HashSet<int>> byClass = new Dictionary<SocialClass, HashSet<int>>();
 
         public int AliveCount => alive.Count;
@@ -37,6 +40,9 @@ namespace Game.Systems.CharacterSystem
             dead.Clear();
             birthdays.Clear();
             byFamily.Clear();
+            byBranch.Clear();
+            byCognomen.Clear();
+            byLineage.Clear();
             byClass.Clear();
         }
 
@@ -64,6 +70,9 @@ namespace Game.Systems.CharacterSystem
 
             AddToBirthdayIndex(character);
             AddToFamilyIndex(character);
+            AddToBranchIndex(character);
+            AddToCognomenIndex(character);
+            AddToLineageIndex(character);
             AddToClassIndex(character);
         }
 
@@ -107,6 +116,40 @@ namespace Game.Systems.CharacterSystem
             return result;
         }
 
+        public IReadOnlyList<Character> GetByBranch(string branchId)
+        {
+            if (string.IsNullOrWhiteSpace(branchId))
+                return Array.Empty<Character>();
+
+            if (!byBranch.TryGetValue(branchId, out var set))
+                return Array.Empty<Character>();
+
+            return BuildListFromIdSet(set, branchId, "Branch");
+        }
+
+        public IReadOnlyList<Character> GetByCognomen(string cognomen)
+        {
+            var normalized = RomanNameUtility.Normalize(cognomen);
+            if (string.IsNullOrWhiteSpace(normalized))
+                return Array.Empty<Character>();
+
+            if (!byCognomen.TryGetValue(normalized, out var set))
+                return Array.Empty<Character>();
+
+            return BuildListFromIdSet(set, normalized, "Cognomen");
+        }
+
+        public IReadOnlyList<Character> GetByLineage(string lineageId)
+        {
+            if (string.IsNullOrWhiteSpace(lineageId))
+                return Array.Empty<Character>();
+
+            if (!byLineage.TryGetValue(lineageId, out var set))
+                return Array.Empty<Character>();
+
+            return BuildListFromIdSet(set, lineageId, "Lineage");
+        }
+
         public IReadOnlyList<Character> GetByClass(SocialClass socialClass) =>
             BuildListFromIndex(byClass, socialClass);
 
@@ -142,6 +185,23 @@ namespace Game.Systems.CharacterSystem
                     result.Add(character);
                 else
                     Logger.Warn("Safety", $"[CharacterRepository] Class index stale for {key} id {id}.");
+            }
+
+            return result;
+        }
+
+        private IReadOnlyList<Character> BuildListFromIdSet(HashSet<int> set, string key, string label)
+        {
+            if (set == null || set.Count == 0)
+                return Array.Empty<Character>();
+
+            var result = new List<Character>();
+            foreach (var id in set.OrderBy(id => id))
+            {
+                if (byId.TryGetValue(id, out var character))
+                    result.Add(character);
+                else
+                    Logger.Warn("Safety", $"[CharacterRepository] {label} index stale for '{key}' id {id}.");
             }
 
             return result;
@@ -239,6 +299,49 @@ namespace Game.Systems.CharacterSystem
             set.Add(character.ID);
         }
 
+        private void AddToBranchIndex(Character character)
+        {
+            if (string.IsNullOrWhiteSpace(character.BranchId))
+                return;
+
+            if (!byBranch.TryGetValue(character.BranchId, out var set))
+            {
+                set = new HashSet<int>();
+                byBranch[character.BranchId] = set;
+            }
+
+            set.Add(character.ID);
+        }
+
+        private void AddToCognomenIndex(Character character)
+        {
+            var cognomen = RomanNameUtility.Normalize(character.RomanName?.Cognomen);
+            if (string.IsNullOrWhiteSpace(cognomen))
+                return;
+
+            if (!byCognomen.TryGetValue(cognomen, out var set))
+            {
+                set = new HashSet<int>();
+                byCognomen[cognomen] = set;
+            }
+
+            set.Add(character.ID);
+        }
+
+        private void AddToLineageIndex(Character character)
+        {
+            if (string.IsNullOrWhiteSpace(character.LineageId))
+                return;
+
+            if (!byLineage.TryGetValue(character.LineageId, out var set))
+            {
+                set = new HashSet<int>();
+                byLineage[character.LineageId] = set;
+            }
+
+            set.Add(character.ID);
+        }
+
         private void AddToClassIndex(Character character)
         {
             if (!byClass.TryGetValue(character.Class, out var set))
@@ -272,6 +375,9 @@ namespace Game.Systems.CharacterSystem
         {
             RemoveFromNameIndex(id);
             RemoveFromFamilyIndex(id, character);
+            RemoveFromBranchIndex(id, character);
+            RemoveFromCognomenIndex(id, character);
+            RemoveFromLineageIndex(id, character);
             RemoveFromClassIndex(id, character);
 
             if (removeBirthdays)
@@ -303,6 +409,46 @@ namespace Game.Systems.CharacterSystem
             set.Remove(id);
             if (set.Count == 0)
                 byFamily.Remove(character.Family);
+        }
+
+        private void RemoveFromBranchIndex(int id, Character character)
+        {
+            if (string.IsNullOrWhiteSpace(character.BranchId))
+                return;
+
+            if (!byBranch.TryGetValue(character.BranchId, out var set))
+                return;
+
+            set.Remove(id);
+            if (set.Count == 0)
+                byBranch.Remove(character.BranchId);
+        }
+
+        private void RemoveFromCognomenIndex(int id, Character character)
+        {
+            var cognomen = RomanNameUtility.Normalize(character.RomanName?.Cognomen);
+            if (string.IsNullOrWhiteSpace(cognomen))
+                return;
+
+            if (!byCognomen.TryGetValue(cognomen, out var set))
+                return;
+
+            set.Remove(id);
+            if (set.Count == 0)
+                byCognomen.Remove(cognomen);
+        }
+
+        private void RemoveFromLineageIndex(int id, Character character)
+        {
+            if (string.IsNullOrWhiteSpace(character.LineageId))
+                return;
+
+            if (!byLineage.TryGetValue(character.LineageId, out var set))
+                return;
+
+            set.Remove(id);
+            if (set.Count == 0)
+                byLineage.Remove(character.LineageId);
         }
 
         private void RemoveFromClassIndex(int id, Character character)
