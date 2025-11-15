@@ -4,15 +4,19 @@ This project keeps gameplay data in JSON files under `Assets/Game/Data/` and con
 that describe how systems interpret those files. The following sections summarize the current
 sources and the fields systems expect.
 
-## Base Characters (`base_characters.json`)
-* **Location:** `Assets/Game/Data/base_characters.json`
-* **Structure:** Root object with a `Characters` array. Each character entry records identity,
-  demographic fields, lifecycle flags, trait history, ambition, and civic milestones.【F:Assets/Game/Data/base_characters.json†L1-L60】
-* **Usage:** Loaded during `CharacterSystem.Initialize` through `CharacterDataLoader`, then hydrated
-  into repositories and services for daily simulation. New fields should default gracefully because
-  the loader iterates properties dynamically before handing them to repositories.【F:Assets/Game/Scripts/Characters/CharacterSystem.cs†L39-L92】
-* **Extensibility:** Additive changes are preferred. Optional arrays (e.g., `TraitRecords`,
-  `CareerMilestones`) can be empty; null values are tolerated for unknown relatives.
+## Base Population (Dynamic Generator)
+* **Location:** `Assets/Game/Scripts/Characters/Generation/BasePopulationGenerator.cs`
+* **Structure:** Produces a `CharacterDataWrapper` with a `Characters` array mirroring the runtime
+  schema used by the repository. Entries capture Roman identity data (including gens, branch, and
+  cognomen metadata), lifecycle flags, ambitions, and civic history. The generator also emits a
+  `PopulationIndex` that caches lookups by gens, cognomen branch, and lineage.【F:Assets/Game/Scripts/Characters/Generation/BasePopulationGenerator.cs†L24-L225】【F:Assets/Game/Scripts/Characters/Generation/PopulationIndex.cs†L10-L138】
+* **Usage:** Instantiated each startup by `CharacterSystem.Initialize`, seeded with the simulation
+  year and the configured RNG. Generated characters flow through `CharacterFactory.ProcessGeneratedCharacters`
+  so existing normalization and validation rules apply uniformly.【F:Assets/Game/Scripts/Characters/CharacterSystem.cs†L52-L82】【F:Assets/Game/Scripts/Characters/CharacterFactory.cs†L73-L117】
+* **Extensibility:** Extend the generator by adjusting the gens registry (`RomanNamingRules`) or by
+  augmenting family synthesis helpers. New metadata automatically persists because the wrapper reuses
+  the serialized `Character` model. Keep optional arrays (e.g., trait or milestone histories) empty
+  rather than null for determinism.
 
 ## Magistrate Offices (`BaseOffices.json`)
 * **Location:** `Assets/Game/Data/BaseOffices.json`

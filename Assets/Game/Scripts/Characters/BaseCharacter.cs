@@ -35,12 +35,15 @@ namespace Game.Data.Characters
         public int? FatherID;
         public int? MotherID;
         public int? SiblingID;
+        public List<int> Children = new List<int>();
 
         // ----------------------------------------------------------------------
         // Social & Cultural Data
         // ----------------------------------------------------------------------
         public string Family; // gens
         public SocialClass Class;
+        public string BranchId;
+        public string LineageKey;
         public List<string> Traits = new List<string>();
         public List<TraitRecord> TraitRecords = new List<TraitRecord>();
         public int Wealth;
@@ -126,10 +129,13 @@ namespace Game.Data.Characters
                 MotherID = MotherID,
                 Family = Family,
                 Class = Class,
+                BranchId = BranchId,
+                LineageKey = LineageKey,
                 Traits = new List<string>(Traits),
                 TraitRecords = CloneTraitRecords(),
                 Ambition = Ambition?.Clone(),
                 CareerMilestones = CloneCareerMilestones(),
+                Children = new List<int>(Children),
                 Wealth = Wealth,
                 Influence = Influence,
                 SenatorialInfluence = SenatorialInfluence,

@@ -37,10 +37,10 @@ Each system inherits from a shared `GameSystemBase` and communicates through the
 | File | Description |
 |------|--------------|
 | **BaseCharacter.cs** | Defines `Character` — identity, relationships, and core stats. |
-| **CharacterFactory.cs** | Loads base JSON data, generates names, and creates new children. |
+| **CharacterFactory.cs** | Normalizes generated citizens, assigns IDs, and creates new children. |
 | **CharacterSystem.cs** | Manages living/dead characters, birthdays, and mortality. |
-| **base_characters.json** | Defines the founding population at game start. |
-| **RomanName.cs / RomanNamingRules.cs** | Authentic Roman naming conventions by gender and class. |
+| **BasePopulationGenerator.cs** | Synthesizes the multi-generational starting population each launch. |
+| **RomanNamingService.cs / RomanNamingRules.cs** | Branch-aware Roman naming with patrician/plebeian variants. |
 
 ---
 
@@ -95,7 +95,7 @@ All deterministic simulation knobs now live in `Assets/Game/Data/simulation_conf
 |-------|-------------|
 | `Character.RngSeed` | Seed used by the character lifecycle RNG (aging, mortality). |
 | `Character.KeepDeadInMemory` | When `true`, deceased citizens remain cached for history lookups. |
-| `Character.BaseDataPath` | Path to the starting population JSON. |
+| `Character.BaseDataPath` | Legacy JSON path kept for tooling/logging; the runtime population is generated dynamically. |
 | `Character.Mortality.UseAgeBandHazards` | Enables age-band driven mortality. |
 | `Character.Mortality.AgeBands[]` | Inclusive age ranges with yearly hazard rates. Values are converted to daily odds at runtime. |
 
