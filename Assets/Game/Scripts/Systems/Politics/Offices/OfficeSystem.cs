@@ -24,6 +24,10 @@ namespace Game.Systems.Politics.Offices
         private readonly OfficeEligibilityService eligibility;
         private readonly IMagistrateOfficeRepository repository;
 
+        private readonly Dictionary<int, int> historySeedCursor = new Dictionary<int, int>();
+        private readonly HashSet<(int characterId, string officeId)> seededHistoryRecords =
+            new HashSet<(int characterId, string officeId)>();
+
         private int currentYear;
         private int currentMonth;
         private int currentDay;
@@ -97,73 +101,167 @@ namespace Game.Systems.Politics.Offices
             currentMonth = 1;
             currentDay = 1;
 
-            var assignments = new Dictionary<string, int[]>
-            {
-                ["consul"] = new[] { 283, 269 },
-                ["censor"] = new[] { 273, 261 },
-                ["praetor"] = new[] { 255, 279 },
-                ["aedile"] = new[] { 25, 31 },
-                ["plebeian_aedile"] = new[] { 37, 43 },
-                ["tribune"] = new[] { 97, 103, 253, 259, 271 },
-                ["quaestor"] = new[] { 1, 7, 13, 19, 49, 55, 79, 121 }
-            };
+            historySeedCursor.Clear();
+            seededHistoryRecords.Clear();
 
-            foreach (var kvp in assignments)
+            var living = characterSystem.GetAllLiving()
+                ?.Where(c => c != null && c.IsAlive && c.IsMale)
+                .OrderByDescending(c => c.Age)
+                .ThenBy(c => c.ID)
+                .ToList() ?? new List<Character>();
+
+            var assignedCharacters = new HashSet<int>();
+            var orderedDefinitions = definitions.GetAllDefinitions()
+                .OrderByDescending(d => d.Rank)
+                .ThenByDescending(d => d.MinAge)
+                .ToList();
+
+            foreach (var def in orderedDefinitions)
             {
-                string officeId = kvp.Key;
-                var def = definitions.GetDefinition(officeId);
                 if (def == null)
                     continue;
 
-                var seats = this.state.GetOrCreateSeatList(officeId, def.Seats);
+                var seats = this.state.GetOrCreateSeatList(def.Id, def.Seats);
                 if (seats == null || seats.Count == 0)
                     continue;
 
-                var holderIds = kvp.Value;
-                int seatCount = Math.Min(holderIds.Length, seats.Count);
-                for (int i = 0; i < seatCount; i++)
+                for (int i = 0; i < seats.Count; i++)
                 {
-                    int characterId = holderIds[i];
-                    var character = characterSystem.Get(characterId);
-                    if (character == null || !character.IsAlive)
+                    var candidate = FindCandidateForOffice(def, initialYear, assignedCharacters, living);
+                    if (candidate == null)
                     {
-                        LogWarn($"Unable to seed {officeId} seat {seats[i].SeatIndex}: character {characterId} missing or deceased.");
+                        LogWarn($"Unable to seed {def.Id} seat {seats[i].SeatIndex}: no eligible characters available.");
                         continue;
                     }
+
+                    assignedCharacters.Add(candidate.ID);
 
                     int termStart = initialYear - Math.Max(0, def.TermLengthYears - 1);
                     int termEnd = initialYear;
 
-                    bool assigned = this.state.TryAssignInitialHolder(officeId, seats[i].SeatIndex, characterId, termStart, termEnd);
+                    bool assigned = this.state.TryAssignInitialHolder(def.Id, seats[i].SeatIndex, candidate.ID, termStart, termEnd);
                     if (!assigned)
                         continue;
 
                     if (DebugMode)
                     {
-                        string name = ResolveCharacterName(characterId);
-                        LogInfo($"Seeded {name}#{characterId} to {def.Name} seat {seats[i].SeatIndex} ({FormatTermRange(termStart, termEnd)}).");
+                        string name = ResolveCharacterName(candidate.ID);
+                        LogInfo($"Seeded {name}#{candidate.ID} to {def.Name} seat {seats[i].SeatIndex} ({FormatTermRange(termStart, termEnd)}).");
                     }
                 }
             }
 
-            var historySeeds = new (int characterId, string officeId, int seatIndex, int startYear, int endYear)[]
-            {
-                (283, "praetor", 0, initialYear - 2, initialYear - 1),
-                (269, "praetor", 1, initialYear - 2, initialYear - 1),
-                (273, "consul", 0, initialYear - 3, initialYear - 3),
-                (261, "consul", 1, initialYear - 3, initialYear - 3),
-                (25, "quaestor", 0, initialYear - 3, initialYear - 2),
-                (31, "quaestor", 1, initialYear - 3, initialYear - 2),
-                (255, "quaestor", 2, initialYear - 4, initialYear - 3),
-                (279, "quaestor", 3, initialYear - 4, initialYear - 3)
-            };
+            initialHoldersSeeded = true;
+        }
 
-            foreach (var record in historySeeds)
+        private Character FindCandidateForOffice(OfficeDefinition definition, int evaluationYear,
+            HashSet<int> assignedCharacters, List<Character> living)
+        {
+            foreach (var candidate in living)
             {
-                this.state.AddHistorySeed(record.characterId, record.officeId, record.seatIndex, record.startYear, record.endYear);
+                if (candidate == null || assignedCharacters.Contains(candidate.ID))
+                    continue;
+
+                if (!MeetsBaseEligibility(candidate, definition))
+                    continue;
+
+                if (!eligibility.IsEligible(candidate, definition, evaluationYear, out _))
+                {
+                    EnsurePrerequisiteHistory(candidate, definition, evaluationYear);
+                    if (!eligibility.IsEligible(candidate, definition, evaluationYear, out _))
+                        continue;
+                }
+
+                return candidate;
             }
 
-            initialHoldersSeeded = true;
+            return null;
+        }
+
+        private bool MeetsBaseEligibility(Character character, OfficeDefinition definition)
+        {
+            if (character == null || definition == null)
+                return false;
+
+            if (!character.IsAlive || !character.IsMale)
+                return false;
+
+            if (character.Age < definition.MinAge)
+                return false;
+
+            if (definition.RequiresPlebeian && character.Class != SocialClass.Plebeian)
+                return false;
+
+            if (definition.RequiresPatrician && character.Class != SocialClass.Patrician)
+                return false;
+
+            return true;
+        }
+
+        private void EnsurePrerequisiteHistory(Character candidate, OfficeDefinition definition, int evaluationYear)
+        {
+            if (candidate == null || definition == null)
+                return;
+
+            if (definition.PrerequisitesAll != null)
+            {
+                foreach (var prerequisite in definition.PrerequisitesAll)
+                {
+                    SeedHistoryForRequirement(candidate, prerequisite, evaluationYear);
+                }
+            }
+
+            if (definition.PrerequisitesAny != null && definition.PrerequisitesAny.Count > 0)
+            {
+                foreach (var option in definition.PrerequisitesAny)
+                {
+                    if (SeedHistoryForRequirement(candidate, option, evaluationYear))
+                        break;
+                }
+            }
+        }
+
+        private bool SeedHistoryForRequirement(Character candidate, string officeId, int evaluationYear)
+        {
+            var normalized = OfficeDefinitions.NormalizeOfficeId(officeId);
+            if (normalized == null)
+                return false;
+
+            if (state.HasCompletedOffice(candidate.ID, normalized) ||
+                seededHistoryRecords.Contains((candidate.ID, normalized)))
+            {
+                return true;
+            }
+
+            var prereqDefinition = definitions.GetDefinition(normalized);
+            if (prereqDefinition == null)
+                return false;
+
+            if (!MeetsBaseEligibility(candidate, prereqDefinition))
+                return false;
+
+            EnsurePrerequisiteHistory(candidate, prereqDefinition, evaluationYear - 1);
+
+            var termWindow = ReserveHistoryWindow(candidate.ID, evaluationYear, prereqDefinition.TermLengthYears,
+                prereqDefinition.ReelectionGapYears);
+            state.AddHistorySeed(candidate.ID, normalized, 0, termWindow.startYear, termWindow.endYear);
+            seededHistoryRecords.Add((candidate.ID, normalized));
+            return true;
+        }
+
+        private (int startYear, int endYear) ReserveHistoryWindow(int characterId, int evaluationYear, int termLengthYears,
+            int reelectionGapYears)
+        {
+            if (!historySeedCursor.TryGetValue(characterId, out var cursor))
+            {
+                cursor = evaluationYear - 1;
+            }
+
+            int endYear = Math.Min(cursor, evaluationYear - 1);
+            int startYear = endYear - Math.Max(0, termLengthYears - 1);
+            int gap = Math.Max(reelectionGapYears, 1);
+            historySeedCursor[characterId] = startYear - gap;
+            return (startYear, endYear);
         }
 
         private int EstimateInitialYear()
