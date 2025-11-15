@@ -7,11 +7,22 @@ namespace Game.Systems.Characters
 {
     internal sealed class CharacterDataLoader
     {
-        public List<Character> LoadBaseCharacters(string path)
+        public List<Character> LoadBaseCharacters(string path, int seed, CharacterLoadMode mode = CharacterLoadMode.Normal)
         {
             try
             {
-                var characters = CharacterFactory.LoadBaseCharacters(path) ?? new List<Character>();
+                List<Character> characters;
+
+                if (Game.Data.Characters.Generation.BasePopulationGenerator.CanHandle(path))
+                {
+                    var wrapper = Game.Data.Characters.Generation.BasePopulationGenerator.Generate(seed);
+                    characters = CharacterFactory.LoadBaseCharacters(wrapper, path, mode) ?? new List<Character>();
+                }
+                else
+                {
+                    characters = CharacterFactory.LoadBaseCharacters(path, mode) ?? new List<Character>();
+                }
+
                 foreach (var character in characters)
                 {
                     if (character == null)

@@ -59,14 +59,6 @@ namespace Game.Data.Characters
         // ------------------------------------------------------------------
         public static List<Character> LoadBaseCharacters(string path, CharacterLoadMode mode = CharacterLoadMode.Normal)
         {
-            ResetValidationResult();
-
-            if (mode == CharacterLoadMode.Normal)
-            {
-                _normalizationBatch =
-                    new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
-            }
-
             if (!File.Exists(path))
             {
                 var message = $"Base character file not found at '{path}'.";
@@ -101,30 +93,48 @@ namespace Game.Data.Characters
                 return new List<Character>();
             }
 
+            return LoadBaseCharacters(wrapper, path, mode);
+        }
+
+        public static List<Character> LoadBaseCharacters(
+            CharacterDataWrapper wrapper,
+            string sourceLabel,
+            CharacterLoadMode mode = CharacterLoadMode.Normal)
+        {
+            ResetValidationResult();
+
+            if (mode == CharacterLoadMode.Normal)
+            {
+                _normalizationBatch =
+                    new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
+            }
+
             if (wrapper == null || wrapper.Characters == null)
             {
-                var message = $"Failed to parse base character JSON from '{path}'.";
+                var message = $"Failed to parse base character data from '{sourceLabel}'.";
                 Game.Core.Logger.Error(LogCategory, message);
-                AddGlobalIssue("File", message);
+                AddGlobalIssue("Data", message);
                 return new List<Character>();
             }
 
+            var characters = wrapper.Characters;
+
             if (mode == CharacterLoadMode.Strict)
             {
-                CollectStrictValidationIssues(wrapper.Characters, path);
-                return wrapper.Characters;
+                CollectStrictValidationIssues(characters, sourceLabel);
+                return characters;
             }
 
-            foreach (var character in wrapper.Characters)
+            foreach (var character in characters)
             {
-                NormalizeCharacter(character, path);
+                NormalizeCharacter(character, sourceLabel);
             }
 
-            ValidateCharacters(wrapper.Characters, path);
-            UpdateNextID(wrapper.Characters);
+            ValidateCharacters(characters, sourceLabel);
+            UpdateNextID(characters);
             _normalizationBatch.Flush();
             LastValidationResult.Success = true;
-            return wrapper.Characters;
+            return characters;
         }
 
         private static void NormalizeCharacter(Character character, string sourcePath)
@@ -134,14 +144,25 @@ namespace Game.Data.Characters
 
             var analysis = AnalyzeCharacter(character);
 
-            character.RomanName = analysis.NormalizedName;
-            if (character.RomanName != null)
-                character.RomanName.Gender = character.Gender;
+            if (analysis.Identity.Name != null)
+            {
+                analysis.Identity.Name.Gender = character.Gender;
+            }
 
+            character.RomanName = analysis.Identity.Name;
             var normalizedNomen = character.RomanName?.Nomen ?? "(unknown)";
 
             if (!string.IsNullOrEmpty(analysis.ResolvedFamily))
                 character.Family = analysis.ResolvedFamily;
+
+            if (analysis.Identity.IsValid && !string.IsNullOrEmpty(analysis.Identity.BranchId))
+                character.BranchId = analysis.Identity.BranchId;
+
+            if (string.IsNullOrWhiteSpace(character.BranchId))
+                character.BranchId = RomanNamingRules.ResolveBranchId(character.Family, character.RomanName);
+
+            if (string.IsNullOrWhiteSpace(character.LineageId))
+                character.LineageId = CreateLineageId(character.BranchId, character.ID);
 
             EnsureLifecycleState(character, character.BirthYear + character.Age);
 
@@ -474,7 +495,7 @@ namespace Game.Data.Characters
 
         private class CharacterNormalizationAnalysis
         {
-            public RomanName NormalizedName;
+            public RomanIdentity Identity;
             public string ResolvedFamily;
             public List<string> Corrections;
         }
@@ -491,7 +512,7 @@ namespace Game.Data.Characters
 
             var corrections = new List<string>();
 
-            var normalizedName = RomanNamingRules.NormalizeOrGenerateName(
+            var identity = RomanNamingRules.NormalizeOrGenerateIdentity(
                 character.Gender,
                 character.Class,
                 character.Family,
@@ -499,7 +520,10 @@ namespace Game.Data.Characters
                 corrections,
                 randomOverride);
 
-            string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, normalizedName);
+            string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, identity.Name);
+            if (string.IsNullOrEmpty(resolvedFamily))
+                resolvedFamily = identity.Family ?? character.Family;
+
             if (!string.IsNullOrEmpty(resolvedFamily)
                 && !string.Equals(character.Family, resolvedFamily, StringComparison.Ordinal))
             {
@@ -508,7 +532,7 @@ namespace Game.Data.Characters
 
             return new CharacterNormalizationAnalysis
             {
-                NormalizedName = normalizedName,
+                Identity = identity,
                 ResolvedFamily = resolvedFamily,
                 Corrections = corrections
             };
@@ -603,13 +627,18 @@ namespace Game.Data.Characters
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
             var socialClass = father?.Class ?? mother?.Class ?? SocialClass.Plebeian;
-            var romanName = RomanNamingRules.GenerateChildName(father, mother, gender, socialClass, rng);
-            var familySeed = father?.Family ?? mother?.Family ?? romanName?.Nomen;
-            var resolvedFamily = RomanNamingRules.ResolveFamilyName(familySeed, romanName) ?? romanName?.Nomen;
+            var identity = RomanNamingRules.GenerateChildIdentity(father, mother, gender, socialClass, rng);
+            var romanName = identity.Name;
+            var familySeed = father?.Family ?? mother?.Family ?? identity.Family ?? romanName?.Nomen;
+            var resolvedFamily = RomanNamingRules.ResolveFamilyName(familySeed, romanName) ??
+                                identity.Family ?? romanName?.Nomen;
+
+            var id = GetNextID();
+            var branchId = identity.BranchId ?? RomanNamingRules.ResolveBranchId(resolvedFamily, romanName);
 
             var child = new Character
             {
-                ID = GetNextID(),
+                ID = id,
                 RomanName = romanName,
                 Gender = gender,
                 BirthYear = year,
@@ -620,6 +649,8 @@ namespace Game.Data.Characters
                 FatherID = father?.ID,
                 MotherID = mother?.ID,
                 Family = resolvedFamily,
+                BranchId = branchId,
+                LineageId = DetermineChildLineageId(father, mother, branchId, id),
                 Class = socialClass,
                 Wealth = 0,
                 Influence = 0,
@@ -630,6 +661,9 @@ namespace Game.Data.Characters
             if (child.RomanName != null)
                 child.RomanName.Gender = child.Gender;
 
+            if (string.IsNullOrWhiteSpace(child.LineageId))
+                child.LineageId = CreateLineageId(child.BranchId, child.ID);
+
             EnsureLifecycleState(child, year);
 
             return child;
@@ -638,15 +672,20 @@ namespace Game.Data.Characters
         public static Character GenerateRandomCharacter(string family, SocialClass socialClass)
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
-            var romanName = RomanNamingRules.GenerateStandaloneName(gender, socialClass, family, rng);
-            var resolvedFamily = RomanNamingRules.ResolveFamilyName(family, romanName) ?? romanName?.Nomen;
+            var identity = RomanNamingRules.GenerateStandaloneIdentity(gender, socialClass, family, rng);
+            var romanName = identity.Name;
+            var resolvedFamily = RomanNamingRules.ResolveFamilyName(family, romanName) ??
+                                identity.Family ?? romanName?.Nomen;
 
             if (romanName != null)
                 romanName.Gender = gender;
 
+            var id = GetNextID();
+            var branchId = identity.BranchId ?? RomanNamingRules.ResolveBranchId(resolvedFamily, romanName);
+
             var character = new Character
             {
-                ID = GetNextID(),
+                ID = id,
                 RomanName = romanName,
                 Gender = gender,
                 BirthYear = -248,
@@ -655,6 +694,8 @@ namespace Game.Data.Characters
                 Age = rng.Next(16, 45),
                 IsAlive = true,
                 Family = resolvedFamily,
+                BranchId = branchId,
+                LineageId = CreateLineageId(branchId, id),
                 Class = socialClass,
                 Wealth = rng.Next(500, 5000),
                 Influence = rng.Next(1, 10),
@@ -681,6 +722,12 @@ namespace Game.Data.Characters
             if (!string.IsNullOrEmpty(normalizedFamily))
                 clone.Family = normalizedFamily;
 
+            if (string.IsNullOrWhiteSpace(clone.BranchId))
+                clone.BranchId = RomanNamingRules.ResolveBranchId(clone.Family, clone.RomanName);
+
+            if (string.IsNullOrWhiteSpace(clone.LineageId))
+                clone.LineageId = CreateLineageId(clone.BranchId, clone.ID);
+
             EnsureLifecycleState(clone, clone.BirthYear + clone.Age);
 
             return clone;
@@ -688,10 +735,40 @@ namespace Game.Data.Characters
 
         public static int GetNextID() => nextID++;
 
+        private static string DetermineChildLineageId(Character father, Character mother, string branchId, int childId)
+        {
+            var parentLineage = father?.LineageId ?? mother?.LineageId;
+            if (!string.IsNullOrEmpty(parentLineage))
+            {
+                var parentBranch = father?.BranchId ?? mother?.BranchId;
+                if (!string.IsNullOrEmpty(parentBranch) && !string.IsNullOrEmpty(branchId) &&
+                    !string.Equals(parentBranch, branchId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return CreateLineageId(branchId, childId);
+                }
+
+                return parentLineage;
+            }
+
+            return CreateLineageId(branchId, childId);
+        }
+
+        private static string CreateLineageId(string branchId, int rootId)
+        {
+            var normalizedBranch = string.IsNullOrWhiteSpace(branchId) ? "Unknown" : branchId;
+            return $"{normalizedBranch}#{rootId}";
+        }
+
         public static void EnsureLifecycleState(Character character, int? evaluationYear = null)
         {
             if (character == null)
                 return;
+
+            if (string.IsNullOrWhiteSpace(character.BranchId))
+                character.BranchId = RomanNamingRules.ResolveBranchId(character.Family, character.RomanName);
+
+            if (string.IsNullOrWhiteSpace(character.LineageId))
+                character.LineageId = CreateLineageId(character.BranchId, character.ID);
 
             if (character.TraitRecords == null)
                 character.TraitRecords = new List<TraitRecord>();

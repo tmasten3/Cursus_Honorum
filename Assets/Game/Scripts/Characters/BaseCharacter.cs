@@ -40,6 +40,8 @@ namespace Game.Data.Characters
         // Social & Cultural Data
         // ----------------------------------------------------------------------
         public string Family; // gens
+        public string BranchId; // gens + cognomen branch identifier
+        public string LineageId; // lineage token for household tracking
         public SocialClass Class;
         public List<string> Traits = new List<string>();
         public List<TraitRecord> TraitRecords = new List<TraitRecord>();
@@ -125,6 +127,8 @@ namespace Game.Data.Characters
                 FatherID = FatherID,
                 MotherID = MotherID,
                 Family = Family,
+                BranchId = BranchId,
+                LineageId = LineageId,
                 Class = Class,
                 Traits = new List<string>(Traits),
                 TraitRecords = CloneTraitRecords(),

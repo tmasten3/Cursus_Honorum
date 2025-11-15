@@ -14,7 +14,7 @@ namespace Game.Core
         {
             public int RngSeed = 1337;
             public bool KeepDeadInMemory = true;
-            public string BaseDataPath = "Assets/Game/Data/base_characters.json";
+            public string BaseDataPath = "generated://base_population";
             public MortalitySettings Mortality = new MortalitySettings();
         }
 
