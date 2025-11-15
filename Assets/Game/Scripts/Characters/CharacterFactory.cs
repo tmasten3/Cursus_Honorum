@@ -39,7 +39,7 @@ namespace Game.Data.Characters
         public static CharacterValidationResult LastValidationResult { get; private set; } =
             new CharacterValidationResult { Success = true, Issues = new List<CharacterValidationIssue>() };
 
-        private static readonly System.Random rng = new();
+        private static readonly System.Random rng = new System.Random();
         private static int nextID = 1000;
 
         private static readonly string[] RoutineNormalizationPrefixes =
@@ -239,7 +239,8 @@ namespace Game.Data.Characters
 
             character.CurrentOffice = SanitizeOfficeAssignment(character, character.CurrentOffice, sourceLabel);
 
-            character.OfficeHistory ??= new List<OfficeHistoryEntry>();
+            if (character.OfficeHistory == null)
+                character.OfficeHistory = new List<OfficeHistoryEntry>();
 
             for (int i = character.OfficeHistory.Count - 1; i >= 0; i--)
             {
@@ -692,8 +693,10 @@ namespace Game.Data.Characters
             if (character == null)
                 return;
 
-            character.TraitRecords ??= new List<TraitRecord>();
-            character.CareerMilestones ??= new List<CareerMilestone>();
+            if (character.TraitRecords == null)
+                character.TraitRecords = new List<TraitRecord>();
+            if (character.CareerMilestones == null)
+                character.CareerMilestones = new List<CareerMilestone>();
 
             if (character.TraitRecords.Count == 0 && character.Traits != null)
             {
@@ -714,7 +717,8 @@ namespace Game.Data.Characters
                 }
             }
 
-            character.Ambition ??= AmbitionProfile.CreateDefault(character);
+            if (character.Ambition == null)
+                character.Ambition = AmbitionProfile.CreateDefault(character);
             if (string.IsNullOrWhiteSpace(character.Ambition.CurrentGoal))
                 character.Ambition.CurrentGoal = AmbitionProfile.InferDefaultGoal(character);
 

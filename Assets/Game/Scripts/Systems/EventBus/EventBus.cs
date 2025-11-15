@@ -14,11 +14,11 @@ namespace Game.Systems.EventBus
 
         public const int DefaultHistoryCapacity = 4096;
 
-        private readonly Queue<IGameEvent> currentQueue = new();
-        private readonly Queue<IGameEvent> nextQueue = new();
+        private readonly Queue<IGameEvent> currentQueue = new Queue<IGameEvent>();
+        private readonly Queue<IGameEvent> nextQueue = new Queue<IGameEvent>();
         private readonly EventHistory history;
-        private readonly HashSet<Type> unhandledTypesLogged = new();
-        private static readonly HashSet<Type> optionalEventTypes = new()
+        private readonly HashSet<Type> unhandledTypesLogged = new HashSet<Type>();
+        private static readonly HashSet<Type> optionalEventTypes = new HashSet<Type>
         {
             typeof(OnCharacterMarried),
             typeof(OnPopulationTick),
@@ -29,8 +29,8 @@ namespace Game.Systems.EventBus
             typeof(Game.Core.Save.OnGameLoadedEvent)
         };
 
-        private readonly EventRegistry registry = new();
-        private readonly EventInvoker invoker = new();
+        private readonly EventRegistry registry = new EventRegistry();
+        private readonly EventInvoker invoker = new EventInvoker();
         private int historyCapacity = DefaultHistoryCapacity;
         private bool isFlushing;
 

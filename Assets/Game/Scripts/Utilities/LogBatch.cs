@@ -7,7 +7,7 @@ namespace Game.Core
         private readonly string _category;
         private readonly string _summaryMessage;
         private readonly string _fileName;
-        private readonly List<string> _records = new();
+        private readonly List<string> _records = new List<string>();
 
         public LogBatch(string category, string summaryMessage, string fileName)
         {

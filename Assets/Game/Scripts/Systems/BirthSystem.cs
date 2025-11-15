@@ -33,9 +33,9 @@ namespace Game.Systems.BirthSystem
             public int DueYear, DueMonth, DueDay;
         }
 
-        private List<Pregnancy> pregnancies = new();
+        private List<Pregnancy> pregnancies = new List<Pregnancy>();
 
-        private BirthSettings config = new();
+        private BirthSettings config = new BirthSettings();
 
         public string ConfigPath { get; set; } = PopulationSimulationConfigLoader.DefaultConfigPath;
 
@@ -238,7 +238,7 @@ namespace Game.Systems.BirthSystem
             public int Version = 1;
             public int Seed;
             public int SampleCount;
-            public List<Pregnancy> Pregnancies = new();
+            public List<Pregnancy> Pregnancies = new List<Pregnancy>();
         }
 
         private void ApplyLoadedConfig(BirthSettings source)

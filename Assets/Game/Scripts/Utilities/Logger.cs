@@ -40,8 +40,8 @@ namespace Game.Core
 
         private const int MaxRecentEntries = 200;
 
-        private static readonly Queue<LogEntry> recentEntries = new();
-        private static readonly object syncRoot = new();
+        private static readonly Queue<LogEntry> recentEntries = new Queue<LogEntry>();
+        private static readonly object syncRoot = new object();
         private static readonly string logFilePath;
         private static readonly bool fileLoggingAvailable;
 

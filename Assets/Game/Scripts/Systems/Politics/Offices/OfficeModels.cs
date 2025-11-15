@@ -57,7 +57,7 @@ namespace Game.Systems.Politics.Offices
     {
         public OfficeDefinition Definition;
         public int SeatsAvailable;
-        public List<OfficeSeatDescriptor> Seats = new();
+        public List<OfficeSeatDescriptor> Seats = new List<OfficeSeatDescriptor>();
 
         public override string ToString()
         {

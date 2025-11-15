@@ -88,7 +88,7 @@ namespace Game.UI
         private readonly ElectionSystem electionSystem;
         private readonly EventBus eventBus;
 
-        private readonly List<EventSubscription> subscriptions = new();
+        private readonly List<EventSubscription> subscriptions = new List<EventSubscription>();
         private int todaysBirths;
         private int todaysDeaths;
         private int todaysMarriages;

@@ -6,7 +6,7 @@ namespace Game.Data.Characters
 {
     public static class RomanNamingRules
     {
-        private static readonly System.Random rng = new();
+        private static readonly System.Random rng = new System.Random();
         private static readonly RomanGensRegistry Registry = new(RomanGensData.All);
 
         private static readonly string[] DefaultPraenomina =

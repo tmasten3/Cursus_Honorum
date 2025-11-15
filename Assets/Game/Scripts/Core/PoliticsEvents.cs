@@ -68,7 +68,7 @@ namespace Game.Core
         public string OfficeId;
         public string OfficeName;
         public OfficeAssembly Assembly;
-        public List<ElectionWinnerSummary> Winners = new();
+        public List<ElectionWinnerSummary> Winners = new List<ElectionWinnerSummary>();
     }
 
     public sealed class ElectionWinnerSummary

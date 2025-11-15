@@ -27,12 +27,12 @@ namespace Game.Systems.Politics
         private readonly OfficeSystem officeSystem;
         private readonly ElectionSystem electionSystem;
 
-        private readonly PoliticsTermTracker termTracker = new();
-        private readonly Dictionary<int, List<string>> eligibilityByCharacter = new();
-        private readonly Dictionary<(int Month, int Day), HashSet<int>> birthdayIndex = new();
-        private readonly PoliticsModelFactory.ElectionCycleState cycleState = new();
+        private readonly PoliticsTermTracker termTracker = new PoliticsTermTracker();
+        private readonly Dictionary<int, List<string>> eligibilityByCharacter = new Dictionary<int, List<string>>();
+        private readonly Dictionary<(int Month, int Day), HashSet<int>> birthdayIndex = new Dictionary<(int Month, int Day), HashSet<int>>();
+        private readonly PoliticsModelFactory.ElectionCycleState cycleState = new PoliticsModelFactory.ElectionCycleState();
 
-        private readonly List<EventSubscription> subscriptions = new();
+        private readonly List<EventSubscription> subscriptions = new List<EventSubscription>();
         private int currentYear;
 
         public PoliticsSystem(EventBus.EventBus eventBus, TimeSystem timeSystem,

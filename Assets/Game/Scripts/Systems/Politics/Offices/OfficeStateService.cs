@@ -6,11 +6,11 @@ namespace Game.Systems.Politics.Offices
 {
     public class OfficeStateService
     {
-        private readonly Dictionary<string, List<OfficeSeat>> seatsByOffice = new();
-        private readonly Dictionary<int, List<ActiveOfficeRecord>> activeByCharacter = new();
-        private readonly Dictionary<int, List<PendingOfficeRecord>> pendingByCharacter = new();
-        private readonly Dictionary<int, List<OfficeCareerRecord>> historyByCharacter = new();
-        private readonly Dictionary<(int characterId, string officeId), int> lastHeldYear = new();
+        private readonly Dictionary<string, List<OfficeSeat>> seatsByOffice = new Dictionary<string, List<OfficeSeat>>();
+        private readonly Dictionary<int, List<ActiveOfficeRecord>> activeByCharacter = new Dictionary<int, List<ActiveOfficeRecord>>();
+        private readonly Dictionary<int, List<PendingOfficeRecord>> pendingByCharacter = new Dictionary<int, List<PendingOfficeRecord>>();
+        private readonly Dictionary<int, List<OfficeCareerRecord>> historyByCharacter = new Dictionary<int, List<OfficeCareerRecord>>();
+        private readonly Dictionary<(int characterId, string officeId), int> lastHeldYear = new Dictionary<(int characterId, string officeId), int>();
 
         private readonly Action<string> logWarn;
 
@@ -819,7 +819,7 @@ namespace Game.Systems.Politics.Offices
         public int EndYear { get; private set; }
         public OfficeSeatDescriptor Descriptor { get; private set; }
         public SeatVacatedInfo PreviousHolder { get; set; }
-        public List<PendingAssignmentCanceledInfo> CanceledPendingAssignments { get; } = new();
+        public List<PendingAssignmentCanceledInfo> CanceledPendingAssignments { get; } = new List<PendingAssignmentCanceledInfo>();
 
         public static OfficeAssignmentResult Error(string officeId, int year)
         {

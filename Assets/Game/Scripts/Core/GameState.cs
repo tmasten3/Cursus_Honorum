@@ -5,7 +5,7 @@ namespace Game.Core
 {
     public class GameState
     {
-        private readonly SystemRegistry registry = new();
+        private readonly SystemRegistry registry = new SystemRegistry();
         private readonly SystemBootstrapProfile profile;
 
         public bool IsInitialized { get; private set; }

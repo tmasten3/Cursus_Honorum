@@ -24,7 +24,7 @@ namespace Game.Systems.MarriageSystem
         private int rngSampleCount;
         private EventSubscription newDaySubscription = EventSubscription.Empty;
 
-        private MarriageSettings config = new();
+        private MarriageSettings config = new MarriageSettings();
 
         public string ConfigPath { get; set; } = PopulationSimulationConfigLoader.DefaultConfigPath;
 

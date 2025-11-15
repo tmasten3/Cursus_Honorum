@@ -12,14 +12,14 @@ namespace Game.Systems.Politics.Elections
         public string OfficeId;
         public OfficeDefinition Office;
         public float DesireScore;
-        public Dictionary<string, float> Factors = new();
+        public Dictionary<string, float> Factors = new Dictionary<string, float>();
     }
 
     public class ElectionCandidate
     {
         public CandidateDeclaration Declaration;
         public Character Character;
-        public Dictionary<string, float> VoteBreakdown = new();
+        public Dictionary<string, float> VoteBreakdown = new Dictionary<string, float>();
         public float FinalScore;
     }
 
@@ -27,7 +27,7 @@ namespace Game.Systems.Politics.Elections
     {
         public OfficeDefinition Office;
         public int Year;
-        public List<ElectionCandidate> Candidates = new();
-        public List<ElectionWinnerSummary> Winners = new();
+        public List<ElectionCandidate> Candidates = new List<ElectionCandidate>();
+        public List<ElectionWinnerSummary> Winners = new List<ElectionWinnerSummary>();
     }
 }

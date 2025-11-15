@@ -40,10 +40,10 @@ namespace CursusHonorum.Tests.Runtime
             var state = CreateInitializedState(out var officeSystem);
             try
             {
-                var holdings = officeSystem.GetCurrentHoldings(283);
+                var holdings = officeSystem.GetCurrentHoldings(61);
                 Assert.IsNotNull(holdings);
-                Assert.IsTrue(holdings.Any(), "Seed data should assign at least one office to character #283.");
-                Assert.IsTrue(holdings.Any(h => h.OfficeId == "consul"), "Character #283 should hold a consul seat at start.");
+                Assert.IsTrue(holdings.Any(), "Seed data should assign at least one office to character #61.");
+                Assert.IsTrue(holdings.Any(h => h.OfficeId == "consul"), "Character #61 should hold a consul seat at start.");
             }
             finally
             {

@@ -41,8 +41,8 @@ namespace Game.Data.Characters
         // ----------------------------------------------------------------------
         public string Family; // gens
         public SocialClass Class;
-        public List<string> Traits = new();
-        public List<TraitRecord> TraitRecords = new();
+        public List<string> Traits = new List<string>();
+        public List<TraitRecord> TraitRecords = new List<TraitRecord>();
         public int Wealth;
         public int Influence;
         public float SenatorialInfluence;
@@ -58,10 +58,10 @@ namespace Game.Data.Characters
         public int Strategy = DefaultStatValue;
         public int Civic = DefaultStatValue;
         public FactionType Faction = FactionType.Neutral;
-        public AmbitionProfile Ambition = new();
-        public List<CareerMilestone> CareerMilestones = new();
+        public AmbitionProfile Ambition = new AmbitionProfile();
+        public List<CareerMilestone> CareerMilestones = new List<CareerMilestone>();
         public OfficeAssignment CurrentOffice;
-        public List<OfficeHistoryEntry> OfficeHistory = new();
+        public List<OfficeHistoryEntry> OfficeHistory = new List<OfficeHistoryEntry>();
 
         // ----------------------------------------------------------------------
         // Helper Methods
@@ -239,7 +239,7 @@ namespace Game.Data.Characters
         public int? TargetYear;
         public bool IsRetired;
         public int LastEvaluatedYear;
-        public List<AmbitionHistoryRecord> History = new();
+            public List<AmbitionHistoryRecord> History = new List<AmbitionHistoryRecord>();
 
         public AmbitionProfile Clone()
         {
@@ -367,7 +367,7 @@ namespace Game.Data.Characters
     [Serializable]
     public class CharacterDataWrapper
     {
-        public List<Character> Characters = new();
+        public List<Character> Characters = new List<Character>();
     }
 
     public enum Gender

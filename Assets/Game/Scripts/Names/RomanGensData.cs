@@ -127,7 +127,7 @@ namespace Game.Data.Characters
 
     internal sealed class RomanGensDefinition
     {
-        private readonly List<RomanGensVariant> _variants = new();
+        private readonly List<RomanGensVariant> _variants = new List<RomanGensVariant>();
 
         public string Id { get; }
         public string StylizedNomen { get; }

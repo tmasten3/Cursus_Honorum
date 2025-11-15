@@ -110,7 +110,7 @@ namespace Game.Core
         // --------------------------------------------------------------------
         // 🔹 Persistence (Safe Defaults)
         // --------------------------------------------------------------------
-        public virtual Dictionary<string, object> Save() => new();
+        public virtual Dictionary<string, object> Save() => new Dictionary<string, object>();
 
         public virtual void Load(Dictionary<string, object> data)
         {

@@ -144,7 +144,10 @@ namespace Game.Core
 
         internal SystemResolver(Func<Type, GameSystemBase> accessor)
         {
-            accessor ??= _ => null;
+            if (accessor == null)
+            {
+                accessor = _ => null;
+            }
             this.accessor = accessor;
         }
 
