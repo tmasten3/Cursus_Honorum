@@ -189,11 +189,16 @@ public class CharacterLedgerSimple : MonoBehaviour
                 if (character.RomanName == null)
                     character.RomanName = RomanNamingRules.GenerateRomanName(character.Gender, character.Family, character.Class);
 
-                fullName = RomanNamingRules.GetFullName(character);
+                fullName = character.RomanName?.GetFullName();
                 if (string.IsNullOrWhiteSpace(fullName) || string.Equals(fullName, "Unknown", StringComparison.OrdinalIgnoreCase))
                 {
                     character.RomanName = RomanNamingRules.GenerateRomanName(character.Gender, character.Family, character.Class);
-                    fullName = RomanNamingRules.GetFullName(character);
+                    fullName = character.RomanName?.GetFullName();
+                }
+
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    fullName = $"Character #{character.ID}";
                 }
             }
             catch (Exception ex)
