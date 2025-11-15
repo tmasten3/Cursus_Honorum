@@ -30,10 +30,10 @@ namespace Game.Systems.Politics.Elections
         private readonly ElectionVoteSimulator voteSimulator;
         private readonly ElectionResultService resultsApplier;
 
-        private readonly Dictionary<string, List<CandidateDeclaration>> declarationsByOffice = new();
-        private readonly Dictionary<int, List<CandidateDeclaration>> declarationsByYear = new();
-        private readonly Dictionary<int, List<ElectionResultRecord>> resultsByYear = new();
-        private readonly Dictionary<int, CandidateDeclaration> declarationByCharacter = new();
+        private readonly Dictionary<string, List<CandidateDeclaration>> declarationsByOffice = new Dictionary<string, List<CandidateDeclaration>>();
+        private readonly Dictionary<int, List<CandidateDeclaration>> declarationsByYear = new Dictionary<int, List<CandidateDeclaration>>();
+        private readonly Dictionary<int, List<ElectionResultRecord>> resultsByYear = new Dictionary<int, List<ElectionResultRecord>>();
+        private readonly Dictionary<int, CandidateDeclaration> declarationByCharacter = new Dictionary<int, CandidateDeclaration>();
 
         private readonly System.Random rng = new(15821);
 

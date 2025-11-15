@@ -46,18 +46,26 @@ namespace Game.Core
 
         private static SimulationConfig Normalize(SimulationConfig config, SimulationConfig defaults)
         {
-            config ??= new SimulationConfig();
+            if (config == null)
+            {
+                config = new SimulationConfig();
+            }
 
-            config.Character ??= new SimulationConfig.CharacterSettings();
+            if (config.Character == null)
+                config.Character = new SimulationConfig.CharacterSettings();
             if (string.IsNullOrWhiteSpace(config.Character.BaseDataPath))
                 config.Character.BaseDataPath = defaults.Character.BaseDataPath;
-            config.Character.Mortality ??= new SimulationConfig.MortalitySettings();
-            config.Character.Mortality.AgeBands ??= Array.Empty<SimulationConfig.MortalityBand>();
+            if (config.Character.Mortality == null)
+                config.Character.Mortality = new SimulationConfig.MortalitySettings();
+            if (config.Character.Mortality.AgeBands == null)
+                config.Character.Mortality.AgeBands = Array.Empty<SimulationConfig.MortalityBand>();
             if (config.Character.Mortality.AgeBands.Length == 0)
                 config.Character.Mortality.AgeBands = defaults.Character.Mortality.AgeBands;
 
-            config.Birth ??= new SimulationConfig.BirthSettings();
-            config.Marriage ??= new SimulationConfig.MarriageSettings();
+            if (config.Birth == null)
+                config.Birth = new SimulationConfig.BirthSettings();
+            if (config.Marriage == null)
+                config.Marriage = new SimulationConfig.MarriageSettings();
 
             return config;
         }

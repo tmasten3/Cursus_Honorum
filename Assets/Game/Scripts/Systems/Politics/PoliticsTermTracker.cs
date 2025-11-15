@@ -8,8 +8,8 @@ namespace Game.Systems.Politics
 {
     internal sealed class PoliticsTermTracker
     {
-        private readonly Dictionary<int, List<OfficeTermRecord>> historyByCharacter = new();
-        private readonly HashSet<(int characterId, string officeId, int startYear, int endYear)> seenRecords = new();
+        private readonly Dictionary<int, List<OfficeTermRecord>> historyByCharacter = new Dictionary<int, List<OfficeTermRecord>>();
+        private readonly HashSet<(int characterId, string officeId, int startYear, int endYear)> seenRecords = new HashSet<(int characterId, string officeId, int startYear, int endYear)>();
 
         public void Reset()
         {

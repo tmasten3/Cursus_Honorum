@@ -141,11 +141,16 @@ namespace Game.UI
             if (gameState == null)
                 return false;
 
-            timeSystem ??= gameState.GetSystem<TimeSystem>();
-            characterSystem ??= gameState.GetSystem<CharacterSystem>();
-            officeSystem ??= gameState.GetSystem<OfficeSystem>();
-            electionSystem ??= gameState.GetSystem<ElectionSystem>();
-            eventBus ??= gameState.GetSystem<EventBus>();
+            if (timeSystem == null)
+                timeSystem = gameState.GetSystem<TimeSystem>();
+            if (characterSystem == null)
+                characterSystem = gameState.GetSystem<CharacterSystem>();
+            if (officeSystem == null)
+                officeSystem = gameState.GetSystem<OfficeSystem>();
+            if (electionSystem == null)
+                electionSystem = gameState.GetSystem<ElectionSystem>();
+            if (eventBus == null)
+                eventBus = gameState.GetSystem<EventBus>();
 
             if (characterRepository == null && characterSystem != null)
             {

@@ -104,7 +104,7 @@ namespace Game.Systems.Time
             Log(state.GetDateString());
         }
 
-        public override Dictionary<string, object> Save() => new()
+        public override Dictionary<string, object> Save() => new Dictionary<string, object>
         {
             ["day"] = state.Day,
             ["month"] = state.Month,

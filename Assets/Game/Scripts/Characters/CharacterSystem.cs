@@ -22,9 +22,9 @@ namespace Game.Systems.CharacterSystem
 
         private System.Random rng;
         private int rngSeed;
-        private readonly CharacterRepository repository = new();
-        private readonly DailyPopulationMetrics metrics = new();
-        private readonly CharacterDataLoader dataLoader = new();
+        private readonly CharacterRepository repository = new CharacterRepository();
+        private readonly DailyPopulationMetrics metrics = new DailyPopulationMetrics();
+        private readonly CharacterDataLoader dataLoader = new CharacterDataLoader();
         private readonly CharacterAgeService ageService;
         private readonly CharacterFamilyService familyService;
         private readonly CharacterMarriageService marriageService;
@@ -175,9 +175,9 @@ namespace Game.Systems.CharacterSystem
         {
             public int Version;
             public int Seed;
-            public List<Character> Characters = new();
-            public List<int> AliveIDs = new();
-            public List<int> DeadIDs = new();
+            public List<Character> Characters = new List<Character>();
+            public List<int> AliveIDs = new List<int>();
+            public List<int> DeadIDs = new List<int>();
         }
 
         public override Dictionary<string, object> Save()
@@ -289,7 +289,7 @@ namespace Game.Systems.CharacterSystem
             if (goalChanged)
             {
                 ambition.CurrentGoal = desiredGoal;
-                ambition.History ??= new List<AmbitionHistoryRecord>();
+                EnsureAmbitionHistoryList(ambition);
                 ambition.History.Add(new AmbitionHistoryRecord
                 {
                     Year = year,
@@ -314,7 +314,7 @@ namespace Game.Systems.CharacterSystem
                 if (ambition.Intensity >= 50 && (!ambition.TargetYear.HasValue || ambition.TargetYear < year))
                 {
                     ambition.TargetYear = year + 5;
-                    ambition.History ??= new List<AmbitionHistoryRecord>();
+                    EnsureAmbitionHistoryList(ambition);
                     ambition.History.Add(new AmbitionHistoryRecord
                     {
                         Year = year,
@@ -387,7 +387,7 @@ namespace Game.Systems.CharacterSystem
             ambition.TargetYear = null;
             ambition.Intensity = 0;
             ambition.LastEvaluatedYear = year;
-            ambition.History ??= new List<AmbitionHistoryRecord>();
+            EnsureAmbitionHistoryList(ambition);
             ambition.History.Add(new AmbitionHistoryRecord
             {
                 Year = year,
@@ -455,7 +455,7 @@ namespace Game.Systems.CharacterSystem
             if (ambition == null)
                 return;
 
-            ambition.History ??= new List<AmbitionHistoryRecord>();
+            EnsureAmbitionHistoryList(ambition);
             foreach (var threshold in ambitionMilestoneThresholds)
             {
                 if (previousIntensity < threshold && newIntensity >= threshold)
@@ -492,7 +492,7 @@ namespace Game.Systems.CharacterSystem
 
         private void RecordCareerMilestone(Character character, int year, int month, int day, string title, string notes)
         {
-            character.CareerMilestones ??= new List<CareerMilestone>();
+            EnsureCareerMilestoneList(character);
 
             bool alreadyRecorded = character.CareerMilestones.Any(m =>
                 m != null && string.Equals(m.Title, title, StringComparison.OrdinalIgnoreCase) && m.Year == year);
@@ -510,6 +510,24 @@ namespace Game.Systems.CharacterSystem
             character.CareerMilestones.Add(milestone);
 
             bus.Publish(new OnCharacterCareerMilestoneRecorded(year, month, day, character.ID, title, notes));
+        }
+
+        private static void EnsureAmbitionHistoryList(AmbitionProfile ambition)
+        {
+            if (ambition == null)
+                return;
+
+            if (ambition.History == null)
+                ambition.History = new List<AmbitionHistoryRecord>();
+        }
+
+        private static void EnsureCareerMilestoneList(Character character)
+        {
+            if (character == null)
+                return;
+
+            if (character.CareerMilestones == null)
+                character.CareerMilestones = new List<CareerMilestone>();
         }
 
         private static readonly int[] ambitionMilestoneThresholds = { 25, 50, 75 };

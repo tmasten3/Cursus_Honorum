@@ -85,8 +85,8 @@ namespace Game.Systems.Politics
         {
             public int Year { get; private set; }
             public ElectionCyclePhase Phase { get; private set; } = ElectionCyclePhase.QuietPeriod;
-            public List<ElectionOfficeSummary> Offices { get; } = new();
-            public List<ElectionResultSummary> Results { get; } = new();
+            public List<ElectionOfficeSummary> Offices { get; } = new List<ElectionOfficeSummary>();
+            public List<ElectionResultSummary> Results { get; } = new List<ElectionResultSummary>();
             public (int Year, int Month, int Day) SeasonOpenedOn { get; private set; }
                 = (0, 0, 0);
             public (int Year, int Month, int Day) SeasonClosedOn { get; private set; }

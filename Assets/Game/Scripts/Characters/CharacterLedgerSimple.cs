@@ -220,10 +220,14 @@ public class CharacterLedgerSimple : MonoBehaviour
         if (eventBus == null || handlersBound)
             return;
 
-        onCharacterBornHandler ??= HandleCharacterBorn;
-        onCharacterDiedHandler ??= HandleCharacterDied;
-        onCharacterMarriedHandler ??= HandleCharacterMarried;
-        onPopulationTickHandler ??= HandlePopulationTick;
+        if (onCharacterBornHandler == null)
+            onCharacterBornHandler = HandleCharacterBorn;
+        if (onCharacterDiedHandler == null)
+            onCharacterDiedHandler = HandleCharacterDied;
+        if (onCharacterMarriedHandler == null)
+            onCharacterMarriedHandler = HandleCharacterMarried;
+        if (onPopulationTickHandler == null)
+            onPopulationTickHandler = HandlePopulationTick;
 
         eventBus.Subscribe(onCharacterBornHandler);
         eventBus.Subscribe(onCharacterDiedHandler);

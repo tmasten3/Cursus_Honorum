@@ -30,8 +30,8 @@ namespace Game.Systems.Population
     [Serializable]
     public class PopulationSimulationConfig
     {
-        public BirthSettings Birth = new();
-        public MarriageSettings Marriage = new();
+        public BirthSettings Birth = new BirthSettings();
+        public MarriageSettings Marriage = new MarriageSettings();
     }
 
     public static class PopulationSimulationConfigLoader
@@ -82,8 +82,10 @@ namespace Game.Systems.Population
                     return new PopulationSimulationConfig();
                 }
 
-                config.Birth ??= new BirthSettings();
-                config.Marriage ??= new MarriageSettings();
+                if (config.Birth == null)
+                    config.Birth = new BirthSettings();
+                if (config.Marriage == null)
+                    config.Marriage = new MarriageSettings();
 
                 logInfo?.Invoke($"Loaded population simulation config from '{path}'.");
                 return config;
