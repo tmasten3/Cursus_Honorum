@@ -35,15 +35,25 @@ namespace CursusHonorum.Tests.Runtime
         }
 
         [Test]
-        public void InitialOfficeHolders_AreSeeded()
+        public void AllOfficeSeats_HaveInitialHolders()
         {
             var state = CreateInitializedState(out var officeSystem);
             try
             {
-                var holdings = officeSystem.GetCurrentHoldings(61);
-                Assert.IsNotNull(holdings);
-                Assert.IsTrue(holdings.Any(), "Seed data should assign at least one office to character #61.");
-                Assert.IsTrue(holdings.Any(h => h.OfficeId == "consul"), "Character #61 should hold a consul seat at start.");
+                var definitions = officeSystem.Definitions.GetAllDefinitions();
+                foreach (var definition in definitions)
+                {
+                    var seats = officeSystem.StateService.GetOrCreateSeatList(definition.Id, definition.Seats);
+                    Assert.IsNotNull(seats, $"Office '{definition.Id}' should expose its seats.");
+
+                    for (int i = 0; i < seats.Count; i++)
+                    {
+                        var seat = seats[i];
+                        Assert.IsNotNull(seat, $"Office '{definition.Id}' seat {i} is missing.");
+                        Assert.IsTrue(seat.HolderId.HasValue,
+                            $"Office '{definition.Id}' seat {i} should be seeded with an initial holder.");
+                    }
+                }
             }
             finally
             {

@@ -134,6 +134,8 @@ namespace Game.Systems.CharacterSystem
         public Character Get(int id) => familyService.Get(id);
         public IReadOnlyList<Character> GetAllLiving() => familyService.GetAllLiving();
         public IReadOnlyList<Character> GetByFamily(string gens) => familyService.GetByFamily(gens);
+        public IReadOnlyList<Character> GetByCognomen(string cognomen) => familyService.GetByCognomen(cognomen);
+        public IReadOnlyList<Character> GetByBranch(string branchId) => familyService.GetByBranch(branchId);
         public IReadOnlyList<Character> GetByClass(SocialClass c) => familyService.GetByClass(c);
         public int CountAlive() => familyService.CountAlive();
         public int GetLiveCharacterCount() => familyService.CountAlive();

@@ -40,6 +40,7 @@ namespace Game.Data.Characters
         // Social & Cultural Data
         // ----------------------------------------------------------------------
         public string Family; // gens
+        public string Branch; // cognomen branch identifier
         public SocialClass Class;
         public List<string> Traits = new List<string>();
         public List<TraitRecord> TraitRecords = new List<TraitRecord>();
@@ -113,7 +114,7 @@ namespace Game.Data.Characters
             {
                 ID = ID,
                 RomanName = RomanName != null
-                    ? new RomanName(RomanName.Praenomen, RomanName.Nomen, RomanName.Cognomen, RomanName.Gender)
+                    ? new RomanName(RomanName.Praenomen, RomanName.Nomen, RomanName.Cognomen, RomanName.Gender, RomanName.BranchId)
                     : null,
                 Gender = Gender,
                 BirthYear = BirthYear,
@@ -125,6 +126,7 @@ namespace Game.Data.Characters
                 FatherID = FatherID,
                 MotherID = MotherID,
                 Family = Family,
+                Branch = Branch,
                 Class = Class,
                 Traits = new List<string>(Traits),
                 TraitRecords = CloneTraitRecords(),
