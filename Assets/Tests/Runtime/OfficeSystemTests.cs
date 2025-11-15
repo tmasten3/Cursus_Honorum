@@ -1,7 +1,7 @@
-using System.Linq;
 using NUnit.Framework;
 using Game.Core;
 using Game.Systems.Politics.Offices;
+using Game.Systems.CharacterSystem;
 
 namespace CursusHonorum.Tests.Runtime
 {
@@ -40,10 +40,24 @@ namespace CursusHonorum.Tests.Runtime
             var state = CreateInitializedState(out var officeSystem);
             try
             {
-                var holdings = officeSystem.GetCurrentHoldings(61);
-                Assert.IsNotNull(holdings);
-                Assert.IsTrue(holdings.Any(), "Seed data should assign at least one office to character #61.");
-                Assert.IsTrue(holdings.Any(h => h.OfficeId == "consul"), "Character #61 should hold a consul seat at start.");
+                var characterSystem = state.GetSystem<CharacterSystem>();
+                Assert.IsNotNull(characterSystem, "CharacterSystem should be available for validation.");
+
+                foreach (var definition in officeSystem.Definitions.GetAllDefinitions())
+                {
+                    var seats = officeSystem.StateService.GetOrCreateSeatList(definition.Id, definition.Seats);
+                    Assert.IsNotNull(seats, $"Seat list for office '{definition.Id}' should be initialized.");
+
+                    foreach (var seat in seats)
+                    {
+                        int holderId = seat.HolderId ?? seat.PendingHolderId ?? 0;
+                        Assert.Greater(holderId, 0, $"Office '{definition.Id}' seat {seat.SeatIndex} is missing a holder.");
+
+                        var holder = characterSystem.Get(holderId);
+                        Assert.IsNotNull(holder, $"Office '{definition.Id}' seat {seat.SeatIndex} references unknown holder #{holderId}.");
+                        Assert.IsTrue(holder.IsAlive, $"Office '{definition.Id}' seat {seat.SeatIndex} assigned to deceased holder #{holderId}.");
+                    }
+                }
             }
             finally
             {

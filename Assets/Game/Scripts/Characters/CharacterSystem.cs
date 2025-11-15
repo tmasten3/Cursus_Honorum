@@ -59,12 +59,12 @@ namespace Game.Systems.CharacterSystem
                     band.DailyHazard = YearlyToDaily(band.YearlyHazard);
             }
 
-            var baseCharacters = dataLoader.LoadBaseCharacters(settings.BaseDataPath);
+            var baseCharacters = dataLoader.LoadBaseCharacters(settings);
             foreach (var character in baseCharacters)
             {
                 if (character == null)
                 {
-                    Logger.Warn("Safety", $"{settings.BaseDataPath}: Encountered null character entry during load. Skipping.");
+                    Logger.Warn("Safety", "Generated base population encountered null character entry. Skipping.");
                     continue;
                 }
 
@@ -75,9 +75,11 @@ namespace Game.Systems.CharacterSystem
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("Safety", $"{settings.BaseDataPath}: Failed to add character #{character.ID} to repository: {ex.Message}");
+                    Logger.Error("Safety", $"Base population: Failed to add character #{character.ID} to repository: {ex.Message}");
                 }
             }
+
+            RomanFamilyRegistry.RebuildFromCharacters(repository.AllCharacters);
 
             mortality = new CharacterMortalityService(repository, rng, GetDailyHazard);
             newDaySubscription.Dispose();
@@ -93,8 +95,92 @@ namespace Game.Systems.CharacterSystem
             if (settings == null)
                 throw new InvalidOperationException("Character settings are not configured.");
 
-            CharacterFactory.LoadBaseCharacters(settings.BaseDataPath, CharacterLoadMode.Strict);
-            return CharacterFactory.LastValidationResult;
+            var issues = new List<CharacterValidationIssue>();
+            var generated = dataLoader.LoadBaseCharacters(settings) ?? new List<Character>();
+
+            int population = generated.Count;
+            if (population == 0)
+            {
+                issues.Add(new CharacterValidationIssue
+                {
+                    CharacterIndex = -1,
+                    Field = "Population",
+                    Message = "Base character generator produced no characters."
+                });
+            }
+            else if (population < 1200 || population > 2000)
+            {
+                issues.Add(new CharacterValidationIssue
+                {
+                    CharacterIndex = -1,
+                    Field = "Population",
+                    Message = $"Base character generator produced {population} characters; expected range is 1200-2000."
+                });
+            }
+
+            int missingNameIndex = generated.FindIndex(c => c != null && c.RomanName == null);
+            if (missingNameIndex >= 0)
+            {
+                issues.Add(new CharacterValidationIssue
+                {
+                    CharacterIndex = missingNameIndex,
+                    Field = nameof(Character.RomanName),
+                    Message = "Generated character missing Roman identity."
+                });
+            }
+
+            int missingBranchIndex = generated.FindIndex(c => c != null && string.IsNullOrWhiteSpace(c.BranchId));
+            if (missingBranchIndex >= 0)
+            {
+                issues.Add(new CharacterValidationIssue
+                {
+                    CharacterIndex = missingBranchIndex,
+                    Field = nameof(Character.BranchId),
+                    Message = "Generated character missing branch assignment."
+                });
+            }
+
+            var branches = RomanFamilyRegistry.GetAllBranches()?.ToList() ?? new List<RomanFamilyBranch>();
+            var branchIds = new HashSet<string>(generated
+                .Where(c => c != null && !string.IsNullOrWhiteSpace(c.BranchId))
+                .Select(c => c.BranchId));
+
+            if (branchIds.Count == 0)
+            {
+                issues.Add(new CharacterValidationIssue
+                {
+                    CharacterIndex = -1,
+                    Field = "Branch",
+                    Message = "No family branches were registered during base population generation."
+                });
+            }
+            else if (branches.Count > 0 && branches.Select(b => b.Id).Except(branchIds).Any())
+            {
+                issues.Add(new CharacterValidationIssue
+                {
+                    CharacterIndex = -1,
+                    Field = "Branch",
+                    Message = "Registered family branches exist without any assigned characters."
+                });
+            }
+
+            bool hasPatrician = generated.Any(c => c != null && c.Class == SocialClass.Patrician);
+            bool hasPlebeian = generated.Any(c => c != null && c.Class == SocialClass.Plebeian);
+            if (!hasPatrician || !hasPlebeian)
+            {
+                issues.Add(new CharacterValidationIssue
+                {
+                    CharacterIndex = -1,
+                    Field = nameof(Character.Class),
+                    Message = "Base population must include both patrician and plebeian characters."
+                });
+            }
+
+            return new CharacterValidationResult
+            {
+                Success = issues.Count == 0,
+                Issues = issues
+            };
         }
 
         public override void Shutdown()
@@ -224,6 +310,7 @@ namespace Game.Systems.CharacterSystem
                     repository.Add(character, settings.KeepDeadInMemory);
                 }
                 repository.ApplyLifeState(blob.AliveIDs, blob.DeadIDs, settings.KeepDeadInMemory);
+                RomanFamilyRegistry.RebuildFromCharacters(repository.AllCharacters);
                 rngSeed = blob.Seed;
                 settings.RngSeed = rngSeed;
                 rng = new System.Random(rngSeed);

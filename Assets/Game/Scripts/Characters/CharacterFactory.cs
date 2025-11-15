@@ -134,14 +134,9 @@ namespace Game.Data.Characters
 
             var analysis = AnalyzeCharacter(character);
 
-            character.RomanName = analysis.NormalizedName;
-            if (character.RomanName != null)
-                character.RomanName.Gender = character.Gender;
+            ApplyIdentity(character, analysis.Identity, analysis.ResolvedFamily);
 
             var normalizedNomen = character.RomanName?.Nomen ?? "(unknown)";
-
-            if (!string.IsNullOrEmpty(analysis.ResolvedFamily))
-                character.Family = analysis.ResolvedFamily;
 
             EnsureLifecycleState(character, character.BirthYear + character.Age);
 
@@ -191,6 +186,39 @@ namespace Game.Data.Characters
         {
             if (character == null)
                 return;
+
+            if (character.RomanName != null)
+            {
+                if (string.IsNullOrEmpty(character.BranchId))
+                {
+                    var identity = RomanNamingRules.NormalizeOrGenerateIdentity(
+                        character.Gender,
+                        character.Class,
+                        character.Family,
+                        character.RomanName,
+                        null,
+                        rng);
+                    ApplyIdentity(character, identity, identity.Branch?.GensKey ?? character.Family);
+                }
+                else
+                {
+                    var branch = RomanFamilyRegistry.RegisterOrGet(
+                        character.Family,
+                        character.Class,
+                        character.RomanName.Cognomen,
+                        character.BranchParentId,
+                        character.BranchIsDynamic);
+
+                    if (branch != null)
+                    {
+                        character.BranchId = branch.Id;
+                        character.BranchDisplayName = branch.DisplayName;
+                        character.BranchIsDynamic = branch.IsDynamic;
+                    }
+
+                    character.RomanName.Gender = character.Gender;
+                }
+            }
 
             NormalizePoliticalAttributes(character, sourceLabel);
         }
@@ -474,7 +502,7 @@ namespace Game.Data.Characters
 
         private class CharacterNormalizationAnalysis
         {
-            public RomanName NormalizedName;
+            public RomanIdentity Identity;
             public string ResolvedFamily;
             public List<string> Corrections;
         }
@@ -491,7 +519,7 @@ namespace Game.Data.Characters
 
             var corrections = new List<string>();
 
-            var normalizedName = RomanNamingRules.NormalizeOrGenerateName(
+            var identity = RomanNamingRules.NormalizeOrGenerateIdentity(
                 character.Gender,
                 character.Class,
                 character.Family,
@@ -499,7 +527,8 @@ namespace Game.Data.Characters
                 corrections,
                 randomOverride);
 
-            string resolvedFamily = RomanNamingRules.ResolveFamilyName(character.Family, normalizedName);
+            string resolvedFamily = identity.Branch?.GensKey
+                ?? RomanNamingRules.ResolveFamilyName(character.Family, identity.Name);
             if (!string.IsNullOrEmpty(resolvedFamily)
                 && !string.Equals(character.Family, resolvedFamily, StringComparison.Ordinal))
             {
@@ -508,10 +537,48 @@ namespace Game.Data.Characters
 
             return new CharacterNormalizationAnalysis
             {
-                NormalizedName = normalizedName,
+                Identity = identity,
                 ResolvedFamily = resolvedFamily,
                 Corrections = corrections
             };
+        }
+
+        internal static void ApplyIdentity(Character character, RomanIdentity identity, string resolvedFamily = null)
+        {
+            if (character == null)
+                return;
+
+            if (identity.Name != null)
+            {
+                character.RomanName = identity.Name;
+                character.RomanName.Gender = character.Gender;
+            }
+            else if (character.RomanName != null)
+            {
+                character.RomanName.Gender = character.Gender;
+            }
+
+            string family = resolvedFamily;
+            if (string.IsNullOrEmpty(family))
+            {
+                family = identity.Branch?.GensKey
+                    ?? RomanNamingRules.ResolveFamilyName(character.Family, character.RomanName)
+                    ?? character.RomanName?.Nomen;
+            }
+
+            if (!string.IsNullOrEmpty(family))
+                character.Family = RomanNameUtility.Normalize(family);
+
+            if (identity.Branch != null)
+            {
+                character.BranchId = identity.Branch.Id;
+                character.BranchDisplayName = identity.Branch.DisplayName;
+                character.BranchParentId = identity.Branch.ParentBranchId;
+                character.BranchIsDynamic = identity.Branch.IsDynamic;
+            }
+
+            if (!string.IsNullOrEmpty(identity.ParentBranchId) && string.IsNullOrEmpty(character.BranchParentId))
+                character.BranchParentId = identity.ParentBranchId;
         }
 
         private static string DetermineFieldFromCorrection(string correction)
@@ -603,14 +670,15 @@ namespace Game.Data.Characters
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
             var socialClass = father?.Class ?? mother?.Class ?? SocialClass.Plebeian;
-            var romanName = RomanNamingRules.GenerateChildName(father, mother, gender, socialClass, rng);
-            var familySeed = father?.Family ?? mother?.Family ?? romanName?.Nomen;
-            var resolvedFamily = RomanNamingRules.ResolveFamilyName(familySeed, romanName) ?? romanName?.Nomen;
+            var identity = RomanNamingRules.GenerateChildIdentity(father, mother, gender, socialClass, rng);
+            var familySeed = father?.Family ?? mother?.Family ?? identity.Name?.Nomen;
+            var resolvedFamily = identity.Branch?.GensKey
+                ?? RomanNamingRules.ResolveFamilyName(familySeed, identity.Name)
+                ?? identity.Name?.Nomen;
 
             var child = new Character
             {
                 ID = GetNextID(),
-                RomanName = romanName,
                 Gender = gender,
                 BirthYear = year,
                 BirthMonth = month,
@@ -619,7 +687,6 @@ namespace Game.Data.Characters
                 IsAlive = true,
                 FatherID = father?.ID,
                 MotherID = mother?.ID,
-                Family = resolvedFamily,
                 Class = socialClass,
                 Wealth = 0,
                 Influence = 0,
@@ -627,8 +694,7 @@ namespace Game.Data.Characters
                 TraitRecords = new List<TraitRecord>()
             };
 
-            if (child.RomanName != null)
-                child.RomanName.Gender = child.Gender;
+            ApplyIdentity(child, identity, resolvedFamily);
 
             EnsureLifecycleState(child, year);
 
@@ -638,28 +704,27 @@ namespace Game.Data.Characters
         public static Character GenerateRandomCharacter(string family, SocialClass socialClass)
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
-            var romanName = RomanNamingRules.GenerateStandaloneName(gender, socialClass, family, rng);
-            var resolvedFamily = RomanNamingRules.ResolveFamilyName(family, romanName) ?? romanName?.Nomen;
-
-            if (romanName != null)
-                romanName.Gender = gender;
+            var identity = RomanNamingRules.GenerateStandaloneIdentity(gender, socialClass, family, rng);
+            var resolvedFamily = identity.Branch?.GensKey
+                ?? RomanNamingRules.ResolveFamilyName(family, identity.Name)
+                ?? identity.Name?.Nomen;
 
             var character = new Character
             {
                 ID = GetNextID(),
-                RomanName = romanName,
                 Gender = gender,
                 BirthYear = -248,
                 BirthMonth = 1,
                 BirthDay = 1,
                 Age = rng.Next(16, 45),
                 IsAlive = true,
-                Family = resolvedFamily,
                 Class = socialClass,
                 Wealth = rng.Next(500, 5000),
                 Influence = rng.Next(1, 10),
                 Ambition = AmbitionProfile.CreateDefault()
             };
+
+            ApplyIdentity(character, identity, resolvedFamily);
 
             EnsureLifecycleState(character, character.BirthYear + character.Age);
 
@@ -674,12 +739,15 @@ namespace Game.Data.Characters
             var clone = template.Clone();
             clone.ID = GetNextID();
 
-            if (clone.RomanName != null)
-                clone.RomanName.Gender = clone.Gender;
+            var identity = RomanNamingRules.NormalizeOrGenerateIdentity(
+                clone.Gender,
+                clone.Class,
+                clone.Family,
+                clone.RomanName,
+                null,
+                rng);
 
-            var normalizedFamily = RomanNamingRules.ResolveFamilyName(clone.Family, clone.RomanName);
-            if (!string.IsNullOrEmpty(normalizedFamily))
-                clone.Family = normalizedFamily;
+            ApplyIdentity(clone, identity, identity.Branch?.GensKey ?? clone.Family);
 
             EnsureLifecycleState(clone, clone.BirthYear + clone.Age);
 

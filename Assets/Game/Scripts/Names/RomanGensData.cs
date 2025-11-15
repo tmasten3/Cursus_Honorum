@@ -112,17 +112,25 @@ namespace Game.Data.Characters
             return _cognomenSet.Contains(RomanNameUtility.Normalize(cognomen));
         }
 
-        public void RegisterCognomen(string cognomen)
+        public bool RegisterCognomen(string cognomen)
         {
             var normalized = RomanNameUtility.Normalize(cognomen);
             if (string.IsNullOrEmpty(normalized))
-                return;
+                return false;
 
             if (_cognomenSet.Add(normalized))
-                _dynamicCognomina.Add(normalized);
+            {
+                if (!_baseCognomina.Any(c => string.Equals(c, normalized, StringComparison.OrdinalIgnoreCase)))
+                    _dynamicCognomina.Add(normalized);
+                return true;
+            }
+
+            return false;
         }
 
         public bool HasAnyCognomen => _baseCognomina.Count > 0 || _dynamicCognomina.Count > 0;
+
+        public IReadOnlyList<string> BaseCognomina => _baseCognomina;
     }
 
     internal sealed class RomanGensDefinition

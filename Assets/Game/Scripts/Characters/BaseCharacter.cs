@@ -41,6 +41,10 @@ namespace Game.Data.Characters
         // ----------------------------------------------------------------------
         public string Family; // gens
         public SocialClass Class;
+        public string BranchId;
+        public string BranchParentId;
+        public string BranchDisplayName;
+        public bool BranchIsDynamic;
         public List<string> Traits = new List<string>();
         public List<TraitRecord> TraitRecords = new List<TraitRecord>();
         public int Wealth;
@@ -125,6 +129,10 @@ namespace Game.Data.Characters
                 FatherID = FatherID,
                 MotherID = MotherID,
                 Family = Family,
+                BranchId = BranchId,
+                BranchParentId = BranchParentId,
+                BranchDisplayName = BranchDisplayName,
+                BranchIsDynamic = BranchIsDynamic,
                 Class = Class,
                 Traits = new List<string>(Traits),
                 TraitRecords = CloneTraitRecords(),
