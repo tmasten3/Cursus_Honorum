@@ -262,10 +262,10 @@ namespace Game.Systems.Politics.Elections
 
         private List<CandidateDeclaration> GetOrCreateOfficeDeclarations(string officeId)
         {
-            if (string.IsNullOrWhiteSpace(officeId))
+            var key = NormalizeOfficeDictionaryKey(officeId);
+            if (key == null)
                 return null;
 
-            var key = officeId.Trim().ToLowerInvariant();
             if (!declarationsByOffice.TryGetValue(key, out var list))
             {
                 list = new List<CandidateDeclaration>();
@@ -273,6 +273,14 @@ namespace Game.Systems.Politics.Elections
             }
 
             return list;
+        }
+
+        private static string NormalizeOfficeDictionaryKey(string officeId)
+        {
+            if (string.IsNullOrWhiteSpace(officeId))
+                return null;
+
+            return officeId.Trim().ToLowerInvariant();
         }
 
         public IReadOnlyList<CandidateDeclaration> GetDeclarationsForYear(int year)
@@ -340,43 +348,43 @@ namespace Game.Systems.Politics.Elections
                 CurrentYear = currentYear,
                 CurrentMonth = currentMonth,
                 CurrentDay = currentDay,
-                Seed = rngSeed,
-                SampleCount = rng.SampleCount
+                Seed = rngSeed
             };
 
             foreach (var kvp in declarationsByYear.OrderBy(k => k.Key))
             {
-                var entry = new YearlyDeclarations
+                var declarations = SerializeDeclarations(kvp.Value);
+                blob.DeclarationYears.Add(new DeclarationYearBlob
                 {
                     Year = kvp.Key,
-                    Declarations = SerializeDeclarations(kvp.Value)
-                };
-                blob.Declarations.Add(entry);
+                    Entries = declarations
+                });
             }
 
             foreach (var kvp in resultsByYear.OrderBy(k => k.Key))
             {
-                var entry = new YearlyResults
+                var records = SerializeResults(kvp.Value);
+                blob.ResultYears.Add(new ResultYearBlob
                 {
                     Year = kvp.Key,
-                    Results = SerializeResults(kvp.Value)
-                };
-                blob.Results.Add(entry);
+                    Records = records
+                });
             }
 
             if (declarationsByOffice.Count > 0)
             {
                 foreach (var kvp in declarationsByOffice.OrderBy(k => k.Key, StringComparer.Ordinal))
                 {
-                    var entry = new ActiveOfficeDeclarations
+                    var entries = SerializeDeclarations(kvp.Value);
+                    if (entries.Count == 0)
+                        continue;
+
+                    blob.ActiveDeclarations.Add(new ActiveDeclarationBlob
                     {
                         OfficeId = kvp.Key,
                         Year = currentYear,
-                        Declarations = SerializeDeclarations(kvp.Value)
-                    };
-
-                    if (entry.Declarations.Count > 0)
-                        blob.ActiveDeclarations.Add(entry);
+                        Entries = entries
+                    });
                 }
             }
 
@@ -390,7 +398,7 @@ namespace Game.Systems.Politics.Elections
             currentDay = blob.CurrentDay;
 
             rngSeed = blob.Seed != 0 ? blob.Seed : DefaultRngSeed;
-            rng.Reset(rngSeed, Math.Max(0, blob.SampleCount));
+            rng.Reset(rngSeed);
 
             declarationsByYear.Clear();
             declarationsByOffice.Clear();
@@ -399,17 +407,17 @@ namespace Game.Systems.Politics.Elections
 
             var declarationCache = new Dictionary<(int year, int characterId, string officeId), CandidateDeclaration>();
 
-            if (blob.Declarations != null)
+            if (blob.DeclarationYears != null)
             {
-                foreach (var yearEntry in blob.Declarations)
+                foreach (var yearEntry in blob.DeclarationYears)
                 {
                     if (yearEntry == null)
                         continue;
 
                     var list = new List<CandidateDeclaration>();
-                    if (yearEntry.Declarations != null)
+                    if (yearEntry.Entries != null)
                     {
-                        foreach (var declarationRecord in yearEntry.Declarations)
+                        foreach (var declarationRecord in yearEntry.Entries)
                         {
                             var declaration = DeserializeDeclaration(declarationRecord, yearEntry.Year, declarationCache);
                             if (declaration != null)
@@ -421,17 +429,17 @@ namespace Game.Systems.Politics.Elections
                 }
             }
 
-            if (blob.Results != null)
+            if (blob.ResultYears != null)
             {
-                foreach (var yearEntry in blob.Results)
+                foreach (var yearEntry in blob.ResultYears)
                 {
                     if (yearEntry == null)
                         continue;
 
                     var list = new List<ElectionResultRecord>();
-                    if (yearEntry.Results != null)
+                    if (yearEntry.Records != null)
                     {
-                        foreach (var resultRecord in yearEntry.Results)
+                        foreach (var resultRecord in yearEntry.Records)
                         {
                             var record = DeserializeResult(yearEntry.Year, resultRecord, declarationCache);
                             if (record != null)
@@ -450,20 +458,24 @@ namespace Game.Systems.Politics.Elections
                     if (officeEntry == null)
                         continue;
 
-                    string normalized = OfficeDefinitions.NormalizeOfficeId(officeEntry.OfficeId);
-                    if (normalized == null)
+                    var cacheOfficeKey = string.IsNullOrWhiteSpace(officeEntry.OfficeId)
+                        ? null
+                        : officeEntry.OfficeId.Trim();
+                    var dictionaryKey = NormalizeOfficeDictionaryKey(officeEntry.OfficeId);
+                    if (dictionaryKey == null)
                         continue;
 
                     var list = new List<CandidateDeclaration>();
-                    if (officeEntry.Declarations != null)
+                    if (officeEntry.Entries != null)
                     {
                         int year = officeEntry.Year != 0 ? officeEntry.Year : currentYear;
-                        foreach (var declarationRecord in officeEntry.Declarations)
+                        foreach (var declarationRecord in officeEntry.Entries)
                         {
                             CandidateDeclaration declaration = null;
                             if (declarationRecord != null && declarationRecord.CharacterId != 0)
                             {
-                                if (declarationCache.TryGetValue((year, declarationRecord.CharacterId, normalized), out var cached))
+                                if (cacheOfficeKey != null &&
+                                    declarationCache.TryGetValue((year, declarationRecord.CharacterId, cacheOfficeKey), out var cached))
                                     declaration = cached;
                             }
 
@@ -477,7 +489,7 @@ namespace Game.Systems.Politics.Elections
                         }
                     }
 
-                    declarationsByOffice[normalized] = list;
+                    declarationsByOffice[dictionaryKey] = list;
                 }
             }
             else if (declarationsByYear.TryGetValue(currentYear, out var currentYearDeclarations))
@@ -487,14 +499,14 @@ namespace Game.Systems.Politics.Elections
                     if (declaration == null)
                         continue;
 
-                    string normalized = OfficeDefinitions.NormalizeOfficeId(declaration.OfficeId);
-                    if (normalized == null)
+                    var dictionaryKey = NormalizeOfficeDictionaryKey(declaration.OfficeId);
+                    if (dictionaryKey == null)
                         continue;
 
-                    if (!declarationsByOffice.TryGetValue(normalized, out var list))
+                    if (!declarationsByOffice.TryGetValue(dictionaryKey, out var list))
                     {
                         list = new List<CandidateDeclaration>();
-                        declarationsByOffice[normalized] = list;
+                        declarationsByOffice[dictionaryKey] = list;
                     }
 
                     list.Add(declaration);
@@ -512,13 +524,16 @@ namespace Game.Systems.Politics.Elections
             LogInfo($"Loaded election data through {currentYear}.");
         }
 
-        private static List<DeclarationRecord> SerializeDeclarations(IEnumerable<CandidateDeclaration> source)
+        private static List<DeclarationEntry> SerializeDeclarations(IEnumerable<CandidateDeclaration> source)
         {
-            var list = new List<DeclarationRecord>();
+            var list = new List<DeclarationEntry>();
             if (source == null)
                 return list;
 
-            foreach (var declaration in source)
+            foreach (var declaration in source
+                .OrderBy(d => d?.CharacterId ?? 0)
+                .ThenBy(d => d?.OfficeId ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(d => d?.CharacterName ?? string.Empty, StringComparer.Ordinal))
             {
                 var record = SerializeDeclaration(declaration);
                 if (record != null)
@@ -528,9 +543,9 @@ namespace Game.Systems.Politics.Elections
             return list;
         }
 
-        private static List<ResultRecord> SerializeResults(IEnumerable<ElectionResultRecord> source)
+        private static List<ResultRecordBlob> SerializeResults(IEnumerable<ElectionResultRecord> source)
         {
-            var list = new List<ResultRecord>();
+            var list = new List<ResultRecordBlob>();
             if (source == null)
                 return list;
 
@@ -544,12 +559,12 @@ namespace Game.Systems.Politics.Elections
             return list;
         }
 
-        private static DeclarationRecord SerializeDeclaration(CandidateDeclaration declaration)
+        private static DeclarationEntry SerializeDeclaration(CandidateDeclaration declaration)
         {
             if (declaration == null)
                 return null;
 
-            var record = new DeclarationRecord
+            var record = new DeclarationEntry
             {
                 CharacterId = declaration.CharacterId,
                 CharacterName = declaration.CharacterName,
@@ -561,12 +576,12 @@ namespace Game.Systems.Politics.Elections
             return record;
         }
 
-        private static ResultRecord SerializeResult(ElectionResultRecord record)
+        private static ResultRecordBlob SerializeResult(ElectionResultRecord record)
         {
             if (record == null || record.Office == null)
                 return null;
 
-            var serialized = new ResultRecord
+            var serialized = new ResultRecordBlob
             {
                 OfficeId = record.Office.Id
             };
@@ -578,7 +593,7 @@ namespace Game.Systems.Politics.Elections
                     if (candidate == null)
                         continue;
 
-                    var candidateRecord = new CandidateResultRecord
+                    var candidateRecord = new CandidateResultBlob
                     {
                         CharacterId = candidate.Character?.ID ?? candidate.Declaration?.CharacterId ?? 0,
                         CharacterName = candidate.Character?.FullName ?? candidate.Declaration?.CharacterName,
@@ -598,7 +613,7 @@ namespace Game.Systems.Politics.Elections
                     if (winner == null)
                         continue;
 
-                    serialized.Winners.Add(new WinnerRecord
+                    serialized.Winners.Add(new ResultWinnerBlob
                     {
                         CharacterId = winner.CharacterId,
                         CharacterName = winner.CharacterName,
@@ -613,14 +628,13 @@ namespace Game.Systems.Politics.Elections
             return serialized;
         }
 
-        private CandidateDeclaration DeserializeDeclaration(DeclarationRecord record, int year,
+        private CandidateDeclaration DeserializeDeclaration(DeclarationEntry record, int year,
             Dictionary<(int year, int characterId, string officeId), CandidateDeclaration> cache)
         {
             if (record == null)
                 return null;
 
-            string normalizedOfficeId = OfficeDefinitions.NormalizeOfficeId(record.OfficeId) ?? record.OfficeId;
-            var office = officeSystem.Definitions.GetDefinition(normalizedOfficeId);
+            var office = officeSystem.Definitions.GetDefinition(record.OfficeId);
 
             var declaration = new CandidateDeclaration
             {
@@ -628,26 +642,29 @@ namespace Game.Systems.Politics.Elections
                 CharacterName = !string.IsNullOrWhiteSpace(record.CharacterName)
                     ? record.CharacterName
                     : characterSystem.Get(record.CharacterId)?.FullName,
-                OfficeId = office?.Id ?? normalizedOfficeId,
+                OfficeId = office?.Id ?? record.OfficeId,
                 Office = office,
                 DesireScore = record.DesireScore,
                 Factors = DeserializeFactors(record.Factors)
             };
 
-            if (cache != null && normalizedOfficeId != null)
-                cache[(year, record.CharacterId, normalizedOfficeId)] = declaration;
+            if (cache != null)
+            {
+                var cacheOfficeKey = string.IsNullOrWhiteSpace(record.OfficeId) ? null : record.OfficeId.Trim();
+                if (cacheOfficeKey != null)
+                    cache[(year, record.CharacterId, cacheOfficeKey)] = declaration;
+            }
 
             return declaration;
         }
 
-        private ElectionResultRecord DeserializeResult(int year, ResultRecord record,
+        private ElectionResultRecord DeserializeResult(int year, ResultRecordBlob record,
             Dictionary<(int year, int characterId, string officeId), CandidateDeclaration> cache)
         {
             if (record == null)
                 return null;
 
-            string normalizedOfficeId = OfficeDefinitions.NormalizeOfficeId(record.OfficeId) ?? record.OfficeId;
-            var office = officeSystem.Definitions.GetDefinition(normalizedOfficeId);
+            var office = officeSystem.Definitions.GetDefinition(record.OfficeId);
             if (office == null)
                 return null;
 
@@ -670,7 +687,8 @@ namespace Game.Systems.Politics.Elections
                     var character = characterSystem.Get(characterId);
 
                     CandidateDeclaration declaration = null;
-                    if (cache != null && normalizedOfficeId != null && cache.TryGetValue((year, characterId, normalizedOfficeId), out var cached))
+                    var cacheOfficeKey = string.IsNullOrWhiteSpace(record.OfficeId) ? null : record.OfficeId.Trim();
+                    if (cache != null && cacheOfficeKey != null && cache.TryGetValue((year, characterId, cacheOfficeKey), out var cached))
                     {
                         declaration = cached;
                     }
@@ -768,36 +786,35 @@ namespace Game.Systems.Politics.Elections
             public int CurrentMonth;
             public int CurrentDay;
             public int Seed;
-            public int SampleCount;
-            public List<YearlyDeclarations> Declarations = new();
-            public List<YearlyResults> Results = new();
-            public List<ActiveOfficeDeclarations> ActiveDeclarations = new();
+            public List<DeclarationYearBlob> DeclarationYears = new();
+            public List<ResultYearBlob> ResultYears = new();
+            public List<ActiveDeclarationBlob> ActiveDeclarations = new();
         }
 
         [Serializable]
-        private class YearlyDeclarations
+        private class DeclarationYearBlob
         {
             public int Year;
-            public List<DeclarationRecord> Declarations = new();
+            public List<DeclarationEntry> Entries = new();
         }
 
         [Serializable]
-        private class YearlyResults
+        private class ResultYearBlob
         {
             public int Year;
-            public List<ResultRecord> Results = new();
+            public List<ResultRecordBlob> Records = new();
         }
 
         [Serializable]
-        private class ActiveOfficeDeclarations
+        private class ActiveDeclarationBlob
         {
             public string OfficeId;
             public int Year;
-            public List<DeclarationRecord> Declarations = new();
+            public List<DeclarationEntry> Entries = new();
         }
 
         [Serializable]
-        private class DeclarationRecord
+        private class DeclarationEntry
         {
             public int CharacterId;
             public string CharacterName;
@@ -807,25 +824,25 @@ namespace Game.Systems.Politics.Elections
         }
 
         [Serializable]
-        private class ResultRecord
+        private class ResultRecordBlob
         {
             public string OfficeId;
-            public List<CandidateResultRecord> Candidates = new();
-            public List<WinnerRecord> Winners = new();
+            public List<CandidateResultBlob> Candidates = new();
+            public List<ResultWinnerBlob> Winners = new();
         }
 
         [Serializable]
-        private class CandidateResultRecord
+        private class CandidateResultBlob
         {
             public int CharacterId;
             public string CharacterName;
             public float FinalScore;
-            public DeclarationRecord Declaration;
+            public DeclarationEntry Declaration;
             public List<FactorEntry> Breakdown = new();
         }
 
         [Serializable]
-        private class WinnerRecord
+        private class ResultWinnerBlob
         {
             public int CharacterId;
             public string CharacterName;
@@ -845,56 +862,40 @@ namespace Game.Systems.Politics.Elections
         private sealed class TrackingRandom : System.Random
         {
             private System.Random inner;
-            private int sampleCount;
 
             public TrackingRandom(int seed)
             {
-                Reset(seed, 0);
+                Reset(seed);
             }
 
-            public int SampleCount => sampleCount;
-
-            public void Reset(int seed, int consumedSamples)
+            public void Reset(int seed)
             {
                 inner = new System.Random(seed);
-                sampleCount = 0;
-                if (consumedSamples > 0)
-                {
-                    for (int i = 0; i < consumedSamples; i++)
-                        _ = inner.Next();
-                    sampleCount = consumedSamples;
-                }
             }
 
             public override double NextDouble()
             {
-                sampleCount++;
                 return inner.NextDouble();
             }
 
             public override int Next()
             {
-                sampleCount++;
                 return inner.Next();
             }
 
             public override int Next(int maxValue)
             {
-                sampleCount++;
                 return inner.Next(maxValue);
             }
 
             public override int Next(int minValue, int maxValue)
             {
-                sampleCount++;
                 return inner.Next(minValue, maxValue);
             }
 
             public override void NextBytes(byte[] buffer)
             {
                 inner.NextBytes(buffer);
-                if (buffer != null && buffer.Length > 0)
-                    sampleCount++;
             }
         }
     }
