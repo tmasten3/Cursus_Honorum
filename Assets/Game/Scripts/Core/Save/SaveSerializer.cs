@@ -442,7 +442,7 @@ namespace Game.Core.Save
 
             private sealed class Serializer
             {
-                private readonly StringBuilder builder = new();
+                private readonly StringBuilder builder = new StringBuilder();
 
                 public static string Serialize(object obj)
                 {

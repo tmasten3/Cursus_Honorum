@@ -189,11 +189,16 @@ public class CharacterLedgerSimple : MonoBehaviour
                 if (character.RomanName == null)
                     character.RomanName = RomanNamingRules.GenerateRomanName(character.Gender, character.Family, character.Class);
 
-                fullName = RomanNamingRules.GetFullName(character);
+                fullName = character.RomanName?.GetFullName();
                 if (string.IsNullOrWhiteSpace(fullName) || string.Equals(fullName, "Unknown", StringComparison.OrdinalIgnoreCase))
                 {
                     character.RomanName = RomanNamingRules.GenerateRomanName(character.Gender, character.Family, character.Class);
-                    fullName = RomanNamingRules.GetFullName(character);
+                    fullName = character.RomanName?.GetFullName();
+                }
+
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    fullName = $"Character #{character.ID}";
                 }
             }
             catch (Exception ex)
@@ -220,10 +225,14 @@ public class CharacterLedgerSimple : MonoBehaviour
         if (eventBus == null || handlersBound)
             return;
 
-        onCharacterBornHandler ??= HandleCharacterBorn;
-        onCharacterDiedHandler ??= HandleCharacterDied;
-        onCharacterMarriedHandler ??= HandleCharacterMarried;
-        onPopulationTickHandler ??= HandlePopulationTick;
+        if (onCharacterBornHandler == null)
+            onCharacterBornHandler = HandleCharacterBorn;
+        if (onCharacterDiedHandler == null)
+            onCharacterDiedHandler = HandleCharacterDied;
+        if (onCharacterMarriedHandler == null)
+            onCharacterMarriedHandler = HandleCharacterMarried;
+        if (onPopulationTickHandler == null)
+            onPopulationTickHandler = HandlePopulationTick;
 
         eventBus.Subscribe(onCharacterBornHandler);
         eventBus.Subscribe(onCharacterDiedHandler);

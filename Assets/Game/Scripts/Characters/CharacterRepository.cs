@@ -8,14 +8,14 @@ namespace Game.Systems.CharacterSystem
 {
     public sealed class CharacterRepository
     {
-        private readonly Dictionary<int, Character> byId = new();
+        private readonly Dictionary<int, Character> byId = new Dictionary<int, Character>();
         private readonly Dictionary<string, List<int>> byName = new(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<int, string> nameKeyById = new();
-        private readonly HashSet<int> alive = new();
-        private readonly HashSet<int> dead = new();
-        private readonly Dictionary<(int Month, int Day), List<int>> birthdays = new();
+        private readonly Dictionary<int, string> nameKeyById = new Dictionary<int, string>();
+        private readonly HashSet<int> alive = new HashSet<int>();
+        private readonly HashSet<int> dead = new HashSet<int>();
+        private readonly Dictionary<(int Month, int Day), List<int>> birthdays = new Dictionary<(int Month, int Day), List<int>>();
         private readonly Dictionary<string, HashSet<int>> byFamily = new(StringComparer.Ordinal);
-        private readonly Dictionary<SocialClass, HashSet<int>> byClass = new();
+        private readonly Dictionary<SocialClass, HashSet<int>> byClass = new Dictionary<SocialClass, HashSet<int>>();
 
         public int AliveCount => alive.Count;
         public int FamilyCount => byFamily.Count;

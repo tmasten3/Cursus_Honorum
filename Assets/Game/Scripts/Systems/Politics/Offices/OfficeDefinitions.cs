@@ -17,8 +17,8 @@ namespace Game.Systems.Politics.Offices
         public int Rank = 0;
         public bool RequiresPlebeian;
         public bool RequiresPatrician;
-        public List<string> PrerequisitesAll = new();
-        public List<string> PrerequisitesAny = new();
+        public List<string> PrerequisitesAll = new List<string>();
+        public List<string> PrerequisitesAny = new List<string>();
 
         public override string ToString() => $"{Name} ({Id})";
     }
@@ -26,7 +26,7 @@ namespace Game.Systems.Politics.Offices
     [Serializable]
     public class OfficeDefinitionCollection
     {
-        public List<OfficeDefinition> Offices = new();
+        public List<OfficeDefinition> Offices = new List<OfficeDefinition>();
     }
 
     public enum OfficeAssembly
@@ -38,7 +38,7 @@ namespace Game.Systems.Politics.Offices
 
     public class OfficeDefinitions
     {
-        private readonly Dictionary<string, OfficeDefinition> definitions = new();
+        private readonly Dictionary<string, OfficeDefinition> definitions = new Dictionary<string, OfficeDefinition>();
         private readonly Action<string> logInfo;
         private readonly Action<string> logWarn;
         private readonly Action<string> logError;
@@ -85,7 +85,8 @@ namespace Game.Systems.Politics.Offices
                 }
 
                 def.Id = normalizedId;
-                def.Name ??= def.Id;
+                if (string.IsNullOrEmpty(def.Name))
+                    def.Name = def.Id;
                 def.Seats = Math.Max(1, def.Seats);
                 def.TermLengthYears = Math.Max(1, def.TermLengthYears);
                 def.ReelectionGapYears = Math.Max(0, def.ReelectionGapYears);

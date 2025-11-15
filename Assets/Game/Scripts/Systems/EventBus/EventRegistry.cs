@@ -8,8 +8,8 @@ namespace Game.Systems.EventBus
     /// </summary>
     public class EventRegistry
     {
-        private readonly Dictionary<Type, List<Action<IGameEvent>>> subscribers = new();
-        private readonly Dictionary<Type, Dictionary<Delegate, Action<IGameEvent>>> subscriberLookup = new();
+        private readonly Dictionary<Type, List<Action<IGameEvent>>> subscribers = new Dictionary<Type, List<Action<IGameEvent>>>();
+        private readonly Dictionary<Type, Dictionary<Delegate, Action<IGameEvent>>> subscriberLookup = new Dictionary<Type, Dictionary<Delegate, Action<IGameEvent>>>();
 
         public bool TryAddSubscriber<TEvent>(Action<TEvent> handler, out bool isDuplicate) where TEvent : IGameEvent
         {

@@ -5,9 +5,9 @@ namespace Game.Core
     [Serializable]
     public sealed class SimulationConfig
     {
-        public CharacterSettings Character = new();
-        public BirthSettings Birth = new();
-        public MarriageSettings Marriage = new();
+        public CharacterSettings Character = new CharacterSettings();
+        public BirthSettings Birth = new BirthSettings();
+        public MarriageSettings Marriage = new MarriageSettings();
 
         [Serializable]
         public sealed class CharacterSettings
@@ -15,7 +15,7 @@ namespace Game.Core
             public int RngSeed = 1337;
             public bool KeepDeadInMemory = true;
             public string BaseDataPath = "Assets/Game/Data/base_characters.json";
-            public MortalitySettings Mortality = new();
+            public MortalitySettings Mortality = new MortalitySettings();
         }
 
         [Serializable]

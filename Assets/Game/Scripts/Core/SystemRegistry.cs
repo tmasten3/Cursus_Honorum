@@ -6,11 +6,11 @@ namespace Game.Core
 {
     public class SystemRegistry
     {
-        private readonly List<GameSystemBase> systems = new();
-        private readonly Dictionary<Type, GameSystemBase> systemLookup = new();
-        private readonly Dictionary<Type, int> registrationOrder = new();
+        private readonly List<GameSystemBase> systems = new List<GameSystemBase>();
+        private readonly Dictionary<Type, GameSystemBase> systemLookup = new Dictionary<Type, GameSystemBase>();
+        private readonly Dictionary<Type, int> registrationOrder = new Dictionary<Type, int>();
         private int registrationSequence;
-        private readonly List<SystemDescriptor> descriptors = new();
+        private readonly List<SystemDescriptor> descriptors = new List<SystemDescriptor>();
 
         public void RegisterDescriptor(SystemDescriptor descriptor)
         {
