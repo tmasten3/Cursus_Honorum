@@ -7,41 +7,68 @@ namespace Game.Data.Characters
     public static class RomanNamingRules
     {
         private static readonly System.Random rng = new();
+        private static readonly RomanGensRegistry Registry = new(RomanGensData.All);
 
-        private static readonly string[] MalePraenomina =
+        private static readonly string[] DefaultPraenomina =
         {
             "Gaius", "Lucius", "Marcus", "Publius", "Quintus",
             "Tiberius", "Aulus", "Sextus", "Servius", "Spurius"
         };
 
-        private static readonly string[] PatricianNomina =
+        private static readonly string[] CognomenSuffixes =
         {
-            "Cornelius", "Claudius", "Fabius", "Aemilius", "Julius", "Valerius"
-        };
-
-        private static readonly string[] PlebeianNomina =
-        {
-            "Aurelius", "Sempronius", "Sulpicius", "Licinius", "Servilius"
-        };
-
-        private static readonly string[] EquestrianNomina =
-        {
-            "Antonius", "Flavius", "Caecilius", "Domitius", "Pompeius"
-        };
-
-        private static readonly string[] Cognomina =
-        {
-            "Scipio", "Nero", "Pulcher", "Lentulus", "Paullus",
-            "Caesar", "Cato", "Gracchus", "Crassus", "Metellus"
+            "ianus", "inus", "illus", "ellus", "ullus", "icus", "inus", "enus", "ianus"
         };
 
         public static RomanName GenerateRomanName(Gender gender, string gens = null, SocialClass socialClass = SocialClass.Patrician)
         {
-            var canonicalGens = NormalizeComponent(gens);
-            if (!string.IsNullOrEmpty(canonicalGens))
-                canonicalGens = GetMasculineForm(canonicalGens);
+            return NormalizeOrGenerateName(gender, socialClass, gens, null);
+        }
 
-            return NormalizeOrGenerateName(gender, socialClass, canonicalGens, null);
+        public static RomanName GenerateStandaloneName(
+            Gender gender,
+            SocialClass socialClass,
+            string gens = null,
+            System.Random randomOverride = null)
+        {
+            var random = randomOverride ?? rng;
+            var variant = ResolveVariantForGeneration(socialClass, gens, null, gender, random)
+                          ?? Registry.GetRandomVariant(NormalizeSocialClass(socialClass), random)
+                          ?? Registry.GetRandomVariant(SocialClass.Patrician, random)
+                          ?? Registry.GetRandomVariant(SocialClass.Plebeian, random);
+
+            return GenerateNameFromVariant(
+                gender,
+                variant,
+                null,
+                random,
+                null,
+                allowCreateCognomen: true);
+        }
+
+        public static RomanName GenerateChildName(
+            Character father,
+            Character mother,
+            Gender gender,
+            SocialClass socialClass,
+            System.Random randomOverride = null)
+        {
+            var random = randomOverride ?? rng;
+            var familySeed = father?.Family ?? mother?.Family;
+            var templateNomen = father?.RomanName?.Nomen ?? mother?.RomanName?.Nomen;
+            var variant = ResolveVariantForGeneration(socialClass, familySeed, templateNomen, gender, random);
+            if (variant == null)
+            {
+                variant = Registry.GetRandomVariant(NormalizeSocialClass(socialClass), random)
+                          ?? Registry.GetRandomVariant(SocialClass.Patrician, random)
+                          ?? Registry.GetRandomVariant(SocialClass.Plebeian, random);
+            }
+
+            var inheritedCognomen = father?.RomanName?.Cognomen;
+            if (string.IsNullOrWhiteSpace(inheritedCognomen))
+                inheritedCognomen = mother?.RomanName?.Cognomen;
+
+            return GenerateNameFromVariant(gender, variant, inheritedCognomen, random, null, allowCreateCognomen: true);
         }
 
         public static RomanName NormalizeOrGenerateName(
@@ -53,242 +80,249 @@ namespace Game.Data.Characters
             System.Random randomOverride = null)
         {
             var random = randomOverride ?? rng;
+            var normalizedFamily = Registry.NormalizeFamily(gens) ?? RomanNameUtility.Normalize(gens);
+            var templatePraenomen = RomanNameUtility.Normalize(template?.Praenomen);
+            var templateNomen = RomanNameUtility.Normalize(template?.Nomen);
+            var templateCognomen = RomanNameUtility.Normalize(template?.Cognomen);
 
-            string canonicalGens = NormalizeComponent(gens);
-            if (!string.IsNullOrEmpty(canonicalGens))
-                canonicalGens = GetMasculineForm(canonicalGens);
+            var variant = ResolveVariantForGeneration(
+                socialClass,
+                normalizedFamily,
+                templateNomen,
+                gender,
+                random);
 
-            string praenomen = NormalizeComponent(template?.Praenomen);
-            string nomen = NormalizeComponent(template?.Nomen);
-            string cognomen = NormalizeComponent(template?.Cognomen);
-
-            if (gender == Gender.Male)
+            if (variant == null)
             {
-                if (string.IsNullOrEmpty(nomen))
-                {
-                    nomen = canonicalGens ?? GetNomen(socialClass, random);
-                    corrections?.Add($"assigned nomen '{nomen}'");
-                }
-                else
-                {
-                    var masculine = GetMasculineForm(nomen);
-                    if (!string.Equals(nomen, masculine, StringComparison.Ordinal))
-                    {
-                        corrections?.Add($"normalized nomen to '{masculine}'");
-                        nomen = masculine;
-                    }
-                }
-
-                if (string.IsNullOrEmpty(praenomen))
-                {
-                    praenomen = GetPraenomenDistinct(nomen, random);
-                    corrections?.Add($"generated praenomen '{praenomen}'");
-                }
-
-                if (string.IsNullOrEmpty(cognomen))
-                {
-                    cognomen = GetDistinctCognomen(praenomen, nomen, random);
-                    corrections?.Add($"generated cognomen '{cognomen}'");
-                }
-
-                if (string.Equals(praenomen, nomen, StringComparison.OrdinalIgnoreCase))
-                {
-                    var adjusted = GetPraenomenDistinct(nomen, random);
-                    if (!string.Equals(adjusted, praenomen, StringComparison.Ordinal))
-                    {
-                        corrections?.Add($"adjusted praenomen to '{adjusted}' to avoid duplication");
-                        praenomen = adjusted;
-                    }
-                }
-
-                if (string.Equals(cognomen, nomen, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(cognomen, praenomen, StringComparison.OrdinalIgnoreCase))
-                {
-                    var adjusted = GetDistinctCognomen(praenomen, nomen, random);
-                    if (!string.Equals(adjusted, cognomen, StringComparison.Ordinal))
-                    {
-                        corrections?.Add($"adjusted cognomen to '{adjusted}' to avoid duplication");
-                        cognomen = adjusted;
-                    }
-                }
-
-                canonicalGens ??= nomen;
-                return new RomanName(praenomen, nomen, cognomen, Gender.Male);
+                variant = Registry.GetRandomVariant(NormalizeSocialClass(socialClass), random)
+                          ?? Registry.GetRandomVariant(SocialClass.Patrician, random)
+                          ?? Registry.GetRandomVariant(SocialClass.Plebeian, random);
             }
-            else
+
+            var request = new NamingRequest
             {
-                var baseGens = canonicalGens;
+                TemplatePraenomen = templatePraenomen,
+                TemplateCognomen = templateCognomen
+            };
 
-                if (string.IsNullOrEmpty(baseGens) && !string.IsNullOrEmpty(nomen))
-                {
-                    baseGens = GetMasculineForm(nomen);
-                    corrections?.Add($"inferred gens '{baseGens}' from feminine nomen");
-                }
-
-                if (string.IsNullOrEmpty(baseGens))
-                {
-                    baseGens = GetNomen(socialClass, random);
-                    corrections?.Add($"assigned gens '{baseGens}'");
-                }
-
-                var feminine = GetFeminineForm(baseGens);
-                if (!string.IsNullOrEmpty(nomen) && !string.Equals(nomen, feminine, StringComparison.Ordinal))
-                {
-                    corrections?.Add($"normalized feminine nomen to '{feminine}'");
-                }
-
-                string finalCognomen = null;
-                if (!string.IsNullOrEmpty(cognomen))
-                {
-                    if (IsNoble(socialClass))
-                    {
-                        if (string.Equals(cognomen, feminine, StringComparison.OrdinalIgnoreCase))
-                        {
-                            corrections?.Add("removed duplicate cognomen");
-                        }
-                        else
-                        {
-                            finalCognomen = cognomen;
-                        }
-                    }
-                    else
-                    {
-                        corrections?.Add("removed cognomen for non-noble female");
-                    }
-                }
-
-                return new RomanName(null, feminine, finalCognomen, Gender.Female);
-            }
-        }
-
-        public static string GetFullName(Character c) => c?.RomanName?.GetFullName() ?? string.Empty;
-
-        public static string GetFeminineForm(string gens)
-        {
-            if (string.IsNullOrWhiteSpace(gens))
-                return null;
-
-            var clean = NormalizeComponent(gens);
-            if (string.IsNullOrEmpty(clean))
-                return null;
-
-            if (clean.EndsWith("ius", StringComparison.OrdinalIgnoreCase))
-                return clean[..^3] + "ia";
-            if (clean.EndsWith("us", StringComparison.OrdinalIgnoreCase))
-                return clean[..^2] + "a";
-            if (clean.EndsWith("as", StringComparison.OrdinalIgnoreCase))
-                return clean[..^2] + "a";
-            return clean + "a";
-        }
-
-        public static string GetMasculineForm(string gens)
-        {
-            if (string.IsNullOrWhiteSpace(gens))
-                return null;
-
-            var clean = NormalizeComponent(gens);
-            if (string.IsNullOrEmpty(clean))
-                return null;
-
-            if (clean.EndsWith("ia", StringComparison.OrdinalIgnoreCase))
-                return clean[..^2] + "ius";
-            if (clean.EndsWith("a", StringComparison.OrdinalIgnoreCase))
-                return clean[..^1] + "us";
-            return clean;
+            return GenerateNameFromVariant(gender, variant, null, random, corrections, allowCreateCognomen: true, request);
         }
 
         public static string ResolveFamilyName(string family, RomanName name)
         {
-            var candidate = GetMasculineForm(family);
+            var candidate = Registry.NormalizeFamily(family);
             if (!string.IsNullOrEmpty(candidate))
                 return candidate;
 
             if (name == null)
                 return null;
 
-            if (!string.IsNullOrEmpty(name.Nomen))
+            if (name.Gender == Gender.Male)
             {
-                return name.Gender == Gender.Female
-                    ? GetMasculineForm(name.Nomen)
-                    : NormalizeComponent(name.Nomen);
+                candidate = Registry.NormalizeFamily(name.Nomen) ?? RomanNameUtility.ToMasculine(name.Nomen);
+            }
+            else
+            {
+                var masculine = RomanNameUtility.ToMasculine(name.Nomen);
+                candidate = Registry.NormalizeFamily(masculine) ?? masculine;
             }
 
-            return null;
+            return RomanNameUtility.Normalize(candidate);
         }
 
-        public static string GetPraenomen(System.Random random = null)
-        {
-            var source = random ?? rng;
-            return MalePraenomina[source.Next(MalePraenomina.Length)];
-        }
+        public static string GetFeminineForm(string gens) => RomanNameUtility.ToFeminine(gens);
 
-        public static string GetNomen(SocialClass socialClass, System.Random random = null)
+        public static string GetMasculineForm(string gens) => RomanNameUtility.ToMasculine(gens);
+
+        private static RomanGensVariant ResolveVariantForGeneration(
+            SocialClass socialClass,
+            string family,
+            string templateNomen,
+            Gender gender,
+            System.Random random)
         {
-            var source = random ?? rng;
-            string[] pool = socialClass switch
+            var variantClass = NormalizeSocialClass(socialClass);
+            RomanGensDefinition definition = null;
+
+            if (!string.IsNullOrEmpty(family))
+                definition = Registry.GetDefinition(family);
+
+            if (definition == null && !string.IsNullOrEmpty(templateNomen))
             {
-                SocialClass.Patrician => PatricianNomina,
-                SocialClass.Plebeian => PlebeianNomina,
-                SocialClass.Equestrian => EquestrianNomina,
-                _ => PatricianNomina
-            };
-            return pool[source.Next(pool.Length)];
-        }
-
-        public static string GetCognomen(System.Random random = null)
-        {
-            var source = random ?? rng;
-            return Cognomina[source.Next(Cognomina.Length)];
-        }
-
-        private static string GetPraenomenDistinct(string nomen, System.Random random)
-        {
-            var guard = 0;
-            var praenomen = GetPraenomen(random);
-            while (string.Equals(praenomen, nomen, StringComparison.OrdinalIgnoreCase) && guard++ < 10)
-                praenomen = GetPraenomen(random);
-            return praenomen;
-        }
-
-        private static string GetDistinctCognomen(string praenomen, string nomen, System.Random random)
-        {
-            var guard = 0;
-            var cognomen = GetCognomen(random);
-            while ((string.Equals(cognomen, nomen, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(cognomen, praenomen, StringComparison.OrdinalIgnoreCase))
-                   && guard++ < 10)
-            {
-                cognomen = GetCognomen(random);
+                definition = Registry.GetDefinition(templateNomen);
+                if (definition == null && gender == Gender.Female)
+                {
+                    var masculine = RomanNameUtility.ToMasculine(templateNomen);
+                    definition = Registry.GetDefinition(masculine);
+                }
             }
-            return cognomen;
+
+            var variant = definition?.GetVariantForClass(variantClass);
+            if (variant != null)
+                return variant;
+
+            return Registry.GetRandomVariant(variantClass, random);
         }
 
-        private static string NormalizeComponent(string value)
+        private static RomanName GenerateNameFromVariant(
+            Gender gender,
+            RomanGensVariant variant,
+            string inheritedCognomen,
+            System.Random random,
+            List<string> corrections,
+            bool allowCreateCognomen,
+            NamingRequest request = null)
         {
-            if (string.IsNullOrWhiteSpace(value))
+            if (variant == null)
+                throw new InvalidOperationException("Roman naming variant could not be resolved.");
+
+            var definition = variant.Definition;
+            string cognomen;
+
+            if (request != null && !string.IsNullOrEmpty(request.TemplateCognomen))
+            {
+                cognomen = DetermineCognomenForNormalization(request.TemplateCognomen, variant, random, corrections, allowCreateCognomen);
+            }
+            else if (!string.IsNullOrEmpty(inheritedCognomen))
+            {
+                cognomen = DetermineChildCognomen(variant, inheritedCognomen, random);
+            }
+            else
+            {
+                cognomen = DetermineCognomenForNormalization(null, variant, random, corrections, allowCreateCognomen);
+            }
+
+            if (gender == Gender.Male)
+            {
+                string praenomen;
+                if (request != null && variant.TryNormalizePraenomen(request.TemplatePraenomen, out var normalizedPraenomen))
+                {
+                    praenomen = normalizedPraenomen;
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(request?.TemplatePraenomen))
+                        corrections?.Add($"replaced praenomen '{request.TemplatePraenomen}' with gens-appropriate selection");
+                    praenomen = variant.GetRandomPraenomen(random) ?? DefaultPraenomina[random.Next(DefaultPraenomina.Length)];
+                }
+
+                return new RomanName(praenomen, definition.StylizedNomen, cognomen, Gender.Male);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(request?.TemplatePraenomen))
+                    corrections?.Add("removed female praenomen");
+
+                return new RomanName(null, definition.FeminineNomen, cognomen, Gender.Female);
+            }
+        }
+
+        private static string DetermineCognomenForNormalization(
+            string templateCognomen,
+            RomanGensVariant variant,
+            System.Random random,
+            List<string> corrections,
+            bool allowCreate)
+        {
+            if (!string.IsNullOrEmpty(templateCognomen))
+            {
+                variant.RegisterCognomen(templateCognomen);
+                return RomanNameUtility.Normalize(templateCognomen);
+            }
+
+            var options = variant.GetAvailableCognomina().ToList();
+            if (options.Count > 0)
+                return options[random.Next(options.Count)];
+
+            if (!allowCreate)
                 return null;
 
-            var segments = value
-                .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(ToTitleCase);
-
-            return string.Join(" ", segments);
+            var created = GenerateNewCognomen(variant, random, null);
+            variant.RegisterCognomen(created);
+            corrections?.Add($"generated cognomen '{created}'");
+            return created;
         }
 
-        private static string ToTitleCase(string value)
+        private static string DetermineChildCognomen(RomanGensVariant variant, string inherited, System.Random random)
         {
-            if (string.IsNullOrEmpty(value))
-                return value;
+            var normalized = RomanNameUtility.Normalize(inherited);
+            if (!string.IsNullOrEmpty(normalized))
+            {
+                variant.RegisterCognomen(normalized);
+                if (ShouldInheritCognomen(random))
+                    return normalized;
+            }
 
-            value = value.Trim();
-            if (value.Length == 0)
-                return value;
+            var alternatives = variant.GetAvailableCognomina()
+                .Where(c => !string.Equals(c, normalized, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
-            var lower = value.ToLowerInvariant();
-            return char.ToUpperInvariant(lower[0]) + lower[1..];
+            if (alternatives.Count > 0 && random.NextDouble() < 0.5)
+                return alternatives[random.Next(alternatives.Count)];
+
+            var created = GenerateNewCognomen(variant, random, null);
+            variant.RegisterCognomen(created);
+            return created;
         }
 
-        private static bool IsNoble(SocialClass socialClass) =>
-            socialClass == SocialClass.Patrician || socialClass == SocialClass.Equestrian;
+        private static string GenerateNewCognomen(RomanGensVariant variant, System.Random random, string seed)
+        {
+            var baseStem = variant?.Definition?.StylizedNomen ?? "Roman";
+            baseStem = RomanNameUtility.Normalize(baseStem) ?? "Roman";
+
+            if (baseStem.EndsWith("ius", StringComparison.OrdinalIgnoreCase))
+                baseStem = baseStem[..^3];
+            else if (baseStem.EndsWith("us", StringComparison.OrdinalIgnoreCase))
+                baseStem = baseStem[..^2];
+
+            if (!string.IsNullOrEmpty(seed))
+            {
+                var cleanSeed = RomanNameUtility.Normalize(seed);
+                if (!string.IsNullOrEmpty(cleanSeed))
+                    baseStem = cleanSeed;
+            }
+
+            if (baseStem.Length > 6)
+            {
+                int trim = random.Next(0, 3);
+                if (trim > 0 && trim < baseStem.Length)
+                    baseStem = baseStem[..^trim];
+            }
+
+            string candidate = null;
+            int guard = 0;
+            while (string.IsNullOrEmpty(candidate) || variant.ContainsCognomen(candidate))
+            {
+                var suffix = CognomenSuffixes[random.Next(CognomenSuffixes.Length)];
+                candidate = RomanNameUtility.Normalize(baseStem + suffix);
+                guard++;
+                if (guard > 10)
+                {
+                    candidate = RomanNameUtility.Normalize(baseStem + "ianus");
+                    break;
+                }
+            }
+
+            return candidate ?? "Novus";
+        }
+
+        private static bool ShouldInheritCognomen(System.Random random)
+        {
+            int threshold = 90 + random.Next(0, 6);
+            int roll = random.Next(0, 100);
+            return roll < threshold;
+        }
+
+        private static SocialClass NormalizeSocialClass(SocialClass socialClass)
+        {
+            return socialClass == SocialClass.Equestrian ? SocialClass.Plebeian : socialClass;
+        }
+
+        private class NamingRequest
+        {
+            public Gender Gender;
+            public string TemplatePraenomen;
+            public string TemplateCognomen;
+        }
     }
 }

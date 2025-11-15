@@ -602,11 +602,9 @@ namespace Game.Data.Characters
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
             var socialClass = father?.Class ?? mother?.Class ?? SocialClass.Plebeian;
-            var familySeed = father?.Family ?? mother?.Family;
-            var canonicalFamily = RomanNamingRules.ResolveFamilyName(familySeed, null);
-
-            var romanName = RomanNamingRules.NormalizeOrGenerateName(gender, socialClass, canonicalFamily, null);
-            var resolvedFamily = RomanNamingRules.ResolveFamilyName(canonicalFamily, romanName) ?? canonicalFamily ?? romanName?.Nomen;
+            var romanName = RomanNamingRules.GenerateChildName(father, mother, gender, socialClass, rng);
+            var familySeed = father?.Family ?? mother?.Family ?? romanName?.Nomen;
+            var resolvedFamily = RomanNamingRules.ResolveFamilyName(familySeed, romanName) ?? romanName?.Nomen;
 
             var child = new Character
             {
@@ -639,9 +637,8 @@ namespace Game.Data.Characters
         public static Character GenerateRandomCharacter(string family, SocialClass socialClass)
         {
             var gender = rng.Next(0, 2) == 0 ? Gender.Male : Gender.Female;
-            var canonicalFamily = RomanNamingRules.ResolveFamilyName(family, null);
-            var romanName = RomanNamingRules.NormalizeOrGenerateName(gender, socialClass, canonicalFamily, null);
-            var resolvedFamily = RomanNamingRules.ResolveFamilyName(canonicalFamily, romanName) ?? canonicalFamily ?? romanName?.Nomen;
+            var romanName = RomanNamingRules.GenerateStandaloneName(gender, socialClass, family, rng);
+            var resolvedFamily = RomanNamingRules.ResolveFamilyName(family, romanName) ?? romanName?.Nomen;
 
             if (romanName != null)
                 romanName.Gender = gender;
