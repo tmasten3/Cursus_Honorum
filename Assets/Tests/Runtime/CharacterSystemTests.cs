@@ -27,6 +27,8 @@ namespace CursusHonorum.Tests.Runtime
                 Assert.IsNotNull(living);
                 Assert.IsNotEmpty(living, "Base character dataset should seed living characters.");
                 Assert.IsTrue(living.All(c => c != null && c.IsAlive));
+                Assert.That(living.Count, Is.InRange(1200, 2000),
+                    "Base population count should match generator expectations.");
             }
             finally
             {
@@ -57,7 +59,8 @@ namespace CursusHonorum.Tests.Runtime
             {
                 var result = characterSystem.ValidateBaseCharactersOnly();
                 Assert.IsNotNull(result);
-                Assert.IsTrue(result.Success, "Base character data should validate successfully.");
+                Assert.IsTrue(result.Success, string.Join("; ", result.Issues.Select(i => i.Message)));
+                Assert.IsEmpty(result.Issues);
             }
             finally
             {

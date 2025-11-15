@@ -20,12 +20,16 @@ namespace Game.Data.Characters
             "ianus", "inus", "illus", "ellus", "ullus", "icus", "inus", "enus", "ianus"
         };
 
-        public static RomanName GenerateRomanName(Gender gender, string gens = null, SocialClass socialClass = SocialClass.Patrician)
+        public static RomanIdentity GenerateRomanIdentity(
+            Gender gender,
+            SocialClass socialClass,
+            string gens = null,
+            System.Random randomOverride = null)
         {
-            return NormalizeOrGenerateName(gender, socialClass, gens, null);
+            return NormalizeOrGenerateIdentity(gender, socialClass, gens, null, null, randomOverride);
         }
 
-        public static RomanName GenerateStandaloneName(
+        public static RomanIdentity GenerateStandaloneIdentity(
             Gender gender,
             SocialClass socialClass,
             string gens = null,
@@ -39,19 +43,21 @@ namespace Game.Data.Characters
                           ?? Registry.GetRandomVariant(SocialClass.Patrician, random)
                           ?? Registry.GetRandomVariant(SocialClass.Plebeian, random);
 
-            var result = GenerateNameFromVariant(
+            var identity = GenerateIdentityFromVariant(
                 gender,
                 variant,
                 null,
                 random,
                 null,
-                allowCreateCognomen: true);
+                allowCreateCognomen: true,
+                request: null,
+                parentBranchId: null);
 
-            ApplyNomenOverride(result, overrideMasculine, overrideFeminine);
-            return result;
+            ApplyNomenOverride(identity.Name, overrideMasculine, overrideFeminine);
+            return identity;
         }
 
-        public static RomanName GenerateChildName(
+        public static RomanIdentity GenerateChildIdentity(
             Character father,
             Character mother,
             Gender gender,
@@ -81,12 +87,21 @@ namespace Game.Data.Characters
             if (string.IsNullOrWhiteSpace(inheritedCognomen))
                 inheritedCognomen = mother?.RomanName?.Cognomen;
 
-            var result = GenerateNameFromVariant(gender, variant, inheritedCognomen, random, null, allowCreateCognomen: true);
-            ApplyNomenOverride(result, overrideMasculine, overrideFeminine);
-            return result;
+            var identity = GenerateIdentityFromVariant(
+                gender,
+                variant,
+                inheritedCognomen,
+                random,
+                null,
+                allowCreateCognomen: true,
+                request: null,
+                parentBranchId: father?.BranchId ?? mother?.BranchId);
+
+            ApplyNomenOverride(identity.Name, overrideMasculine, overrideFeminine);
+            return identity;
         }
 
-        public static RomanName NormalizeOrGenerateName(
+        public static RomanIdentity NormalizeOrGenerateIdentity(
             Gender gender,
             SocialClass socialClass,
             string gens,
@@ -122,9 +137,56 @@ namespace Game.Data.Characters
                 TemplateCognomen = templateCognomen
             };
 
-            var result = GenerateNameFromVariant(gender, variant, null, random, corrections, allowCreateCognomen: true, request);
-            ApplyNomenOverride(result, overrideMasculine, overrideFeminine);
-            return result;
+            var identity = GenerateIdentityFromVariant(
+                gender,
+                variant,
+                null,
+                random,
+                corrections,
+                allowCreateCognomen: true,
+                request,
+                parentBranchId: null);
+
+            ApplyNomenOverride(identity.Name, overrideMasculine, overrideFeminine);
+            return identity;
+        }
+
+        public static RomanName GenerateRomanName(
+            Gender gender,
+            string gens = null,
+            SocialClass socialClass = SocialClass.Patrician)
+        {
+            return GenerateRomanIdentity(gender, socialClass, gens).Name;
+        }
+
+        public static RomanName GenerateStandaloneName(
+            Gender gender,
+            SocialClass socialClass,
+            string gens = null,
+            System.Random randomOverride = null)
+        {
+            return GenerateStandaloneIdentity(gender, socialClass, gens, randomOverride).Name;
+        }
+
+        public static RomanName GenerateChildName(
+            Character father,
+            Character mother,
+            Gender gender,
+            SocialClass socialClass,
+            System.Random randomOverride = null)
+        {
+            return GenerateChildIdentity(father, mother, gender, socialClass, randomOverride).Name;
+        }
+
+        public static RomanName NormalizeOrGenerateName(
+            Gender gender,
+            SocialClass socialClass,
+            string gens,
+            RomanName template,
+            List<string> corrections = null,
+            System.Random randomOverride = null)
+        {
+            return NormalizeOrGenerateIdentity(gender, socialClass, gens, template, corrections, randomOverride).Name;
         }
 
         public static string ResolveFamilyName(string family, RomanName name)
@@ -195,6 +257,198 @@ namespace Game.Data.Characters
             return "Unknown";
         }
 
+        internal static string GenerateDynamicCognomen(RomanGensVariant variant, System.Random random, string seed = null)
+        {
+            return GenerateNewCognomen(variant, random, seed);
+        }
+
+        private static RomanIdentity GenerateIdentityFromVariant(
+            Gender gender,
+            RomanGensVariant variant,
+            string inheritedCognomen,
+            System.Random random,
+            List<string> corrections,
+            bool allowCreateCognomen,
+            NamingRequest request,
+            string parentBranchId)
+        {
+            if (variant == null)
+                throw new InvalidOperationException("Roman naming variant could not be resolved.");
+
+            bool createdNewCognomen;
+            string cognomen;
+
+            if (request != null && !string.IsNullOrEmpty(request.TemplateCognomen))
+            {
+                cognomen = DetermineCognomenForNormalization(
+                    request.TemplateCognomen,
+                    variant,
+                    random,
+                    corrections,
+                    allowCreateCognomen,
+                    out createdNewCognomen);
+            }
+            else if (!string.IsNullOrEmpty(inheritedCognomen))
+            {
+                cognomen = DetermineChildCognomen(variant, inheritedCognomen, random, out createdNewCognomen);
+            }
+            else
+            {
+                cognomen = DetermineCognomenForNormalization(
+                    null,
+                    variant,
+                    random,
+                    corrections,
+                    allowCreateCognomen,
+                    out createdNewCognomen);
+            }
+
+            var definition = variant.Definition;
+            RomanName name;
+
+            if (gender == Gender.Male)
+            {
+                string praenomen;
+                if (request != null && variant.TryNormalizePraenomen(request.TemplatePraenomen, out var normalizedPraenomen))
+                {
+                    praenomen = normalizedPraenomen;
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(request?.TemplatePraenomen))
+                        corrections?.Add($"replaced praenomen '{request.TemplatePraenomen}' with gens-appropriate selection");
+                    praenomen = variant.GetRandomPraenomen(random) ?? DefaultPraenomina[random.Next(DefaultPraenomina.Length)];
+                }
+
+                name = new RomanName(praenomen, definition.StylizedNomen, cognomen, Gender.Male);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(request?.TemplatePraenomen))
+                    corrections?.Add("removed female praenomen");
+
+                name = new RomanName(null, definition.FeminineNomen, cognomen, Gender.Female);
+            }
+
+            var branch = RomanFamilyRegistry.RegisterOrGet(
+                definition.StylizedNomen,
+                variant.SocialClass,
+                cognomen,
+                parentBranchId,
+                createdNewCognomen);
+
+            return new RomanIdentity(name, branch, createdNewCognomen, parentBranchId);
+        }
+
+        private static string DetermineCognomenForNormalization(
+            string templateCognomen,
+            RomanGensVariant variant,
+            System.Random random,
+            List<string> corrections,
+            bool allowCreate,
+            out bool createdNew)
+        {
+            createdNew = false;
+
+            if (!string.IsNullOrEmpty(templateCognomen))
+            {
+                createdNew = variant.RegisterCognomen(templateCognomen);
+                return RomanNameUtility.Normalize(templateCognomen);
+            }
+
+            var options = variant.GetAvailableCognomina().ToList();
+            if (options.Count > 0)
+                return options[random.Next(options.Count)];
+
+            if (!allowCreate)
+                return null;
+
+            var created = GenerateNewCognomen(variant, random, null);
+            createdNew = variant.RegisterCognomen(created);
+            corrections?.Add($"generated cognomen '{created}'");
+            return created;
+        }
+
+        private static string DetermineChildCognomen(RomanGensVariant variant, string inherited, System.Random random, out bool createdNew)
+        {
+            createdNew = false;
+            var normalized = RomanNameUtility.Normalize(inherited);
+            if (!string.IsNullOrEmpty(normalized))
+            {
+                _ = variant.RegisterCognomen(normalized);
+                if (ShouldInheritCognomen(random))
+                    return normalized;
+            }
+
+            var alternatives = variant.GetAvailableCognomina()
+                .Where(c => !string.Equals(c, normalized, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (alternatives.Count > 0 && random.NextDouble() < 0.5)
+                return alternatives[random.Next(alternatives.Count)];
+
+            var created = GenerateNewCognomen(variant, random, null);
+            createdNew = variant.RegisterCognomen(created);
+            return created;
+        }
+
+        private static string GenerateNewCognomen(RomanGensVariant variant, System.Random random, string seed)
+        {
+            var baseStem = variant?.Definition?.StylizedNomen ?? "Roman";
+            baseStem = RomanNameUtility.Normalize(baseStem) ?? "Roman";
+
+            if (baseStem.EndsWith("ius", StringComparison.OrdinalIgnoreCase))
+                baseStem = baseStem[..^3];
+            else if (baseStem.EndsWith("us", StringComparison.OrdinalIgnoreCase))
+                baseStem = baseStem[..^2];
+
+            if (!string.IsNullOrEmpty(seed))
+            {
+                var cleanSeed = RomanNameUtility.Normalize(seed);
+                if (!string.IsNullOrEmpty(cleanSeed))
+                    baseStem = cleanSeed;
+            }
+
+            if (baseStem.Length > 6)
+            {
+                int trim = random.Next(0, 3);
+                if (trim > 0 && trim < baseStem.Length)
+                    baseStem = baseStem[..^trim];
+            }
+
+            string candidate = null;
+            int guard = 0;
+            while (string.IsNullOrEmpty(candidate) || variant.ContainsCognomen(candidate))
+            {
+                var suffix = CognomenSuffixes[random.Next(CognomenSuffixes.Length)];
+                candidate = RomanNameUtility.Normalize(baseStem + suffix);
+                guard++;
+                if (guard > 10)
+                {
+                    candidate = RomanNameUtility.Normalize(baseStem + "ianus");
+                    break;
+                }
+            }
+
+            return candidate ?? "Novus";
+        }
+
+        private static void ApplyNomenOverride(RomanName name, string masculineOverride, string feminineOverride)
+        {
+            if (name == null)
+                return;
+
+            if (name.Gender == Gender.Male)
+            {
+                if (!string.IsNullOrEmpty(masculineOverride))
+                    name.Nomen = masculineOverride;
+            }
+            else if (!string.IsNullOrEmpty(feminineOverride))
+            {
+                name.Nomen = feminineOverride;
+            }
+        }
+
         private static RomanGensVariant ResolveVariantForGeneration(
             SocialClass socialClass,
             string family,
@@ -249,164 +503,6 @@ namespace Game.Data.Characters
             }
 
             return Registry.GetRandomVariant(variantClass, random);
-        }
-
-        private static void ApplyNomenOverride(RomanName name, string masculineOverride, string feminineOverride)
-        {
-            if (name == null)
-                return;
-
-            if (name.Gender == Gender.Male)
-            {
-                if (!string.IsNullOrEmpty(masculineOverride))
-                    name.Nomen = masculineOverride;
-            }
-            else if (!string.IsNullOrEmpty(feminineOverride))
-            {
-                name.Nomen = feminineOverride;
-            }
-        }
-
-        private static RomanName GenerateNameFromVariant(
-            Gender gender,
-            RomanGensVariant variant,
-            string inheritedCognomen,
-            System.Random random,
-            List<string> corrections,
-            bool allowCreateCognomen,
-            NamingRequest request = null)
-        {
-            if (variant == null)
-                throw new InvalidOperationException("Roman naming variant could not be resolved.");
-
-            var definition = variant.Definition;
-            string cognomen;
-
-            if (request != null && !string.IsNullOrEmpty(request.TemplateCognomen))
-            {
-                cognomen = DetermineCognomenForNormalization(request.TemplateCognomen, variant, random, corrections, allowCreateCognomen);
-            }
-            else if (!string.IsNullOrEmpty(inheritedCognomen))
-            {
-                cognomen = DetermineChildCognomen(variant, inheritedCognomen, random);
-            }
-            else
-            {
-                cognomen = DetermineCognomenForNormalization(null, variant, random, corrections, allowCreateCognomen);
-            }
-
-            if (gender == Gender.Male)
-            {
-                string praenomen;
-                if (request != null && variant.TryNormalizePraenomen(request.TemplatePraenomen, out var normalizedPraenomen))
-                {
-                    praenomen = normalizedPraenomen;
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(request?.TemplatePraenomen))
-                        corrections?.Add($"replaced praenomen '{request.TemplatePraenomen}' with gens-appropriate selection");
-                    praenomen = variant.GetRandomPraenomen(random) ?? DefaultPraenomina[random.Next(DefaultPraenomina.Length)];
-                }
-
-                return new RomanName(praenomen, definition.StylizedNomen, cognomen, Gender.Male);
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(request?.TemplatePraenomen))
-                    corrections?.Add("removed female praenomen");
-
-                return new RomanName(null, definition.FeminineNomen, cognomen, Gender.Female);
-            }
-        }
-
-        private static string DetermineCognomenForNormalization(
-            string templateCognomen,
-            RomanGensVariant variant,
-            System.Random random,
-            List<string> corrections,
-            bool allowCreate)
-        {
-            if (!string.IsNullOrEmpty(templateCognomen))
-            {
-                variant.RegisterCognomen(templateCognomen);
-                return RomanNameUtility.Normalize(templateCognomen);
-            }
-
-            var options = variant.GetAvailableCognomina().ToList();
-            if (options.Count > 0)
-                return options[random.Next(options.Count)];
-
-            if (!allowCreate)
-                return null;
-
-            var created = GenerateNewCognomen(variant, random, null);
-            variant.RegisterCognomen(created);
-            corrections?.Add($"generated cognomen '{created}'");
-            return created;
-        }
-
-        private static string DetermineChildCognomen(RomanGensVariant variant, string inherited, System.Random random)
-        {
-            var normalized = RomanNameUtility.Normalize(inherited);
-            if (!string.IsNullOrEmpty(normalized))
-            {
-                variant.RegisterCognomen(normalized);
-                if (ShouldInheritCognomen(random))
-                    return normalized;
-            }
-
-            var alternatives = variant.GetAvailableCognomina()
-                .Where(c => !string.Equals(c, normalized, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (alternatives.Count > 0 && random.NextDouble() < 0.5)
-                return alternatives[random.Next(alternatives.Count)];
-
-            var created = GenerateNewCognomen(variant, random, null);
-            variant.RegisterCognomen(created);
-            return created;
-        }
-
-        private static string GenerateNewCognomen(RomanGensVariant variant, System.Random random, string seed)
-        {
-            var baseStem = variant?.Definition?.StylizedNomen ?? "Roman";
-            baseStem = RomanNameUtility.Normalize(baseStem) ?? "Roman";
-
-            if (baseStem.EndsWith("ius", StringComparison.OrdinalIgnoreCase))
-                baseStem = baseStem[..^3];
-            else if (baseStem.EndsWith("us", StringComparison.OrdinalIgnoreCase))
-                baseStem = baseStem[..^2];
-
-            if (!string.IsNullOrEmpty(seed))
-            {
-                var cleanSeed = RomanNameUtility.Normalize(seed);
-                if (!string.IsNullOrEmpty(cleanSeed))
-                    baseStem = cleanSeed;
-            }
-
-            if (baseStem.Length > 6)
-            {
-                int trim = random.Next(0, 3);
-                if (trim > 0 && trim < baseStem.Length)
-                    baseStem = baseStem[..^trim];
-            }
-
-            string candidate = null;
-            int guard = 0;
-            while (string.IsNullOrEmpty(candidate) || variant.ContainsCognomen(candidate))
-            {
-                var suffix = CognomenSuffixes[random.Next(CognomenSuffixes.Length)];
-                candidate = RomanNameUtility.Normalize(baseStem + suffix);
-                guard++;
-                if (guard > 10)
-                {
-                    candidate = RomanNameUtility.Normalize(baseStem + "ianus");
-                    break;
-                }
-            }
-
-            return candidate ?? "Novus";
         }
 
         private static bool ShouldInheritCognomen(System.Random random)

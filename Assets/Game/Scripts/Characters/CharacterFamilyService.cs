@@ -27,6 +27,10 @@ namespace Game.Systems.Characters
 
         public IReadOnlyList<Character> GetByClass(SocialClass socialClass) => repository.GetByClass(socialClass);
 
+        public IReadOnlyList<Character> GetByCognomen(string cognomen) => repository.GetByCognomen(cognomen);
+
+        public IReadOnlyList<Character> GetByBranch(string branchId) => repository.GetByBranch(branchId);
+
         public int CountAlive() => repository.AliveCount;
 
         public int GetFamilyCount() => repository.FamilyCount;
