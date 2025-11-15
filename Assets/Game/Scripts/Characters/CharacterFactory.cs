@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Game.Core;
+using Game.Data.Characters.Generation;
 using UnityEngine;
 
 namespace Game.Data.Characters
@@ -41,6 +42,7 @@ namespace Game.Data.Characters
 
         private static readonly System.Random rng = new System.Random();
         private static int nextID = 1000;
+        private const string GeneratorPrefix = "generator:";
 
         private static readonly string[] RoutineNormalizationPrefixes =
         {
@@ -66,6 +68,9 @@ namespace Game.Data.Characters
                 _normalizationBatch =
                     new LogBatch("CharacterData", "characters were normalized", "CharacterNormalizationReport.txt");
             }
+
+            if (TryLoadFromGenerator(path, mode, out var generatedCharacters))
+                return generatedCharacters;
 
             if (!File.Exists(path))
             {
@@ -127,6 +132,48 @@ namespace Game.Data.Characters
             return wrapper.Characters;
         }
 
+        private static bool TryLoadFromGenerator(string descriptor, CharacterLoadMode mode, out List<Character> characters)
+        {
+            characters = null;
+            if (string.IsNullOrWhiteSpace(descriptor) ||
+                !descriptor.StartsWith(GeneratorPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (!BasePopulationGenerator.TryCreate(descriptor, out var generator))
+            {
+                var message = $"Failed to resolve population generator '{descriptor}'.";
+                Game.Core.Logger.Error(LogCategory, message);
+                AddGlobalIssue("Generator", message);
+                characters = new List<Character>();
+                LastValidationResult.Success = false;
+                return true;
+            }
+
+            var wrapper = generator.Generate();
+            var list = wrapper?.Characters ?? new List<Character>();
+
+            if (mode == CharacterLoadMode.Strict)
+            {
+                CollectStrictValidationIssues(list, descriptor);
+                characters = list;
+                return true;
+            }
+
+            foreach (var character in list)
+            {
+                NormalizeCharacter(character, descriptor);
+            }
+
+            ValidateCharacters(list, descriptor);
+            UpdateNextID(list);
+            _normalizationBatch.Flush();
+            LastValidationResult.Success = true;
+            characters = list;
+            return true;
+        }
+
         private static void NormalizeCharacter(Character character, string sourcePath)
         {
             if (character == null)
@@ -137,6 +184,7 @@ namespace Game.Data.Characters
             character.RomanName = analysis.NormalizedName;
             if (character.RomanName != null)
                 character.RomanName.Gender = character.Gender;
+            character.Branch = character.RomanName?.BranchId;
 
             var normalizedNomen = character.RomanName?.Nomen ?? "(unknown)";
 
@@ -191,6 +239,9 @@ namespace Game.Data.Characters
         {
             if (character == null)
                 return;
+
+            if (character.RomanName != null)
+                character.Branch = character.RomanName.BranchId;
 
             NormalizePoliticalAttributes(character, sourceLabel);
         }
@@ -629,6 +680,7 @@ namespace Game.Data.Characters
 
             if (child.RomanName != null)
                 child.RomanName.Gender = child.Gender;
+            child.Branch = romanName?.BranchId;
 
             EnsureLifecycleState(child, year);
 
@@ -661,6 +713,7 @@ namespace Game.Data.Characters
                 Ambition = AmbitionProfile.CreateDefault()
             };
 
+            character.Branch = romanName?.BranchId;
             EnsureLifecycleState(character, character.BirthYear + character.Age);
 
             return character;
@@ -680,6 +733,7 @@ namespace Game.Data.Characters
             var normalizedFamily = RomanNamingRules.ResolveFamilyName(clone.Family, clone.RomanName);
             if (!string.IsNullOrEmpty(normalizedFamily))
                 clone.Family = normalizedFamily;
+            clone.Branch = clone.RomanName?.BranchId;
 
             EnsureLifecycleState(clone, clone.BirthYear + clone.Age);
 

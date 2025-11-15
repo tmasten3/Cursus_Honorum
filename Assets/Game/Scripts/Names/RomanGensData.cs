@@ -16,13 +16,43 @@ namespace Game.Data.Characters
         }
     }
 
+    internal sealed class RomanCognomenBranch
+    {
+        public RomanGensDefinition Definition { get; }
+        public SocialClass SocialClass { get; }
+        public string Cognomen { get; }
+        public string BranchId { get; }
+        public bool IsDynamic { get; }
+
+        public RomanCognomenBranch(
+            RomanGensDefinition definition,
+            SocialClass socialClass,
+            string cognomen,
+            string branchId,
+            bool isDynamic)
+        {
+            Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            SocialClass = socialClass;
+            Cognomen = RomanNameUtility.Normalize(cognomen);
+            BranchId = branchId;
+            IsDynamic = isDynamic;
+        }
+    }
+
     internal sealed class RomanGensVariant
     {
         private readonly List<RomanPraenomenOption> _praenomina;
         private readonly Dictionary<string, RomanPraenomenOption> _praenomenLookup;
         private readonly List<string> _baseCognomina;
-        private readonly HashSet<string> _cognomenSet;
         private readonly HashSet<string> _dynamicCognomina = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, RomanCognomenBranch> _branchLookup =
+            new(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _branchIds = new(StringComparer.OrdinalIgnoreCase);
+        private int _branchSequence;
+        private static readonly string[] DynamicSuffixes =
+        {
+            "ianus", "inus", "illus", "ellus", "ullus", "icus", "inus", "enus", "ianus"
+        };
 
         public RomanGensDefinition Definition { get; }
         public SocialClass SocialClass { get; }
@@ -53,7 +83,7 @@ namespace Game.Data.Characters
                 .ToList()
                 ?? new List<string>();
 
-            _cognomenSet = new HashSet<string>(_baseCognomina, StringComparer.OrdinalIgnoreCase);
+            ResetDynamicState();
         }
 
         public bool TryNormalizePraenomen(string value, out string normalized)
@@ -95,13 +125,10 @@ namespace Game.Data.Characters
             return _praenomina[^1].Name;
         }
 
-        public IEnumerable<string> GetAvailableCognomina()
+        public IEnumerable<RomanCognomenBranch> GetBranches()
         {
-            foreach (var cognomen in _baseCognomina)
-                yield return cognomen;
-
-            foreach (var cognomen in _dynamicCognomina)
-                yield return cognomen;
+            foreach (var branch in _branchLookup.Values)
+                yield return branch;
         }
 
         public bool ContainsCognomen(string cognomen)
@@ -109,20 +136,155 @@ namespace Game.Data.Characters
             if (string.IsNullOrWhiteSpace(cognomen))
                 return false;
 
-            return _cognomenSet.Contains(RomanNameUtility.Normalize(cognomen));
+            return _branchLookup.ContainsKey(RomanNameUtility.Normalize(cognomen));
         }
 
-        public void RegisterCognomen(string cognomen)
+        public RomanCognomenBranch RegisterCognomen(string cognomen, bool isDynamic = true)
         {
             var normalized = RomanNameUtility.Normalize(cognomen);
             if (string.IsNullOrEmpty(normalized))
-                return;
+                return null;
 
-            if (_cognomenSet.Add(normalized))
-                _dynamicCognomina.Add(normalized);
+            if (_branchLookup.TryGetValue(normalized, out var existing))
+                return existing;
+
+            var branch = CreateBranch(normalized, isDynamic);
+            return branch;
         }
 
-        public bool HasAnyCognomen => _baseCognomina.Count > 0 || _dynamicCognomina.Count > 0;
+        public RomanCognomenBranch GetBranch(string cognomen)
+        {
+            if (string.IsNullOrWhiteSpace(cognomen))
+                return null;
+
+            _branchLookup.TryGetValue(RomanNameUtility.Normalize(cognomen), out var branch);
+            return branch;
+        }
+
+        public RomanCognomenBranch GetRandomBranch(Random random, RomanCognomenBranch exclude = null)
+        {
+            var branches = _branchLookup.Values
+                .Where(b => exclude == null || !string.Equals(b.BranchId, exclude.BranchId, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (branches.Count == 0)
+                return null;
+
+            return branches[random.Next(branches.Count)];
+        }
+
+        public RomanCognomenBranch CreateNewBranch(Random random, string seed = null)
+        {
+            var cognomen = GenerateDynamicCognomen(random, seed);
+            return RegisterCognomen(cognomen, true);
+        }
+
+        public bool HasAnyCognomen => _branchLookup.Count > 0;
+
+        public void ResetDynamicState()
+        {
+            _dynamicCognomina.Clear();
+            _branchLookup.Clear();
+            _branchIds.Clear();
+            _branchSequence = 0;
+
+            foreach (var cognomen in _baseCognomina)
+            {
+                CreateBranch(cognomen, false);
+            }
+        }
+
+        private RomanCognomenBranch CreateBranch(string cognomen, bool isDynamic)
+        {
+            var normalized = RomanNameUtility.Normalize(cognomen);
+            if (string.IsNullOrEmpty(normalized))
+                return null;
+
+            if (_branchLookup.TryGetValue(normalized, out var existing))
+                return existing;
+
+            if (isDynamic)
+                _dynamicCognomina.Add(normalized);
+
+            var branchId = BuildBranchId(normalized);
+            var branch = new RomanCognomenBranch(Definition, SocialClass, normalized, branchId, isDynamic);
+            _branchLookup[normalized] = branch;
+            _branchIds.Add(branchId);
+            return branch;
+        }
+
+        private string BuildBranchId(string cognomen)
+        {
+            string gensSlug = Slugify(Definition?.Id ?? Definition?.StylizedNomen ?? "roman");
+            string classSlug = Slugify(SocialClass.ToString());
+            string cognomenSlug = Slugify(cognomen);
+
+            string baseId = $"{gensSlug}_{classSlug}_{cognomenSlug}";
+            if (_branchIds.Contains(baseId))
+            {
+                string candidate;
+                do
+                {
+                    candidate = $"{baseId}_{++_branchSequence}";
+                } while (_branchIds.Contains(candidate));
+
+                return candidate;
+            }
+
+            return baseId;
+        }
+
+        private string GenerateDynamicCognomen(Random random, string seed)
+        {
+            var baseStem = Definition?.StylizedNomen ?? "Roman";
+            baseStem = RomanNameUtility.Normalize(baseStem) ?? "Roman";
+
+            if (baseStem.EndsWith("ius", StringComparison.OrdinalIgnoreCase))
+                baseStem = baseStem[..^3];
+            else if (baseStem.EndsWith("us", StringComparison.OrdinalIgnoreCase))
+                baseStem = baseStem[..^2];
+
+            if (!string.IsNullOrEmpty(seed))
+            {
+                var cleanSeed = RomanNameUtility.Normalize(seed);
+                if (!string.IsNullOrEmpty(cleanSeed))
+                    baseStem = cleanSeed;
+            }
+
+            if (baseStem.Length > 6)
+            {
+                int trim = random.Next(0, 3);
+                if (trim > 0 && trim < baseStem.Length)
+                    baseStem = baseStem[..^trim];
+            }
+
+            string candidate = null;
+            int guard = 0;
+            while (string.IsNullOrEmpty(candidate) || _branchLookup.ContainsKey(candidate))
+            {
+                var suffix = DynamicSuffixes[random.Next(DynamicSuffixes.Length)];
+                candidate = RomanNameUtility.Normalize(baseStem + suffix);
+                guard++;
+                if (guard > 10)
+                {
+                    candidate = RomanNameUtility.Normalize(baseStem + "ianus");
+                    break;
+                }
+            }
+
+            return candidate ?? "Novus";
+        }
+
+        private static string Slugify(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            var normalized = RomanNameUtility.Normalize(value) ?? string.Empty;
+            var chars = normalized.Where(char.IsLetter);
+            var result = string.Concat(chars).ToLowerInvariant();
+            return string.IsNullOrEmpty(result) ? normalized.ToLowerInvariant() : result;
+        }
     }
 
     internal sealed class RomanGensDefinition
@@ -230,6 +392,17 @@ namespace Game.Data.Characters
         public string NormalizeFamily(string family)
         {
             return GetDefinition(family)?.StylizedNomen;
+        }
+
+        public void ResetDynamicState()
+        {
+            foreach (var definition in _definitions)
+            {
+                foreach (var variant in definition.Variants)
+                {
+                    variant?.ResetDynamicState();
+                }
+            }
         }
 
         public IEnumerable<RomanGensDefinition> Definitions => _definitions;

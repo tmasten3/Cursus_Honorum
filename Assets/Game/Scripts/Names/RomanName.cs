@@ -10,13 +10,15 @@ namespace Game.Data.Characters
         public string Nomen;
         public string Cognomen;
         public Gender Gender;
+        public string BranchId;
 
-        public RomanName(string praenomen, string nomen, string cognomen, Gender gender)
+        public RomanName(string praenomen, string nomen, string cognomen, Gender gender, string branchId = null)
         {
             Praenomen = praenomen;
             Nomen = nomen;
             Cognomen = cognomen;
             Gender = gender;
+            BranchId = branchId;
         }
 
         public string GetFullName()
