@@ -245,8 +245,137 @@ namespace Game.Data.Characters
             if (character == null)
                 return;
 
+            RestoreBranchRegistration(character);
             EnsureLifecycleState(character, character.BirthYear + character.Age);
             NormalizePoliticalAttributes(character, sourceLabel);
+        }
+
+        private sealed class BranchIdComponents
+        {
+            public string DefinitionId { get; init; }
+            public SocialClass? SocialClass { get; init; }
+            public string Cognomen { get; init; }
+        }
+
+        private static void RestoreBranchRegistration(Character character)
+        {
+            if (character == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(character.BranchId))
+                return;
+
+            var service = RomanNamingRules.ActiveService;
+            var context = service?.Context;
+            var registry = context?.BranchRegistry;
+            if (registry == null)
+                return;
+
+            if (registry.GetBranch(character.BranchId) != null)
+                return;
+
+            var components = ParseBranchId(character.BranchId);
+            var branchClass = components?.SocialClass ?? character.Class;
+
+            var variant = ResolveVariantForBranch(context.Registry, components, character, branchClass)
+                          ?? ResolveVariantForBranch(context.Registry, components, character, character.Class);
+
+            if (variant == null)
+            {
+                RecalculateIdentityWithFallback(character);
+                return;
+            }
+
+            string cognomen = components?.Cognomen
+                               ?? RomanNameUtility.Normalize(character.RomanName?.Cognomen);
+
+            if (string.IsNullOrEmpty(cognomen))
+            {
+                RecalculateIdentityWithFallback(character);
+                return;
+            }
+
+            bool isDynamic = !variant.BaseCognomina.Any(c =>
+                string.Equals(c, cognomen, StringComparison.OrdinalIgnoreCase));
+
+            registry.RehydrateBranch(character.BranchId, variant, cognomen, isDynamic);
+        }
+
+        private static BranchIdComponents ParseBranchId(string branchId)
+        {
+            if (string.IsNullOrWhiteSpace(branchId))
+                return null;
+
+            var segments = branchId.Split('-');
+            if (segments.Length < 3)
+                return null;
+
+            var definitionId = segments[0];
+            var classSegment = segments[1];
+            var cognomen = string.Join("-", segments.Skip(2));
+
+            SocialClass? parsedClass = null;
+            if (Enum.TryParse(classSegment, true, out SocialClass socialClass))
+                parsedClass = socialClass;
+
+            return new BranchIdComponents
+            {
+                DefinitionId = string.IsNullOrWhiteSpace(definitionId) ? null : definitionId,
+                SocialClass = parsedClass,
+                Cognomen = RomanNameUtility.Normalize(cognomen)
+            };
+        }
+
+        private static RomanGensVariant ResolveVariantForBranch(
+            RomanGensRegistry registry,
+            BranchIdComponents components,
+            Character character,
+            SocialClass desiredClass)
+        {
+            if (registry == null)
+                return null;
+
+            string[] familyCandidates =
+            {
+                components?.DefinitionId,
+                character?.Family,
+                character?.RomanName?.Nomen,
+                RomanNameUtility.ToMasculine(character?.Family),
+                RomanNameUtility.ToMasculine(character?.RomanName?.Nomen)
+            };
+
+            foreach (var candidate in familyCandidates)
+            {
+                if (string.IsNullOrWhiteSpace(candidate))
+                    continue;
+
+                var variant = registry.ResolveVariant(candidate, desiredClass);
+                if (variant != null)
+                    return variant;
+            }
+
+            return null;
+        }
+
+        private static void RecalculateIdentityWithFallback(Character character)
+        {
+            var identity = RomanNamingRules.NormalizeOrGenerateIdentity(
+                character.Gender,
+                character.Class,
+                character.Family,
+                character.RomanName,
+                character.BranchId,
+                null,
+                null);
+
+            if (identity?.Name != null)
+            {
+                character.RomanName = identity.Name;
+                character.RomanName.Gender = character.Gender;
+            }
+
+            if (!string.IsNullOrEmpty(identity?.BranchId))
+                character.BranchId = identity.BranchId;
         }
 
         private static void NormalizePoliticalAttributes(Character character, string sourceLabel)

@@ -87,6 +87,55 @@ namespace Game.Data.Characters
             return RegisterBranch(variant, candidate, true, parentBranchId);
         }
 
+        public RomanFamilyBranch RehydrateBranch(
+            string branchId,
+            RomanGensVariant variant,
+            string cognomen,
+            bool isDynamic,
+            string parentBranchId = null)
+        {
+            if (string.IsNullOrWhiteSpace(branchId))
+                throw new ArgumentNullException(nameof(branchId));
+            if (variant == null)
+                throw new ArgumentNullException(nameof(variant));
+
+            var normalizedId = branchId.Trim();
+            if (byId.TryGetValue(normalizedId, out var existing))
+                return existing;
+
+            var normalizedCognomen = NormalizeCognomen(cognomen);
+            if (string.IsNullOrEmpty(normalizedCognomen))
+                normalizedCognomen = $"Novus{dynamicSequence++}";
+
+            var variantKey = GetVariantKey(variant);
+            if (!byVariantAndCognomen.TryGetValue(variantKey, out var cognomenLookup))
+            {
+                cognomenLookup = new Dictionary<string, RomanFamilyBranch>(StringComparer.OrdinalIgnoreCase);
+                byVariantAndCognomen[variantKey] = cognomenLookup;
+            }
+
+            if (cognomenLookup.TryGetValue(normalizedCognomen, out var byCognomen))
+            {
+                byId[normalizedId] = byCognomen;
+                return byCognomen;
+            }
+
+            var branch = new RomanFamilyBranch(normalizedId, variant, normalizedCognomen, isDynamic, parentBranchId);
+            cognomenLookup[normalizedCognomen] = branch;
+            byId[normalizedId] = branch;
+            allBranches.Add(branch);
+
+            if (!byClass.TryGetValue(branch.SocialClass, out var list))
+            {
+                list = new List<RomanFamilyBranch>();
+                byClass[branch.SocialClass] = list;
+            }
+            list.Add(branch);
+
+            variant.RegisterCognomen(normalizedCognomen);
+            return branch;
+        }
+
         public RomanFamilyBranch GetBranch(string branchId)
         {
             if (string.IsNullOrWhiteSpace(branchId))
