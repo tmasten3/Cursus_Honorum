@@ -5,6 +5,7 @@ using UnityEngine;
 using Game.Core;
 using Logger = Game.Core.Logger;
 using Game.Data.Characters;
+using Game.Data.Characters.Generation;
 using Game.Systems.Characters;
 using Game.Systems.EventBus;
 using Game.Systems.Time;
@@ -24,7 +25,6 @@ namespace Game.Systems.CharacterSystem
         private int rngSeed;
         private readonly CharacterRepository repository = new CharacterRepository();
         private readonly DailyPopulationMetrics metrics = new DailyPopulationMetrics();
-        private readonly CharacterDataLoader dataLoader = new CharacterDataLoader();
         private readonly CharacterAgeService ageService;
         private readonly CharacterFamilyService familyService;
         private readonly CharacterMarriageService marriageService;
@@ -59,7 +59,13 @@ namespace Game.Systems.CharacterSystem
                     band.DailyHazard = YearlyToDaily(band.YearlyHazard);
             }
 
-            var baseCharacters = dataLoader.LoadBaseCharacters(settings.BaseDataPath);
+            RomanNamingRules.ConfigureSeed(settings.RngSeed);
+            CharacterFactory.ConfigureRng(settings.RngSeed);
+
+            var currentDate = timeSystem.CurrentDate;
+            var generator = new BasePopulationGenerator(RomanNamingRules.ActiveService, settings.RngSeed, currentDate.Year);
+            var population = generator.Generate();
+            var baseCharacters = CharacterFactory.ProcessGeneratedCharacters(population, "DynamicBasePopulation", CharacterLoadMode.Normal);
             foreach (var character in baseCharacters)
             {
                 if (character == null)
@@ -93,8 +99,16 @@ namespace Game.Systems.CharacterSystem
             if (settings == null)
                 throw new InvalidOperationException("Character settings are not configured.");
 
-            CharacterFactory.LoadBaseCharacters(settings.BaseDataPath, CharacterLoadMode.Strict);
-            return CharacterFactory.LastValidationResult;
+            return RomanNamingRules.WithTemporaryService(
+                RomanNamingRules.CreateIsolatedService(settings.RngSeed),
+                () =>
+                {
+                    var currentDate = timeSystem.CurrentDate;
+                    var generator = new BasePopulationGenerator(RomanNamingRules.ActiveService, settings.RngSeed, currentDate.Year);
+                    var population = generator.Generate();
+                    CharacterFactory.ProcessGeneratedCharacters(population, "DynamicBasePopulation-Validation", CharacterLoadMode.Strict);
+                    return CharacterFactory.LastValidationResult;
+                });
         }
 
         public override void Shutdown()

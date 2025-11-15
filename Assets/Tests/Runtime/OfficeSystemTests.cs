@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Game.Core;
@@ -35,15 +36,33 @@ namespace CursusHonorum.Tests.Runtime
         }
 
         [Test]
-        public void InitialOfficeHolders_AreSeeded()
+        public void InitialOfficeHolders_AllSeatsFilled()
         {
             var state = CreateInitializedState(out var officeSystem);
             try
             {
-                var holdings = officeSystem.GetCurrentHoldings(61);
-                Assert.IsNotNull(holdings);
-                Assert.IsTrue(holdings.Any(), "Seed data should assign at least one office to character #61.");
-                Assert.IsTrue(holdings.Any(h => h.OfficeId == "consul"), "Character #61 should hold a consul seat at start.");
+                var missing = new List<string>();
+                foreach (var definition in officeSystem.Definitions.GetAllDefinitions())
+                {
+                    if (definition == null)
+                        continue;
+
+                    var seats = officeSystem.StateService.GetOrCreateSeatList(definition.Id, definition.Seats);
+                    if (seats == null)
+                        continue;
+
+                    foreach (var seat in seats)
+                    {
+                        if (seat == null)
+                            continue;
+
+                        if (!seat.HolderId.HasValue || seat.HolderId.Value <= 0)
+                            missing.Add($"{definition.Name} seat {seat.SeatIndex}");
+                    }
+                }
+
+                if (missing.Count > 0)
+                    Assert.Fail($"Offices missing initial holders: {string.Join(", ", missing)}");
             }
             finally
             {

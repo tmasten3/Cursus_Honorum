@@ -27,6 +27,8 @@ namespace Game.Data.Characters
         public RomanGensDefinition Definition { get; }
         public SocialClass SocialClass { get; }
 
+        public IReadOnlyList<string> BaseCognomina => _baseCognomina;
+
         public RomanGensVariant(
             RomanGensDefinition definition,
             SocialClass socialClass,
