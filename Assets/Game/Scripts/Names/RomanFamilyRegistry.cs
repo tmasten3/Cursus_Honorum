@@ -123,15 +123,72 @@ namespace Game.Data.Characters
             if (characters == null)
                 return;
 
+            var pendingWithoutId = new List<Character>();
+
             foreach (var character in characters)
             {
                 if (character?.RomanName == null)
                     continue;
 
+                if (string.IsNullOrEmpty(character.BranchId))
+                {
+                    pendingWithoutId.Add(character);
+                    continue;
+                }
+
+                RegisterExistingBranch(character);
+            }
+
+            if (pendingWithoutId.Count == 0)
+                return;
+
+            foreach (var character in pendingWithoutId)
+            {
                 var branch = RegisterOrGet(character.Family, character.Class, character.RomanName.Cognomen, character.BranchParentId, character.BranchIsDynamic);
                 if (branch != null && !string.IsNullOrEmpty(character.BranchParentId) && BranchesById.TryGetValue(character.BranchParentId, out var parent))
                     parent.RegisterChild(branch.Id);
             }
+        }
+
+        private static void RegisterExistingBranch(Character character)
+        {
+            string gensKey = RomanNameUtility.Normalize(character.Family) ?? "unknown";
+            string cognomen = RomanNameUtility.Normalize(character.RomanName.Cognomen);
+            string key = BuildKey(gensKey, character.Class, cognomen);
+
+            if (!BranchesById.TryGetValue(character.BranchId, out var branch))
+            {
+                branch = new RomanFamilyBranch(character.BranchId, gensKey, cognomen, character.Class, character.BranchParentId, character.BranchIsDynamic);
+                BranchesById[branch.Id] = branch;
+            }
+            else
+            {
+                branch.EnsureParent(character.BranchParentId);
+            }
+
+            BranchIdByKey[key] = branch.Id;
+
+            if (!string.IsNullOrEmpty(character.BranchParentId) && BranchesById.TryGetValue(character.BranchParentId, out var parent))
+                parent.RegisterChild(branch.Id);
+
+            UpdateDynamicBranchCounter(branch.Id);
+        }
+
+        private static void UpdateDynamicBranchCounter(string branchId)
+        {
+            if (string.IsNullOrEmpty(branchId))
+                return;
+
+            int index = branchId.LastIndexOf("-dyn", StringComparison.OrdinalIgnoreCase);
+            if (index < 0 || index + 4 >= branchId.Length)
+                return;
+
+            var suffix = branchId[(index + 4)..];
+            if (!int.TryParse(suffix, out var value))
+                return;
+
+            if (value >= dynamicBranchCounter)
+                dynamicBranchCounter = value + 1;
         }
 
         private static string BuildKey(string gensKey, SocialClass socialClass, string cognomen)
