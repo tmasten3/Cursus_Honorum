@@ -429,6 +429,9 @@ namespace Game.Data.Characters
 
                 foreach (var correction in analysis.Corrections)
                 {
+                    if (IsRoutineNormalization(correction))
+                        continue;
+
                     TryAddIssue(new CharacterValidationIssue
                     {
                         CharacterIndex = i,
