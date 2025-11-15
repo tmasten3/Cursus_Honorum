@@ -153,6 +153,48 @@ namespace Game.Data.Characters
 
         public static string GetMasculineForm(string gens) => RomanNameUtility.ToMasculine(gens);
 
+        public static string GetFullName(Character character)
+        {
+            if (character?.RomanName == null)
+                return string.Empty;
+
+            var resolved = character.RomanName.GetFullName();
+            if (!string.IsNullOrWhiteSpace(resolved))
+                return resolved;
+
+            var fallbackSegments = new List<string>();
+            string last = null;
+
+            void AddSegment(string raw)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                    return;
+
+                var normalized = RomanNameUtility.Normalize(raw);
+                if (string.IsNullOrEmpty(normalized))
+                    return;
+
+                if (last != null && string.Equals(last, normalized, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                fallbackSegments.Add(normalized);
+                last = normalized;
+            }
+
+            AddSegment(character.RomanName.Praenomen);
+            AddSegment(character.RomanName.Nomen);
+            AddSegment(character.RomanName.Cognomen);
+
+            if (fallbackSegments.Count > 0)
+                return string.Join(" ", fallbackSegments);
+
+            var family = RomanNameUtility.Normalize(character.Family);
+            if (!string.IsNullOrEmpty(family))
+                return family;
+
+            return "Unknown";
+        }
+
         private static RomanGensVariant ResolveVariantForGeneration(
             SocialClass socialClass,
             string family,
